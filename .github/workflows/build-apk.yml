@@ -28,6 +28,9 @@ jobs:
     steps:
       - name: Code holen
         uses: actions/checkout@v5
+        with:
+          # Kein GitHub-Token in .git/config: npm-Pakete und Gradle sollen nichts ins Repo schreiben können.
+          persist-credentials: false
 
       - name: Node einrichten
         uses: actions/setup-node@v5
@@ -49,7 +52,8 @@ jobs:
       - name: Pakete installieren
         run: |
           set -o pipefail
-          npm install --no-audit --no-fund 2>&1 | tee npm.log
+          # Ohne Install-Skripte der Pakete (Schutz vor manipulierten npm-Paketen), Capacitor braucht keine.
+          npm install --no-audit --no-fund --ignore-scripts 2>&1 | tee npm.log
           npm ls --depth=0 2>&1 | tee -a npm.log
 
       - name: Web-Teil vorbereiten

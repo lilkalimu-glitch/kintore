@@ -10,6 +10,7 @@ Projektsprache ist Deutsch: Texte in der App, Code-Kommentare, Commit-Nachrichte
   (AES-256, Passwort im GitHub-Secret `KEYSTORE_PASSWORD`).
 - `appId` (`com.lilkalimu.kintore` in `capacitor.config.json`) und den Schlüssel nie ändern. Sonst lassen sich neue
   Versionen nicht mehr über die alte installieren und Nutzer verlieren beim Neuinstallieren ihre Daten.
+- Im Workflow `persist-credentials: false` beim Checkout und `npm install --ignore-scripts` beibehalten.
 
 ## Bauen und ausliefern
 - Jeder Push auf `main` startet `.github/workflows/build-apk.yml`. Ergebnis: Release `v2.<run>` mit `KINTORE-2.<run>.apk`, versionCode 100 + Lauf (muss immer steigen).
