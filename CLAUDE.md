@@ -1,0 +1,36 @@
+# KINTORE 筋トレ – Hinweise für Claude
+
+Öffentliches Repository einer Android-App: Gym-Tracker im Neon-Anime-Stil. Der Besitzer schreibt Deutsch;
+antworte ihm auf Deutsch, kurz und in einfacher Sprache.
+
+## Regeln
+- Keine persönlichen Trainings- oder Körperdaten committen. `www/data/seed.json` enthält nur Übungsliste und Vorlagen
+  und wird mit `node scripts/make-starter.mjs` erzeugt.
+- Den Signaturschlüssel nie unverschlüsselt committen. Im Repository liegt nur `signing/kintore.jks.enc`
+  (AES-256, Passwort im GitHub-Secret `KEYSTORE_PASSWORD`).
+- `appId` (`com.lilkalimu.kintore` in `capacitor.config.json`) und den Schlüssel nie ändern. Sonst lassen sich neue
+  Versionen nicht mehr über die alte installieren und Nutzer verlieren beim Neuinstallieren ihre Daten.
+
+## Bauen und ausliefern
+- Jeder Push auf `main` startet `.github/workflows/build-apk.yml`. Ergebnis: Release `v1.<run>` mit `KINTORE-1.<run>.apk`.
+- Reine Doku-Änderungen (`*.md`) lösen keinen Build aus.
+- Build-Logs lassen sich aus Claude-Sitzungen nicht laden. Bei Fehlern schreibt der Schritt „Fehler melden“ die letzten
+  Log-Zeilen als Annotations: `gh api repos/<owner>/<repo>/check-runs/<job-id>/annotations`.
+
+## Aufbau
+- `www/` – die App, ohne Build-Schritt (ES-Module). Einstieg `js/app.js`, Ansichten `js/view-*.js`, Sheets `js/sheets.js`.
+- Alle Datenänderungen laufen über `js/ops.js`, Berechnungen (Rekorde, Level, Quest, Tipps) in `js/stats.js`.
+- Daten liegen auf dem Handy (IndexedDB plus Datei-Kopie). Neue Felder oder Formatänderungen immer in `migrate()` in
+  `js/ops.js` abfangen, damit vorhandene Daten erhalten bleiben.
+- `scripts/patch-android.py` passt das von Capacitor erzeugte Android-Projekt an (Icon, Startbild, dunkle Leisten,
+  Rechte, Version).
+- Japanische Zeichen kommen aus Teil-Schriften in `www/fonts`. Nach neuen Zeichen `python3 scripts/build-fonts.py`
+  ausführen (braucht fontTools sowie Noto Sans CJK, Inter und TeX Gyre Adventor auf dem System).
+
+## Testen
+- `python3 -m http.server 8080 --directory www` und im Handy-Format (393 × 852) mit Playwright oder Browser prüfen.
+- Vor dem Push: keine Konsolenfehler, kein horizontales Scrollen, alle Ansichten aufrufbar, auch mit leeren Daten.
+
+## Design
+Navy-Grund, Glas-Karten, Neon-Glow in Pink, Cyan und Violett. Schriften: Adventor (Titel und Zahlen), Inter (Text).
+Japanische Schriftzeichen nur als Deko (Neon-Schild, Wasserzeichen in Seitenköpfen). Keine bekannten Anime-Figuren.

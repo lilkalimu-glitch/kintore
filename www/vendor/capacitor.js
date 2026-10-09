@@ -1,0 +1,1 @@
+/* Wird beim Bauen der APK durch Capacitor ersetzt. */

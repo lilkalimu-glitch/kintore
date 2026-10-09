@@ -1,0 +1,130 @@
+name: APK bauen
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apk-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Code holen
+        uses: actions/checkout@v5
+
+      - name: Node einrichten
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Java einrichten
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Android SDK prüfen
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_HOME/platforms" || true
+          ls "$ANDROID_HOME/build-tools" || true
+
+      - name: Pakete installieren
+        run: |
+          set -o pipefail
+          npm install --no-audit --no-fund 2>&1 | tee npm.log
+          npm ls --depth=0 2>&1 | tee -a npm.log
+
+      - name: Web-Teil vorbereiten
+        run: node scripts/prepare-web.mjs
+
+      - name: Android-Projekt erzeugen
+        run: |
+          set -o pipefail
+          npx cap add android 2>&1 | tee cap.log
+          npx cap sync android 2>&1 | tee -a cap.log
+
+      - name: Android-Projekt anpassen
+        run: |
+          set -o pipefail
+          python3 scripts/patch-android.py 2>&1 | tee patch.log
+
+      - name: App-Schlüssel entschlüsseln
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_PASSWORD" ]; then
+            echo "::error title=Passwort fehlt::Lege unter Settings > Secrets and variables > Actions das Secret KEYSTORE_PASSWORD an."
+            exit 1
+          fi
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in signing/kintore.jks.enc -out "$RUNNER_TEMP/kintore.jks" -pass env:KEYSTORE_PASSWORD \
+            || { echo "::error title=Falsches Passwort::Das Secret KEYSTORE_PASSWORD passt nicht zum Schlüssel."; exit 1; }
+
+      - name: APK bauen
+        working-directory: android
+        run: |
+          set -o pipefail
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --console=plain \
+            -Pandroid.injected.signing.store.file="$RUNNER_TEMP/kintore.jks" \
+            -Pandroid.injected.signing.store.password=kintore-neon-2026 \
+            -Pandroid.injected.signing.key.alias=kintore \
+            -Pandroid.injected.signing.key.password=kintore-neon-2026 2>&1 | tee ../gradle.log
+
+      - name: APK bereitlegen
+        run: |
+          mkdir -p out
+          APK=$(find android/app/build/outputs/apk/release -name '*.apk' | head -n 1)
+          echo "Gefunden: $APK"
+          cp "$APK" "out/KINTORE-1.${{ github.run_number }}.apk"
+          ls -la out
+
+      - name: APK als Artefakt speichern
+        uses: actions/upload-artifact@v4
+        with:
+          name: KINTORE-1.${{ github.run_number }}
+          path: out/*.apk
+
+      - name: Release mit APK veröffentlichen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v1.${{ github.run_number }}"
+          if gh release view "$TAG" --repo "${{ github.repository }}" > /dev/null 2>&1; then
+            gh release upload "$TAG" out/*.apk --clobber --repo "${{ github.repository }}"
+          else
+            gh release create "$TAG" out/*.apk \
+              --repo "${{ github.repository }}" \
+              --target "${{ github.sha }}" \
+              --title "KINTORE 1.${{ github.run_number }}" \
+              --notes "KINTORE-APK herunterladen und auf dem Android-Handy öffnen. Neue Versionen einfach über die alte installieren, deine Daten bleiben erhalten." \
+              --latest
+          fi
+
+      - name: Fehler melden
+        if: failure()
+        run: |
+          for f in npm.log cap.log patch.log gradle.log; do
+            if [ -f "$f" ]; then
+              msg=$(grep -v '^\s*$' "$f" | tail -n 45 | cut -c1-220 | sed 's/%/%25/g' | sed ':a;N;$!ba;s/\n/%0A/g')
+              echo "::error title=$f::$msg"
+              if [ "$f" = gradle.log ]; then
+                err=$(grep -E -i -A6 'what went wrong|error:|FAILED|Exception' "$f" | head -n 60 | cut -c1-220 | sed 's/%/%25/g' | sed ':a;N;$!ba;s/\n/%0A/g')
+                [ -n "$err" ] && echo "::error title=gradle-fehler::$err"
+              fi
+            fi
+          done
+
+      - name: Schlüssel entfernen
+        if: always()
+        run: rm -f "$RUNNER_TEMP/kintore.jks"

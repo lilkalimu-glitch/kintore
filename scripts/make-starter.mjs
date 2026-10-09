@@ -1,0 +1,157 @@
+// Erzeugt die Startdaten für neue Nutzer: Übungsliste und Vorlagen, keine Trainingsdaten.
+// Aufruf: node scripts/make-starter.mjs
+import { writeFileSync } from 'node:fs';
+import { completeExercise, guessFlags } from '../www/js/model.js';
+
+// [id, Name, Muskelgruppe]
+const LIBRARY = [
+  [79, "Ab-Wheel Rollout", 'bauch'],
+  [80, "Cable Crunch", 'bauch'],
+  [81, "Crunch", 'bauch'],
+  [82, "Crunch Machine", 'bauch'],
+  [83, "Decline Crunch", 'bauch'],
+  [84, "Dragon Flag", 'bauch'],
+  [85, "Hanging Knee Raise", 'bauch'],
+  [86, "Hanging Leg Raise", 'bauch'],
+  [71, "Barbell Calf Raise", 'beine'],
+  [65, "Barbell Front Squat", 'beine'],
+  [72, "Barbell Glute Bridge", 'beine'],
+  [64, "Barbell Squat", 'beine'],
+  [116, "Box Jump", 'beine'],
+  [70, "Donkey Calf Raise", 'beine'],
+  [73, "Glute-Ham Raise", 'beine'],
+  [127, "Hack Squat", 'beine'],
+  [107, "Hip Adduction", 'beine'],
+  [104, "Hip Thrust", 'beine'],
+  [67, "Leg Extension Machine", 'beine'],
+  [66, "Leg Press", 'beine'],
+  [74, "Lying Leg Curl Machine", 'beine'],
+  [129, "Pendulum Squat", 'beine'],
+  [75, "Romanian Deadlift", 'beine'],
+  [78, "Seated Calf Raise Machine", 'beine'],
+  [68, "Seated Leg Curl Machine", 'beine'],
+  [102, "Smith Machine Split Squat", 'beine'],
+  [103, "Split Squat", 'beine'],
+  [69, "Standing Calf Raise Machine", 'beine'],
+  [77, "Sumo Deadlift", 'beine'],
+  [117, "Walking Lunge", 'beine'],
+  [135, "Zercher Squat", 'beine'],
+  [27, "Barbell Curl", 'bizeps'],
+  [115, "Bayesian Curl", 'bizeps'],
+  [33, "Cable Curl", 'bizeps'],
+  [123, "Cable Hammer Curl", 'bizeps'],
+  [35, "Dumbbell Concentration Curl", 'bizeps'],
+  [29, "Dumbbell Curl", 'bizeps'],
+  [32, "Dumbbell Hammer Curl", 'bizeps'],
+  [36, "Dumbbell Preacher Curl", 'bizeps'],
+  [28, "EZ-Bar Curl", 'bizeps'],
+  [34, "EZ-Bar Preacher Curl", 'bizeps'],
+  [100, "Preacher Machine Curl", 'bizeps'],
+  [30, "Seated Incline Dumbbell Curl", 'bizeps'],
+  [31, "Seated Machine Curl", 'bizeps'],
+  [44, "Cable Crossover", 'brust'],
+  [142, "Cable Low Fly", 'brust'],
+  [40, "Decline Barbell Bench Press", 'brust'],
+  [46, "Decline Hammer Strength Chest Press", 'brust'],
+  [98, "Dips", 'brust'],
+  [37, "Flat Barbell Bench Press", 'brust'],
+  [38, "Flat Dumbbell Bench Press", 'brust'],
+  [42, "Flat Dumbbell Fly", 'brust'],
+  [39, "Incline Barbell Bench Press", 'brust'],
+  [41, "Incline Dumbbell Bench Press", 'brust'],
+  [43, "Incline Dumbbell Fly", 'brust'],
+  [45, "Incline Hammer Strength Chest Press", 'brust'],
+  [114, "Incline Smith Machine Press", 'brust'],
+  [118, "Iso Lateral Bench Press", 'brust'],
+  [99, "Push Up", 'brust'],
+  [47, "Seated Machine Fly", 'brust'],
+  [141, "Back Extension", 'ruecken'],
+  [53, "Barbell Row", 'ruecken'],
+  [59, "Barbell Shrug", 'ruecken'],
+  [50, "Chin Up", 'ruecken'],
+  [140, "Close Grip Cable Row", 'ruecken'],
+  [48, "Deadlift", 'ruecken'],
+  [52, "Dumbbell Row", 'ruecken'],
+  [63, "Good Morning", 'ruecken'],
+  [56, "Hammer Strength Row", 'ruecken'],
+  [111, "High Machine Row", 'ruecken'],
+  [55, "Lat Pulldown", 'ruecken'],
+  [60, "Machine Shrug", 'ruecken'],
+  [126, "Mid Back Shrug", 'ruecken'],
+  [51, "Neutral Chin Up", 'ruecken'],
+  [54, "Pendlay Row", 'ruecken'],
+  [49, "Pull Up", 'ruecken'],
+  [97, "Pull-over", 'ruecken'],
+  [62, "Rack Pull", 'ruecken'],
+  [57, "Seated Cable Row", 'ruecken'],
+  [61, "Straight-Arm Cable Pushdown", 'ruecken'],
+  [58, "T-Bar Row", 'ruecken'],
+  [12, "Arnold Dumbbell Press", 'schultern'],
+  [6, "Behind The Neck Barbell Press", 'schultern'],
+  [14, "Cable Face Pull", 'schultern'],
+  [112, "Cable Rear Delt Fly", 'schultern'],
+  [139, "Dumbbell Shrug", 'schultern'],
+  [4, "Front Dumbbell Raise", 'schultern'],
+  [7, "Hammer Strength Shoulder Press", 'schultern'],
+  [105, "Lateral Cable Raise", 'schultern'],
+  [3, "Lateral Dumbbell Raise", 'schultern'],
+  [9, "Lateral Machine Raise", 'schultern'],
+  [15, "Log Press", 'schultern'],
+  [13, "One-Arm Standing Dumbbell Press", 'schultern'],
+  [1, "Overhead Press", 'schultern'],
+  [5, "Push Press", 'schultern'],
+  [10, "Rear Delt Dumbbell Raise", 'schultern'],
+  [11, "Rear Delt Machine Fly", 'schultern'],
+  [8, "Seated Dumbbell Lateral Raise", 'schultern'],
+  [2, "Seated Dumbbell Press", 'schultern'],
+  [16, "Smith Machine Overhead Press", 'schultern'],
+  [22, "Cable Overhead Triceps Extension", 'trizeps'],
+  [17, "Close Grip Barbell Bench Press", 'trizeps'],
+  [24, "Dumbbell Overhead Triceps Extension", 'trizeps'],
+  [23, "EZ-Bar Skullcrusher", 'trizeps'],
+  [20, "Lying Triceps Extension", 'trizeps'],
+  [19, "Parallel Bar Triceps Dip", 'trizeps'],
+  [25, "Ring Dip", 'trizeps'],
+  [21, "Rope Push Down", 'trizeps'],
+  [128, "Single Arm Cable Overhead Extension", 'trizeps'],
+  [101, "Single Arm Cable Push Down", 'trizeps'],
+  [26, "Smith Machine Close Grip Bench Press", 'trizeps'],
+  [18, "V-Bar Push Down", 'trizeps'],
+  [121, "Z Bar Push Down", 'trizeps']
+];
+
+const exercises = LIBRARY.map(([id, name, cat]) => {
+  const flags = guessFlags(name);
+  return completeExercise({
+    id,
+    name,
+    cat,
+    repMin: flags.compound ? 6 : 10,
+    repMax: flags.compound ? 10 : 15,
+  });
+});
+
+const byName = new Map(exercises.map((e) => [e.name, e.id]));
+const ids = (names) => names.map((n) => {
+  if (!byName.has(n)) throw new Error('Übung fehlt: ' + n);
+  return byName.get(n);
+});
+
+const templates = [
+  { id: 'pull', name: 'Pull', jp: 'プル', ex: ids(['Lat Pulldown', 'Seated Cable Row', 'Cable Face Pull', 'Barbell Curl', 'Dumbbell Hammer Curl']) },
+  { id: 'push', name: 'Push', jp: 'プッシュ', ex: ids(['Flat Barbell Bench Press', 'Incline Dumbbell Bench Press', 'Seated Dumbbell Press', 'Lateral Dumbbell Raise', 'Rope Push Down']) },
+  { id: 'beine', name: 'Beine', jp: '脚の日', ex: ids(['Barbell Squat', 'Romanian Deadlift', 'Leg Press', 'Seated Leg Curl Machine', 'Leg Extension Machine', 'Standing Calf Raise Machine']) },
+];
+
+const seed = {
+  v: 1,
+  exercises,
+  sets: [],
+  body: [],
+  templates,
+  rotation: ['pull', 'push', 'beine', 'off'],
+  meta: { source: 'start' },
+};
+
+writeFileSync('www/data/seed.json', JSON.stringify(seed));
+console.log(`${exercises.length} Übungen, ${templates.length} Vorlagen → www/data/seed.json`);

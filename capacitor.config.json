@@ -1,0 +1,14 @@
+{
+  "appId": "com.lilkalimu.kintore",
+  "appName": "KINTORE",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#0B1020"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_kintore",
+      "iconColor": "#FF4FA3"
+    }
+  }
+}

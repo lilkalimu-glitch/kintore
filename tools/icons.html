@@ -1,0 +1,36 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../www/css/fonts.css">
+<style>
+  html, body { margin: 0; background: transparent; }
+  .stage { position: relative; display: grid; place-items: center; }
+  .kanji { font-family: 'KJP', 'Noto Sans CJK JP'; line-height: 1; }
+  /* Vordergrund (adaptives Icon): leuchtendes 筋 im Neon-Rahmen */
+  #fg { width: 432px; height: 432px; }
+  #fg .frame { position: absolute; width: 236px; height: 236px; border-radius: 56px; border: 7px solid #3CF0FF;
+    box-shadow: 0 0 10px #3CF0FF, 0 0 34px rgba(60,240,255,.55), inset 0 0 18px rgba(60,240,255,.45); }
+  #fg .kanji { font-weight: 300; font-size: 168px; color: #FFE7F4;
+    text-shadow: 0 0 3px #fff, 0 0 10px #FF4FA3, 0 0 24px #FF4FA3, 0 0 48px rgba(255,79,163,.9); margin-top: 6px; }
+  #fg .spark { position: absolute; left: 290px; top: 92px; font-size: 44px; color: #FFF3C9; text-shadow: 0 0 10px #FFE45C, 0 0 22px #FF4FA3; }
+  /* Monochrom (Android 13 Themen-Icons) */
+  #mono { width: 432px; height: 432px; }
+  #mono .frame { position: absolute; width: 236px; height: 236px; border-radius: 56px; border: 10px solid #fff; }
+  #mono .kanji { font-weight: 900; font-size: 150px; color: #fff; margin-top: 4px; }
+  /* Benachrichtigungs-Symbol */
+  #stat { width: 96px; height: 96px; }
+  #stat .kanji { font-weight: 900; font-size: 84px; color: #fff; }
+  /* Startbild */
+  #splash { width: 600px; height: 780px; }
+  #splash .sign { writing-mode: vertical-rl; text-orientation: upright; font-family: 'KJP'; font-weight: 300; font-size: 118px; letter-spacing: .12em;
+    color: #FFE7F4; padding: 52px 26px; border-radius: 46px; border: 5px solid #3CF0FF; background: rgba(9,13,28,.4);
+    box-shadow: 0 0 12px #3CF0FF, 0 0 48px rgba(60,240,255,.45), inset 0 0 26px rgba(60,240,255,.35);
+    text-shadow: 0 0 4px #fff, 0 0 14px #FF4FA3, 0 0 32px #FF4FA3, 0 0 70px rgba(255,79,163,.85); }
+  #splash .name { margin-top: 40px; font: italic 700 64px/1 'KAdventor'; letter-spacing: .04em; color: #fff;
+    text-shadow: 0 0 22px rgba(255,79,163,.7); }
+</style></head>
+<body>
+  <div id="fg" class="stage"><div class="frame"></div><div class="kanji">筋</div><div class="spark">✦</div></div>
+  <div id="mono" class="stage"><div class="frame"></div><div class="kanji">筋</div></div>
+  <div id="stat" class="stage"><div class="kanji">筋</div></div>
+  <div id="splash" class="stage"><div style="display:grid;justify-items:center"><div class="sign">筋トレ</div><div class="name">KINTORE</div></div></div>
+</body></html>
