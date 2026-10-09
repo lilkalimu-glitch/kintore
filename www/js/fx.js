@@ -68,7 +68,7 @@ export function prBurst({ name, w, r, bw, e1, gain }) {
       <div class="fx-big">NEW PR!</div>
       <div class="fx-ex">${esc(name)}</div>
       <div class="fx-val">${bw ? (w > 0 ? '+' + kg(w) + ' kg' : 'Körpergewicht') : kg(w) + ' kg'} × ${r}</div>
-      <div class="fx-sub">Geschätztes Maximum ${kg(Math.round(e1 * 10) / 10)} kg${gain > 0.05 ? ` <em>+${kg(Math.round(gain * 10) / 10)}</em>` : ''}</div>
+      <div class="fx-sub">1RM ${kg(Math.round(e1 * 10) / 10)} kg${gain > 0.05 ? ` <em>+${kg(Math.round(gain * 10) / 10)}</em>` : ''}</div>
       <div class="fx-xp">+50 XP</div>
     </div>`, { cls: 'fx-pr' }));
 }
@@ -94,7 +94,7 @@ export function missionComplete({ title, dur, sets, vol, prs, xp }) {
       <div class="fx-big fx-big-sm">Training geschafft</div>
       <div class="fx-ex">${esc(title)}</div>
       <dl class="mc-grid">
-        <div><dt>Dauer</dt><dd>${dur ? esc(fmtDuration(dur)) : '–'}</dd></div>
+        <div><dt>Dauer</dt><dd>${dur ? esc(fmtDuration(dur)) : '-'}</dd></div>
         <div><dt>Sätze</dt><dd>${sets}</dd></div>
         <div><dt>Volumen</dt><dd>${int(vol)} kg</dd></div>
         <div><dt>Rekorde</dt><dd>${prs}</dd></div>

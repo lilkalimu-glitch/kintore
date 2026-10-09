@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "KINTORE 筋トレ – Gym-Tracker im Neon-Anime-Stil für Android",
+  "description": "Gym-Tracker im Neon-Anime-Stil für Android",
   "scripts": {
     "serve": "python3 -m http.server 8080 --directory www",
     "starter": "node scripts/make-starter.mjs",

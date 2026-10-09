@@ -154,4 +154,4 @@ const seed = {
 };
 
 writeFileSync('www/data/seed.json', JSON.stringify(seed));
-console.log(`${exercises.length} Übungen, ${templates.length} Vorlagen → www/data/seed.json`);
+console.log(`${exercises.length} Übungen, ${templates.length} Vorlagen in www/data/seed.json`);

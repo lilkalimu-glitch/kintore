@@ -66,11 +66,11 @@ function exBlock(id) {
       <h2 class="exb-name"><button data-act="go" data-to="uebung" data-id="${id}">${esc(ex.name)}</button></h2>
       <button class="icon-btn" data-act="ex-menu" data-id="${id}" aria-label="Optionen für ${esc(ex.name)}">${icon('more')}</button>
     </div>
-    <p class="exb-last">${prev ? `${esc(cap(relDay(prev.d)))}: ${prev.sets.filter((s) => s.r > 0).map((s) => fmtSetText(ex, s)).join(', ')}` : 'Zum ersten Mal dabei.'}</p>
+    <p class="exb-last">${prev ? `${esc(cap(relDay(prev.d)))}: ${prev.sets.filter((s) => s.r > 0).map((s) => fmtSetText(ex, s)).join(', ')}` : 'Erstes Mal'}</p>
     <div class="chips">
       ${tip ? `<span class="chip chip-tip ${tip.up ? 'up' : ''}">${icon(tip.up ? 'arrowUp' : 'sparkle')}${tip.up ? 'Gewicht hoch:' : 'Ziel:'} <b>${fmtSetText(ex, { w: tip.w, r: tip.r })}</b></span>` : ''}
       ${ex.bar ? platesHtml(ex, draft.w) : ''}
-      <span class="chip">${ex.repMin}–${ex.repMax} Wdh.</span>
+      <span class="chip">${ex.repMin}-${ex.repMax} Wdh.</span>
     </div>
     ${setRows ? `<ol class="sets">${setRows}</ol>` : ''}
     <div class="entry">
@@ -131,7 +131,7 @@ function renderPicker() {
   <header class="head">
     <span class="jp-mark" aria-hidden="true">トレーニング</span>
     <div class="head-row"><h1>Training</h1></div>
-    <p class="sub">${q.kind === 'rest' ? 'Heute ist laut Split Ruhetag. Wenn du trotzdem willst, wähl unten.' : 'Wähl, was du heute trainierst.'}</p>
+    <p class="sub">${q.kind === 'rest' ? 'Laut Split ist heute Ruhetag.' : 'Was trainierst du heute?'}</p>
   </header>
   <div class="stack">
     ${todaySets ? `<section class="card pad"><div class="card-title"><h2>Heute schon ${todaySets} ${todaySets === 1 ? 'Satz' : 'Sätze'}</h2></div><button class="btn-neon btn-block" data-act="resume">Weiter trainieren</button></section>` : ''}
@@ -148,7 +148,7 @@ function renderPicker() {
         </section>`;
       })
       .join('')}
-    <button class="btn-dashed" data-act="start-free">${icon('plus')} Freies Training ohne Vorlage</button>
+    <button class="btn-dashed" data-act="start-free">${icon('plus')} Ohne Vorlage starten</button>
     <button class="link-btn" data-act="edit-templates">Vorlagen bearbeiten</button>
   </div>`;
 }

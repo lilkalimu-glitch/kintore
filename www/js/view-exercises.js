@@ -19,7 +19,7 @@ function listRows(list, d) {
       const sessions = d.sessionsByEx.get(ex.id) || [];
       const best = d.bestE1.get(ex.id);
       const spark = sessions.slice(-12).map((s) => s.best);
-      const meta = last ? `${relDay(last)}${best ? `, Maximum ${kg(Math.round((ex.bw ? best - d.bw : best) * 10) / 10)} kg` : ''}` : 'Noch nicht trainiert';
+      const meta = last ? `${relDay(last)}${best ? `, 1RM ${ex.bw ? '+' : ''}${kg(Math.round((ex.bw ? best - d.bw : best) * 10) / 10)} kg` : ''}` : 'Noch nicht trainiert';
       return `<li><button class="ex-row" style="--c:${catColor(ex.cat)}" data-act="go" data-to="uebung" data-id="${ex.id}">
         <span class="bar"></span>
         <span><span class="name">${esc(ex.name)}</span><span class="meta">${esc(meta)}</span></span>
@@ -62,7 +62,7 @@ views.uebungen = {
     <header class="head">
       <span class="jp-mark" aria-hidden="true">種目</span>
       <div class="head-row"><h1>Übungen</h1></div>
-      <p class="sub">${d.setsByEx.size ? `${d.setsByEx.size} trainiert, ${int(d.prEvents.length)} Rekorde gesamt` : `${app.state.exercises.filter((e) => !e.hidden).length} Übungen zur Auswahl`}</p>
+      <p class="sub">${d.setsByEx.size ? `${d.setsByEx.size} trainiert, ${int(d.prEvents.length)} Rekorde` : `${app.state.exercises.filter((e) => !e.hidden).length} Übungen`}</p>
     </header>
     <label class="search">${icon('search')}<input type="search" placeholder="Übung suchen" value="${esc(ui.exSearch)}" data-ex-search aria-label="Übung suchen"></label>
     <div class="cat-row" role="tablist" aria-label="Muskelgruppe">
@@ -125,7 +125,7 @@ views.uebung = {
     const c = catColor(ex.cat);
     const maxW = sessions.length ? Math.max(...sessions.map((s) => s.top?.w || 0)) : 0;
     const bigValue = ex.bw ? (maxW > 0 ? '+' + kg(maxW) : 'BW') : kg(Math.round(best * 10) / 10);
-    const bigLabel = ex.bw ? `Bestes Zusatzgewicht. Geschätztes Maximum mit Körpergewicht: ${kg(Math.round(best))} kg` : 'Geschätztes Maximum für 1 Wiederholung';
+    const bigLabel = ex.bw ? `Bestes Zusatzgewicht, 1RM mit Körpergewicht ca. ${kg(Math.round(best))} kg` : 'Geschätztes 1RM';
     let bestRec = null;
     for (const r of records) {
       const v = e1rmOf(d.loadOf(ex, r.w), r.r);
@@ -151,9 +151,9 @@ views.uebung = {
       <section class="card pad">
         <div class="big-stat">
           <div><b>${bigValue}<small>kg</small></b><span>${esc(bigLabel)}</span></div>
-          ${tr != null && Math.abs(tr) >= 0.1 ? `<span class="trend ${tr < 0 ? 'down' : ''}">${tr > 0 ? '+' : '−'}${kg(Math.round(Math.abs(tr) * 10) / 10)} kg</span>` : ''}
+          ${tr != null && Math.abs(tr) >= 0.1 ? `<span class="trend ${tr < 0 ? 'down' : ''}">${tr > 0 ? '+' : '-'}${kg(Math.round(Math.abs(tr) * 10) / 10)} kg</span>` : ''}
         </div>
-        ${seg('metric', [['e1rm', 'Maximum'], ['top', 'Top-Satz'], ['vol', 'Volumen']], app.ui.metric)}
+        ${seg('metric', [['e1rm', '1RM'], ['top', 'Top-Satz'], ['vol', 'Volumen']], app.ui.metric)}
         ${seg('range', [['3m', '3 M'], ['6m', '6 M'], ['1j', '1 J'], ['alle', 'Alle']], app.ui.range)}
         ${chartFor(ex, d)}
       </section>
@@ -162,19 +162,19 @@ views.uebung = {
         <div class="rec-grid">${records.map((r) => `<div class="rec ${bestRec && r.r === bestRec.r ? 'best' : ''}"><span>${r.r} Wdh.</span><b>${fmtLoad(ex, r.w)}${ex.bw && !(r.w > 0) ? '' : ' kg'}</b></div>`).join('')}</div>
       </section>
       <section class="card pad">
-        <div class="card-title"><h2>Schätzung</h2><span class="hint">aus deinem Maximum</span></div>
+        <div class="card-title"><h2>Schätzung</h2><span class="hint">aus deinem 1RM</span></div>
         <table class="rm-table"><tbody>${[1, 3, 5, 6, 8, 10, 12].map((r) => {
           const w = weightFor(best, r) - (ex.bw ? d.bw : 0);
-          return `<tr><td>${r} ${r === 1 ? 'Wiederholung' : 'Wiederholungen'}</td><td>${ex.bw ? (w > 0 ? '+' + kg(Math.round(w * 2) / 2) + ' kg' : 'BW') : kg(Math.round(w * 2) / 2) + ' kg'}</td></tr>`;
+          return `<tr><td>${r} Wdh.</td><td>${ex.bw ? (w > 0 ? '+' + kg(Math.round(w * 2) / 2) + ' kg' : 'BW') : kg(Math.round(w * 2) / 2) + ' kg'}</td></tr>`;
         }).join('')}</tbody></table>
-      </section>` : `<section class="card pad"><p class="soft" style="margin:0">Noch keine Sätze. Sobald du die Übung trainierst, siehst du hier Diagramme und Rekorde.</p></section>`}
+      </section>` : `<section class="card pad"><p class="soft" style="margin:0">Noch keine Sätze.</p></section>`}
       <section class="card">
         <ul class="set-list">
-          <li><span class="grow">Wiederholungsbereich<small>Für den Steigerungs-Tipp</small></span><div class="range-pick">${miniStep('range-lo', ex.repMin, 'Untergrenze')}<span class="muted">bis</span>${miniStep('range-hi', ex.repMax, 'Obergrenze')}</div></li>
-          <li><span class="grow">Steigerung<small>Gewichtssprung beim nächsten Schritt</small></span>${miniStep('inc', kg(ex.inc) + ' kg', 'Steigerung')}</li>
-          <li><span class="grow">Satzpause<small>Für den Pausen-Timer</small></span>${miniStep('rest', Math.floor(ex.rest / 60) + ':' + String(ex.rest % 60).padStart(2, '0'), 'Pause')}</li>
-          <li><span class="grow">Mit Langhantel<small>Scheiben pro Seite anzeigen</small></span><label class="switch"><input type="checkbox" data-ex-flag="bar" ${ex.bar ? 'checked' : ''}><span></span></label></li>
-          <li><span class="grow">Körpergewicht-Übung<small>Gewicht zählt als Zusatzgewicht</small></span><label class="switch"><input type="checkbox" data-ex-flag="bw" ${ex.bw ? 'checked' : ''}><span></span></label></li>
+          <li><span class="grow">Wdh.-Bereich</span><div class="range-pick">${miniStep('range-lo', ex.repMin, 'Untergrenze')}<span class="muted">bis</span>${miniStep('range-hi', ex.repMax, 'Obergrenze')}</div></li>
+          <li><span class="grow">Gewichtssprung</span>${miniStep('inc', kg(ex.inc) + ' kg', 'Steigerung')}</li>
+          <li><span class="grow">Pause</span>${miniStep('rest', Math.floor(ex.rest / 60) + ':' + String(ex.rest % 60).padStart(2, '0'), 'Pause')}</li>
+          <li><span class="grow">Langhantel<small>Scheiben pro Seite anzeigen</small></span><label class="switch"><input type="checkbox" data-ex-flag="bar" ${ex.bar ? 'checked' : ''}><span></span></label></li>
+          <li><span class="grow">Körpergewicht-Übung<small>Gewicht = Zusatzgewicht</small></span><label class="switch"><input type="checkbox" data-ex-flag="bw" ${ex.bw ? 'checked' : ''}><span></span></label></li>
           <li><button class="row-btn" data-act="ex-cat-pick">${icon('layers')}<span class="grow">Muskelgruppe<small>${esc(CAT[ex.cat]?.name || '')}</small></span>${icon('right')}</button></li>
           <li><button class="row-btn" data-act="ex-note">${icon('note')}<span class="grow">Notiz zur Übung<small>${esc(ex.notes ? ex.notes.slice(0, 60) : 'z. B. Sitzhöhe 4, Griff eng')}</small></span>${icon('right')}</button></li>
         </ul>
@@ -183,7 +183,7 @@ views.uebung = {
       ${!app.state.active ? `<button class="btn-ghost btn-block" data-act="ex-train-now">${icon('play', 'ic-fill')} Jetzt trainieren</button>` : ''}
       ${hist.length ? `<section class="card pad">
         <div class="card-title"><h2>Verlauf</h2><span class="hint">${hist.length} Einheiten</span></div>
-        ${shown.map((s) => `<div class="hist-day"><h3><span>${esc(fmtDay(s.d))}</span><span class="muted">Max ${kg(Math.round((ex.bw ? s.best - d.bw : s.best) * 10) / 10)} kg</span></h3>
+        ${shown.map((s) => `<div class="hist-day"><h3><span>${esc(fmtDay(s.d))}</span><span class="muted">1RM ${ex.bw ? '+' : ''}${kg(Math.round((ex.bw ? s.best - d.bw : s.best) * 10) / 10)} kg</span></h3>
           <div class="hist-sets">${s.sets.map((x) => `<button class="hs ${d.prIds.has(x.id) ? 'is-pr' : ''}" data-act="edit-set" data-id="${x.id}">${fmtLoad(ex, x.w)}<small> × </small>${x.r}${x.note ? ` <small>${icon('note')}</small>` : ''}</button>`).join('')}</div></div>`).join('')}
         ${hist.length > shown.length ? `<button class="link-btn" data-act="hist-more">Ältere anzeigen</button>` : ''}
       </section>` : ''}
@@ -274,8 +274,8 @@ actions['ex-more'] = () => {
     else if (m === 'delete') {
       const n = D().setsByEx.get(ex.id)?.length || 0;
       confirmSheet({
-        title: `„${ex.name}“ löschen?`,
-        text: n ? `Dabei werden auch ${n} eingetragene Sätze gelöscht. Das lässt sich nicht rückgängig machen.` : 'Die Übung wird entfernt.',
+        title: `${ex.name} löschen?`,
+        text: n ? `${n} Sätze werden mitgelöscht.` : '',
         confirm: 'Endgültig löschen',
         danger: true,
         onConfirm: () => { deleteExercise(ex.id); navigate('uebungen', null, { replace: true }); toast('Übung gelöscht'); },

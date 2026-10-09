@@ -47,9 +47,9 @@ views.koerper = {
           <div><b>${kg(last.kg)}<small>kg</small></b><p>Zuletzt gewogen ${esc(relDay(last.d))}</p></div>
         </div>
         <div class="kv">
-          <div><span>Schnitt der letzten 7 Tage</span><b>${a7 != null ? kg(Math.round(a7 * 10) / 10) + ' kg' : '–'}</b></div>
-          <div><span>Zur Woche davor</span><b>${diff != null ? (diff > 0 ? '+' : diff < 0 ? '−' : '±') + kg(Math.round(Math.abs(diff) * 10) / 10) + ' kg' : '–'}</b></div>
-        </div>` : '<p class="soft" style="margin:0">Trag dein erstes Gewicht unten ein.</p>'}
+          <div><span>Ø 7 Tage</span><b>${a7 != null ? kg(Math.round(a7 * 10) / 10) + ' kg' : '-'}</b></div>
+          <div><span>vs. Vorwoche</span><b>${diff != null ? (diff > 0 ? '+' : diff < 0 ? '-' : '±') + kg(Math.round(Math.abs(diff) * 10) / 10) + ' kg' : '-'}</b></div>
+        </div>` : '<p class="soft" style="margin:0">Noch keine Einträge.</p>'}
         ${list.length ? `<div class="seg" role="tablist" style="margin-top:16px">${[['1m', '1 M'], ['3m', '3 M'], ['1j', '1 J'], ['alle', 'Alle']].map(([v, l]) => `<button class="${v === app.ui.bodyRange ? 'is-on' : ''}" data-act="body-range" data-v="${v}" role="tab" aria-selected="${v === app.ui.bodyRange}">${l}</button>`).join('')}</div>
         ${lineChart({ points: shown.map((b) => ({ x: b.d, y: b.kg, label: fmtShort(b.d) })), avg, goal, width: chartWidth(), height: 200, color: '#9B6BFF', yFmt: (v) => kg(Math.round(v * 10) / 10), unit: 'kg', label: 'Körpergewicht', area: true })}
         <div class="legend" style="margin:8px 0 0"><span><i style="border-top-color:#FF4FA3"></i>Schnitt 7 Tage</span></div>` : ''}
@@ -68,7 +68,7 @@ views.koerper = {
           const i = list.indexOf(b);
           const prev = i > 0 ? list[i - 1] : null;
           const dlt = prev ? b.kg - prev.kg : 0;
-          return `<li><button data-act="body-edit" data-d="${b.d}"><span>${esc(fmtDay(b.d))}</span><b>${kg(b.kg)} kg</b><span class="diff ${dlt > 0 ? 'up' : dlt < 0 ? 'down' : ''}">${prev ? (dlt > 0 ? '+' : dlt < 0 ? '−' : '±') + kg(Math.abs(Math.round(dlt * 100) / 100)) : ''}</span></button></li>`;
+          return `<li><button data-act="body-edit" data-d="${b.d}"><span>${esc(fmtDay(b.d))}</span><b>${kg(b.kg)} kg</b><span class="diff ${dlt > 0 ? 'up' : dlt < 0 ? 'down' : ''}">${prev ? (dlt > 0 ? '+' : dlt < 0 ? '-' : '±') + kg(Math.abs(Math.round(dlt * 100) / 100)) : ''}</span></button></li>`;
         }).join('')}</ul>
       </section>` : ''}
     </div>`;

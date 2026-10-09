@@ -114,7 +114,7 @@ jobs:
               --repo "${{ github.repository }}" \
               --target "${{ github.sha }}" \
               --title "KINTORE ${APP_MAJOR}.${{ github.run_number }}" \
-              --notes "Android-APK. Neue Versionen lassen sich über eine ältere installieren, die Daten bleiben dabei erhalten." \
+              --notes "APK fürs Handy. Einfach über die alte Version installieren, die Daten bleiben." \
               --latest
           fi
 

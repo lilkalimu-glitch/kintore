@@ -43,7 +43,7 @@ export function replaceState(next) {
   render();
 }
 
-// ---------- Navigation über die Adresszeile (#/…) ----------
+// ---------- Navigation über die Adresszeile (#/...) ----------
 export function parseHash() {
   const h = location.hash.replace(/^#\/?/, '');
   const [name, param] = h.split('/');

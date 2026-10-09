@@ -186,7 +186,7 @@ public class MainActivity extends BridgeActivity {
 
 def main():
     if not os.path.isdir(RES):
-        sys.exit("android/ fehlt – vorher 'npx cap add android' ausführen")
+        sys.exit("android/ fehlt, vorher 'npx cap add android' ausführen")
     copy_resources()
     adaptive_icon()
     splash()

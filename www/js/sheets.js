@@ -20,7 +20,6 @@ export function pickExercise({ title = 'Übung hinzufügen', onPick, markIn = []
     const nq = norm(q.trim());
     const rows = all
       .filter((e) => !nq || norm(e.name).includes(nq) || norm(CAT[e.cat]?.name || '').includes(nq))
-      .slice(0, 80)
       .map((e) => {
         const last = d.lastUsed.get(e.id);
         return `<li><button data-pick="${e.id}" style="--c:${CAT[e.cat]?.color}"><i></i><span>${esc(e.name)}<br><small>${esc(CAT[e.cat]?.name || '')}${last ? ', zuletzt ' + esc(relDay(last)) : ''}</small></span>${markIn.includes(e.id) ? '<span class="in">dabei</span>' : ''}</button></li>`;
@@ -54,8 +53,8 @@ export function newExerciseSheet({ name = '', onCreated }) {
     <label class="field"><span>Name</span><input class="input" data-name value="${esc(name)}" placeholder="z. B. Incline Cable Fly" autocomplete="off"></label>
     <div class="field"><span>Muskelgruppe</span><div class="cat-pick">${CATEGORIES.map((c) => `<button class="cat-chip ${c.id === cat ? 'is-on' : ''}" style="--c:${c.color}" data-cat="${c.id}"><i></i>${esc(c.name)}</button>`).join('')}</div></div>
     <ul class="set-list">
-      <li><span class="grow">Mit Langhantel<small>Zeigt die Scheiben pro Seite an</small></span><label class="switch"><input type="checkbox" data-bar><span></span></label></li>
-      <li><span class="grow">Körpergewicht-Übung<small>Gewicht zählt als Zusatzgewicht, z. B. Dips</small></span><label class="switch"><input type="checkbox" data-bw><span></span></label></li>
+      <li><span class="grow">Langhantel<small>Scheiben pro Seite anzeigen</small></span><label class="switch"><input type="checkbox" data-bar><span></span></label></li>
+      <li><span class="grow">Körpergewicht-Übung<small>z. B. Dips, Gewicht = Zusatzgewicht</small></span><label class="switch"><input type="checkbox" data-bw><span></span></label></li>
     </ul>
     <div class="sheet-actions"><button class="btn-neon btn-block" data-save>Übung anlegen</button></div>`, { focus: '[data-name]' });
   el.addEventListener('click', async (e) => {
@@ -156,7 +155,7 @@ export function templatesSheet() {
   const s = app.state;
   const el = openSheet(`
     <h2>Vorlagen</h2>
-    <p class="lead">Deine Trainingstage mit ihren Übungen. Die Reihenfolge im Split: ${esc(s.rotation.map((id) => (id === 'off' ? 'Ruhetag' : s.templates.find((t) => t.id === id)?.name || id)).join(', '))}.</p>
+    <p class="lead">Reihenfolge: ${esc(s.rotation.map((id) => (id === 'off' ? 'Ruhetag' : s.templates.find((t) => t.id === id)?.name || id)).join(', '))}.</p>
     <ul class="menu-list">
       ${s.templates.map((t) => `<li><button data-t="${esc(t.id)}">${icon('edit')} <span class="grow">${esc(t.name)} <small class="muted">${t.ex.length} Übungen</small></span></button></li>`).join('')}
       <li><button data-t="__new">${icon('plus')} Neue Vorlage</button></li>
@@ -205,10 +204,10 @@ function templateEditor(tpl, isNew) {
         if (!tpl.name) { toast('Gib der Vorlage einen Namen.'); nameIn.focus(); return; }
         await closeSheet();
         saveTemplate(tpl);
-        toast(`Vorlage „${tpl.name}“ gespeichert`);
+        toast('Vorlage gespeichert');
       } else if (t.hasAttribute('data-del')) {
         await closeSheet();
-        confirmSheet({ title: `„${tpl.name}“ löschen?`, text: 'Deine eingetragenen Sätze bleiben erhalten.', confirm: 'Vorlage löschen', danger: true, onConfirm: () => deleteTemplate(tpl.id) });
+        confirmSheet({ title: `${tpl.name} löschen?`, text: 'Die eingetragenen Sätze bleiben.', confirm: 'Vorlage löschen', danger: true, onConfirm: () => deleteTemplate(tpl.id) });
       }
     });
   };

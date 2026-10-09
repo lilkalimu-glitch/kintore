@@ -71,7 +71,7 @@ async function idbDel(key) {
   });
 }
 
-// Lädt den gespeicherten Stand. Reihenfolge: IndexedDB → Datei-Kopie → Startdaten.
+// Lädt den gespeicherten Stand. Reihenfolge: IndexedDB, dann Datei-Kopie, dann Startdaten.
 export async function loadState() {
   const fromDb = await idbGet(KEY);
   if (fromDb && Array.isArray(fromDb.sets)) return { state: fromDb, origin: 'db' };

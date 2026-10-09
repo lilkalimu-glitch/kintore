@@ -1,5 +1,5 @@
 // Brücke zu den Android-Funktionen (Capacitor-Plugins).
-// Im Browser fehlen diese Plugins – dann greifen einfache Web-Ersatzlösungen.
+// Im Browser fehlen diese Plugins, dann greifen einfache Web-Ersatzlösungen.
 
 const g = typeof window !== 'undefined' ? window : globalThis;
 
@@ -60,7 +60,7 @@ export async function scheduleRest(atMs, body) {
   if (!(await notificationsAllowed(true))) return;
   if (!channelReady) {
     await safe(() => LN.createChannel({
-      id: 'rest', name: 'Pausen-Timer', description: 'Meldet sich, wenn die Satzpause vorbei ist',
+      id: 'rest', name: 'Pausen-Timer', description: 'Ende der Satzpause',
       importance: 5, visibility: 1, vibration: true,
     }));
     channelReady = true;
@@ -99,7 +99,7 @@ export async function mirrorRead() {
   return typeof res?.data === 'string' ? res.data : null;
 }
 
-// Speichert eine Textdatei und öffnet das Teilen-Menü (Drive, WhatsApp, Dateien …).
+// Speichert eine Textdatei und öffnet das Teilen-Menü (Drive, WhatsApp, Dateien usw.).
 export async function saveTextFile(filename, text, mime = 'application/json') {
   const FS = plugin('Filesystem');
   const SH = plugin('Share');

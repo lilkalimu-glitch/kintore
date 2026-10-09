@@ -32,7 +32,7 @@ export function startTimer(seconds, label = '') {
   const s = getSettings();
   t = { end: Date.now() + seconds * 1000, total: seconds, label, fired: false };
   save();
-  if (s.restNotify !== false) scheduleRest(t.end, label ? `Nächster Satz: ${label}` : 'Weiter geht’s!');
+  if (s.restNotify !== false) scheduleRest(t.end, label ? `Nächster Satz: ${label}` : 'Nächster Satz');
   loop();
 }
 
@@ -55,7 +55,7 @@ function adjust(delta) {
   if (t.end <= Date.now()) { stopTimer(); return; }
   save();
   const s = getSettings();
-  if (s.restNotify !== false) scheduleRest(t.end, t.label ? `Nächster Satz: ${t.label}` : 'Weiter geht’s!');
+  if (s.restNotify !== false) scheduleRest(t.end, t.label ? `Nächster Satz: ${t.label}` : 'Nächster Satz');
   loop();
 }
 
@@ -90,7 +90,7 @@ function paint() {
   if (!el.querySelector('.t-main')) {
     el.innerHTML = `${ring(0, 44, 4)}
       <div class="t-main"><span class="t-time"></span><span class="t-label"></span></div>
-      <button class="t-btn" data-t="minus" aria-label="15 Sekunden weniger">−15</button>
+      <button class="t-btn" data-t="minus" aria-label="15 Sekunden weniger">-15</button>
       <button class="t-btn" data-t="plus" aria-label="15 Sekunden mehr">+15</button>
       <button class="t-btn" data-t="stop" aria-label="Timer beenden">${icon('x')}</button>`;
   }

@@ -16,7 +16,7 @@ if (existsSync(core)) {
   writeFileSync('www/vendor/capacitor.js', readFileSync(core, 'utf8'));
   console.log('Capacitor-Kern kopiert');
 } else {
-  console.warn('WARNUNG: Capacitor-Kern nicht gefunden – native Funktionen fehlen.');
+  console.warn('WARNUNG: Capacitor-Kern nicht gefunden, native Funktionen fehlen.');
 }
 
 let bundle = '/* Automatisch erzeugt von scripts/prepare-web.mjs */\n';

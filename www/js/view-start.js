@@ -33,7 +33,7 @@ function targetsList(s, d, tpl) {
     const tip = progressionTip(ex, d.sessionsByEx.get(id), today());
     const val = tip
       ? `<span class="t-val ${tip.up ? 'up' : ''}">${tip.up ? icon('arrowUp') : ''}${fmtSetText(ex, { w: tip.w, r: tip.r })}</span>`
-      : `<span class="t-val">${ex.repMin}–${ex.repMax} Wdh.</span>`;
+      : `<span class="t-val">${ex.repMin}-${ex.repMax} Wdh.</span>`;
     return `<li><span class="t-name">${esc(ex.name)}</span>${val}</li>`;
   });
   const more = tpl.ex.length - ids.length;
@@ -75,7 +75,7 @@ function questCard(s, d) {
       <div class="quest-label">Heute dran</div>
       <div class="quest-title"><b>Ruhetag</b><span>休息日</span></div>
       ${rotationTrack(s, 'off')}
-      <p class="rest-msg">Nach dem ${esc(q.lastTpl?.name || 'letzten')}-Tag ist Pause. ${q.tpl ? `Danach geht es mit ${esc(q.tpl.name)} weiter.` : ''}</p>
+      <p class="rest-msg">Heute ist Pause.${q.tpl ? ` Danach kommt ${esc(q.tpl.name)}.` : ''}</p>
       ${q.tpl ? `<button class="btn-ghost btn-block" data-act="start-session" data-tpl="${esc(q.tpl.id)}">Trotzdem ${esc(q.tpl.name)} trainieren</button>` : ''}
     </section>`;
   }
@@ -87,7 +87,7 @@ function questCard(s, d) {
     </section>`;
   }
   return `<section class="card quest">
-    <div class="quest-label">Heute dran${q.last ? `, letztes Training ${esc(relDay(q.last))}` : ''}</div>
+    <div class="quest-label">Heute dran</div>
     <div class="quest-title"><b>${esc(q.tpl.name)}</b><span>${esc(q.tpl.jp || '')}</span></div>
     ${rotationTrack(s, q.tpl.id)}
     ${targetsList(s, d, q.tpl)}
@@ -100,11 +100,11 @@ function weekCard(d) {
   const t = today();
   const names = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
   return `<section class="card pad">
-    <div class="card-title"><h2>Diese Woche</h2><span class="hint">Sätze je Muskel, 7 Tage</span></div>
+    <div class="card-title"><h2>Diese Woche</h2><span class="hint">Sätze pro Muskel</span></div>
     ${radarChart(weekCats(d))}
     <div class="legend"><span><i></i>10 Sätze pro Woche</span></div>
     <div class="week">${ws.days.map((x, i) => `<div class="wk-day ${x.trained ? 'on' : ''} ${x.d === t ? 'today' : ''} ${x.future ? 'future' : ''}"><i></i>${names[i]}</div>`).join('')}</div>
-    <div class="streak">${icon('flame')}<span>${ws.streak ? `<b>${ws.streak} ${ws.streak === 1 ? 'Woche' : 'Wochen'}</b> am Stück mit mindestens 3 Trainings` : 'Schaff 3 Trainings diese Woche für eine neue Serie'}</span></div>
+    <div class="streak">${icon('flame')}<span>${ws.streak ? `<b>${ws.streak} ${ws.streak === 1 ? 'Woche' : 'Wochen'}</b> in Folge mit 3+ Trainings` : '3 Trainings in einer Woche starten eine Serie'}</span></div>
   </section>`;
 }
 
@@ -127,16 +127,16 @@ function noticeCard(s) {
   if (!m.welcomeDone && !s.sets.length) {
     return `<section class="card pad notice">
       <div class="card-title"><h2>Willkommen</h2><span class="jp" aria-hidden="true">ようこそ</span></div>
-      <p class="soft">Starte dein erstes Training mit einer Vorlage unten. Die Vorlagen und Wiederholungsbereiche kannst du jederzeit anpassen. Hast du vorher FitNotes benutzt? Dann hol deine Daten über <b>Einstellungen → FitNotes-Backup importieren</b>.</p>
-      <button class="btn-ghost small" data-act="notice-ok" data-k="welcomeDone">Alles klar</button>
+      <p class="soft">Wähl unten eine Vorlage und leg los. Ein FitNotes-Backup kannst du in den Einstellungen importieren.</p>
+      <button class="btn-ghost small" data-act="notice-ok" data-k="welcomeDone">Ok</button>
     </section>`;
   }
   if (!m.welcomeDone && m.summary) {
     const last = m.summary.last || (D().dates.slice(-1)[0] ?? null);
     return `<section class="card pad notice">
       <div class="card-title"><h2>Willkommen</h2><span class="jp" aria-hidden="true">ようこそ</span></div>
-      <p class="soft">Deine FitNotes-Daten${last ? ` bis ${esc(fmtDate(last))}` : ''} sind schon drin. Falls du seitdem noch in FitNotes trainiert hast, hol die Tage über <b>Einstellungen → FitNotes-Backup importieren</b> nach.</p>
-      <button class="btn-ghost small" data-act="notice-ok" data-k="welcomeDone">Alles klar</button>
+      <p class="soft">Deine FitNotes-Daten${last ? ` bis ${esc(fmtDate(last))}` : ''} sind drin. Wenn du danach noch in FitNotes trainiert hast, importier das neue Backup in den Einstellungen.</p>
+      <button class="btn-ghost small" data-act="notice-ok" data-k="welcomeDone">Ok</button>
     </section>`;
   }
   const lastBackup = m.lastBackup;
@@ -144,8 +144,8 @@ function noticeCard(s) {
   const due = lastSet && (!lastBackup || daysBetween(lastBackup, today()) >= 30) && (!m.backupSnooze || daysBetween(m.backupSnooze, today()) >= 7);
   if (due) {
     return `<section class="card pad notice">
-      <div class="card-title"><h2>Backup fällig</h2></div>
-      <p class="soft">${lastBackup ? `Dein letztes Backup ist vom ${esc(fmtDate(lastBackup))}.` : 'Du hast noch kein Backup gespeichert.'} Speichere eins, damit beim Handywechsel nichts verloren geht.</p>
+      <div class="card-title"><h2>Backup</h2></div>
+      <p class="soft">${lastBackup ? `Letztes Backup: ${esc(fmtDate(lastBackup))}` : 'Noch kein Backup gespeichert.'}</p>
       <div class="row-actions"><button class="btn-ghost small" data-act="go" data-to="einstellungen">Zum Backup</button><button class="btn-ghost small" data-act="notice-ok" data-k="backupSnooze">Später</button></div>
     </section>`;
   }

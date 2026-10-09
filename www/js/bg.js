@@ -5,8 +5,8 @@ export function applyBackground(dataUrl) {
   const bg = document.getElementById('bg');
   if (!bg) return;
   const s = app.state?.settings || {};
-  bg.style.setProperty('--bg-dim', s.bgDim ?? 0.55);
-  bg.style.setProperty('--bg-blur', (s.bgBlur ?? 6) + 'px');
+  bg.style.setProperty('--bg-dim', s.bgDim ?? 0.4);
+  bg.style.setProperty('--bg-blur', (s.bgBlur ?? 2) + 'px');
   if (dataUrl !== undefined) {
     if (dataUrl) {
       bg.classList.add('has-img');

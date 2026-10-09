@@ -35,40 +35,40 @@ views.einstellungen = {
     <h2 class="group-title">Pausen-Timer</h2>
     <section class="card"><ul class="set-list">
       <li><span class="grow">Nach jedem Satz starten</span>${sw('restAuto', st.restAuto)}</li>
-      <li><span class="grow">Pause je Übung<small>Sonst überall die Standard-Pause</small></span>${sw('useExerciseRest', st.useExerciseRest)}</li>
+      <li><span class="grow">Eigene Pause je Übung</span>${sw('useExerciseRest', st.useExerciseRest)}</li>
       <li><span class="grow">Standard-Pause</span>${mini('set-rest', fmtClock(st.restDefault), 'Standard-Pause')}</li>
-      <li><span class="grow">Vibrieren, wenn die Pause vorbei ist</span>${sw('restVibrate', st.restVibrate)}</li>
-      <li><span class="grow">Meldung bei gesperrtem Handy<small>${isNative() ? 'Braucht die Erlaubnis für Mitteilungen' : 'Nur in der Android-App'}</small></span>${sw('restNotify', st.restNotify)}</li>
+      <li><span class="grow">Vibration am Ende</span>${sw('restVibrate', st.restVibrate)}</li>
+      <li><span class="grow">Mitteilung bei gesperrtem Handy${isNative() ? '' : '<small>Nur in der Android-App</small>'}</span>${sw('restNotify', st.restNotify)}</li>
     </ul></section>
 
     <h2 class="group-title">Training</h2>
     <section class="card"><ul class="set-list">
       <li><button class="row-btn" data-act="edit-templates">${icon('layers')}<span class="grow">Vorlagen<small>${esc(s.templates.map((t) => t.name).join(', ') || 'Keine')}</small></span>${icon('right')}</button></li>
-      <li><span class="grow">Gewicht der Langhantel</span>${mini('set-bar', kg(st.barWeight) + ' kg', 'Hantelgewicht')}</li>
+      <li><span class="grow">Langhantel</span>${mini('set-bar', kg(st.barWeight) + ' kg', 'Hantelgewicht')}</li>
       <li><button class="row-btn" data-act="set-bw">${icon('scale')}<span class="grow">Körpergewicht für Klimmzüge und Dips<small>${bwAuto ? `Automatisch: letzter Eintrag (${kg(d.bw)} kg)` : `Fest: ${kg(st.bwManual)} kg`}</small></span>${icon('right')}</button></li>
-      <li><button class="row-btn" data-act="set-goal">${icon('sparkle')}<span class="grow">Zielgewicht<small>${Number(st.goalWeight) > 0 ? `${kg(st.goalWeight)} kg, als Linie im Körper-Diagramm` : 'Nicht gesetzt'}</small></span>${icon('right')}</button></li>
+      <li><button class="row-btn" data-act="set-goal">${icon('sparkle')}<span class="grow">Zielgewicht<small>${Number(st.goalWeight) > 0 ? `${kg(st.goalWeight)} kg` : 'Nicht gesetzt'}</small></span>${icon('right')}</button></li>
     </ul></section>
 
     <h2 class="group-title">Aussehen</h2>
     <section class="card"><ul class="set-list">
-      <li><span class="bg-preview" data-bg-preview></span><span class="grow">Eigenes Hintergrundbild<small>Ein Bild aus deiner Galerie</small></span>
+      <li><span class="bg-preview" data-bg-preview></span><span class="grow">Hintergrundbild</span>
         <label class="btn-ghost small">Wählen<input type="file" accept="image/*" data-bg-file class="visually-hidden"></label></li>
-      <li data-bg-only><span class="grow">Abdunkeln</span><input type="range" min="0.2" max="0.9" step="0.05" value="${st.bgDim}" data-range="bgDim" aria-label="Abdunkeln" style="max-width:150px"></li>
+      <li data-bg-only><span class="grow">Abdunkeln</span><input type="range" min="0" max="0.9" step="0.05" value="${st.bgDim}" data-range="bgDim" aria-label="Abdunkeln" style="max-width:150px"></li>
       <li data-bg-only><span class="grow">Weichzeichnen</span><input type="range" min="0" max="20" step="1" value="${st.bgBlur}" data-range="bgBlur" aria-label="Weichzeichnen" style="max-width:150px"></li>
       <li data-bg-only><button class="row-btn" data-act="bg-remove">${icon('x')}<span class="grow">Bild entfernen</span></button></li>
     </ul></section>
 
     <h2 class="group-title">Daten</h2>
     <section class="card"><ul class="set-list">
-      <li><button class="row-btn" data-act="backup-save">${icon('download')}<span class="grow">Backup speichern<small>${s.meta.lastBackup ? 'Zuletzt ' + esc(fmtDate(s.meta.lastBackup)) : 'Noch nie. Am besten regelmäßig, z. B. in Google Drive.'}</small></span></button></li>
-      <li><label class="row-btn">${icon('upload')}<span class="grow">Backup laden<small>Ersetzt die Daten auf diesem Handy</small></span><input type="file" accept=".json,application/json,text/plain" data-backup-file class="visually-hidden"></label></li>
-      <li><label class="row-btn">${icon('file')}<span class="grow">FitNotes-Backup importieren<small>Fehlende Trainingstage ergänzen</small></span><input type="file" data-fitnotes-file class="visually-hidden"></label></li>
-      <li><button class="row-btn" data-act="reset">${icon('trash')}<span class="grow">Alle Daten löschen<small>Setzt KINTORE auf den Anfang zurück</small></span></button></li>
+      <li><button class="row-btn" data-act="backup-save">${icon('download')}<span class="grow">Backup speichern<small>${s.meta.lastBackup ? 'Zuletzt ' + esc(fmtDate(s.meta.lastBackup)) : 'Noch nie'}</small></span></button></li>
+      <li><label class="row-btn">${icon('upload')}<span class="grow">Backup laden</span><input type="file" accept=".json,application/json,text/plain" data-backup-file class="visually-hidden"></label></li>
+      <li><label class="row-btn">${icon('file')}<span class="grow">FitNotes-Backup importieren</span><input type="file" data-fitnotes-file class="visually-hidden"></label></li>
+      <li><button class="row-btn" data-act="reset">${icon('trash')}<span class="grow">Alle Daten löschen</span></button></li>
     </ul></section>
 
     <div class="about">
       <b>KINTORE <span class="jp">筋トレ</span></b>
-      Version ${esc(VERSION)}, ${int(d.totals.sets)} Sätze, ${s.exercises.length} Übungen<br>Alles bleibt offline auf diesem Gerät.
+      Version ${esc(VERSION)}
     </div>`;
   },
   async after(main) {
@@ -131,7 +131,7 @@ async function pickBackground(f) {
     paintBgPreview(document.getElementById('view'));
     toast('Hintergrund gesetzt');
   } catch (e) {
-    toast(e.message || 'Das Bild ging nicht.');
+    toast(e.message || 'Bild konnte nicht geladen werden.');
   }
 }
 
@@ -150,7 +150,7 @@ async function loadBackup(f, input) {
     JSON.parse(text);
     confirmSheet({
       title: 'Backup laden?',
-      text: `„${f.name}“ ersetzt alle Daten auf diesem Handy. Speichere vorher ein Backup, falls du unsicher bist.`,
+      text: 'Das ersetzt alle Daten auf diesem Handy.',
       confirm: 'Backup laden',
       onConfirm: () => {
         try { importBackupText(text); toast('Backup geladen'); } catch (e) { toast(e.message); }
@@ -177,7 +177,7 @@ async function loadFitNotes(f, input) {
         <div><span>Trainingstage</span><b>${fit.summary.days}</b></div>
         <div><span>Sätze</span><b>${int(fit.summary.sets)}</b></div>
         <div><span>Davon neu für KINTORE</span><b>${newDays.size} Tage</b></div>
-        <div><span>Letztes Training</span><b>${fit.summary.last ? esc(fmtDate(fit.summary.last)) : '–'}</b></div>
+        <div><span>Letztes Training</span><b>${fit.summary.last ? esc(fmtDate(fit.summary.last)) : '-'}</b></div>
       </div>
       <div class="sheet-actions">
         <button class="btn-neon btn-block" data-mode="add" ${newDays.size ? '' : 'disabled style="opacity:.5"'}>${newDays.size ? `${newDays.size} fehlende Tage ergänzen` : 'Nichts Neues zum Ergänzen'}</button>
@@ -230,7 +230,7 @@ function numberSheet({ title, lead, value, placeholder, onSave, allowEmpty }) {
 
 actions['set-bw'] = () => numberSheet({
   title: 'Körpergewicht für Klimmzüge und Dips',
-  lead: 'Wird zum Zusatzgewicht addiert, um dein Maximum zu schätzen. Leer lassen heißt: immer der letzte Eintrag unter Körper.',
+  lead: 'Wird fürs 1RM zum Zusatzgewicht addiert. Ohne Wert nimmt die App den letzten Eintrag unter Körper.',
   value: app.state.settings.bwManual,
   placeholder: kg(D().bw),
   allowEmpty: 'Automatisch verwenden',
@@ -239,7 +239,7 @@ actions['set-bw'] = () => numberSheet({
 
 actions['set-goal'] = () => numberSheet({
   title: 'Zielgewicht',
-  lead: 'Erscheint als Linie im Körper-Diagramm.',
+  lead: 'Wird als Linie im Diagramm angezeigt.',
   value: app.state.settings.goalWeight,
   placeholder: 'z. B. 80',
   allowEmpty: 'Kein Ziel',
@@ -257,13 +257,13 @@ actions['backup-save'] = async () => {
   const res = await saveTextFile(`kintore-backup-${today()}.json`, exportJson());
   if (res.ok) {
     commit((s) => { s.meta.lastBackup = today(); });
-    toast(res.how === 'documents' ? 'Backup im Ordner „Dokumente“ gespeichert' : 'Backup erstellt');
+    toast(res.how === 'documents' ? 'Backup in Dokumente gespeichert' : 'Backup erstellt');
   } else toast('Backup konnte nicht gespeichert werden.');
 };
 
 actions.reset = () => confirmSheet({
   title: 'Alle Daten löschen?',
-  text: 'Alle Trainings, Körpergewichte und eigenen Übungen gehen verloren. Speichere vorher ein Backup.',
+  text: 'Alle Trainings, Gewichte und eigenen Übungen sind danach weg.',
   confirm: 'Alles löschen',
   danger: true,
   onConfirm: async () => {

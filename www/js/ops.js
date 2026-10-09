@@ -16,8 +16,8 @@ export const DEFAULT_SETTINGS = {
   useExerciseRest: true,
   bwManual: null,
   goalWeight: null,
-  bgDim: 0.55,
-  bgBlur: 6,
+  bgDim: 0.4,
+  bgBlur: 2,
   barWeight: 20,
   plates: [20, 15, 10, 5, 2.5, 1.25],
 };
@@ -32,6 +32,11 @@ export function migrate(raw) {
   s.rotation = Array.isArray(s.rotation) && s.rotation.length ? s.rotation : ['pull', 'push', 'beine', 'off'];
   s.sessions = s.sessions && typeof s.sessions === 'object' ? s.sessions : {};
   s.settings = { ...DEFAULT_SETTINGS, ...(s.settings || {}) };
+  // Alte Standardwerte für das Hintergrundbild waren zu dunkel: einmalig auf die neuen setzen.
+  if (s.settings.bgDim === 0.55 && s.settings.bgBlur === 6) {
+    s.settings.bgDim = DEFAULT_SETTINGS.bgDim;
+    s.settings.bgBlur = DEFAULT_SETTINGS.bgBlur;
+  }
   s.meta = s.meta || {};
   const setsByEx = new Map();
   for (const x of s.sets) {

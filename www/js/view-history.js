@@ -32,7 +32,7 @@ function dayPanel(s, d, date) {
   if (!day) {
     return `<section class="card pad">
       <div class="card-title"><h2>${esc(fmtLong(date))}</h2></div>
-      <p class="soft" style="margin:0 0 14px">An diesem Tag ist kein Training eingetragen.</p>
+      <p class="soft" style="margin:0 0 14px">Kein Training an diesem Tag.</p>
       ${date <= today() ? `<button class="btn-ghost btn-block" data-act="backfill" data-d="${date}">${icon('plus')} Training nachtragen</button>` : ''}
     </section>`;
   }
@@ -93,7 +93,7 @@ views.verlauf = {
     <header class="head">
       <span class="jp-mark" aria-hidden="true">記録</span>
       <div class="head-row"><h1>Verlauf</h1></div>
-      <p class="sub">${d.dates.length ? `${int(d.totals.days)} Trainingstage seit ${esc(fmtMonth(d.dates[0]))}` : 'Noch keine Trainingstage. Tipp einen Tag an, um ein Training nachzutragen.'}</p>
+      <p class="sub">${d.dates.length ? `${int(d.totals.days)} Trainingstage seit ${esc(fmtMonth(d.dates[0]))}` : 'Noch nichts eingetragen.'}</p>
     </header>
     <div class="stack">
       <section class="card pad">
