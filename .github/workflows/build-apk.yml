@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths-ignore:
       - '**.md'
+      - 'docs/**'
+      - '.claude/**'
   workflow_dispatch:
 
 permissions:
@@ -112,7 +114,7 @@ jobs:
               --repo "${{ github.repository }}" \
               --target "${{ github.sha }}" \
               --title "KINTORE ${APP_MAJOR}.${{ github.run_number }}" \
-              --notes "KINTORE-APK herunterladen und auf dem Android-Handy öffnen. Neue Versionen einfach über die alte installieren, deine Daten bleiben erhalten." \
+              --notes "Android-APK. Neue Versionen lassen sich über eine ältere installieren, die Daten bleiben dabei erhalten." \
               --latest
           fi
 

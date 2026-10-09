@@ -1,44 +1,53 @@
 # KINTORE 筋トレ
 
-Gym-Tracker im Neon-Anime-Stil für Android. Läuft komplett offline und ohne Konto. Alles, was du einträgst,
-bleibt auf deinem Handy.
+Gym-Tracker im Neon-Anime-Stil für Android. Offline, ohne Konto, ohne Werbung.
 
-## Installieren
+<p align="center">
+  <img src="docs/screenshots/start.jpg" width="200" alt="Startseite mit Level, Rang und Tages-Quest">
+  <img src="docs/screenshots/training.jpg" width="200" alt="Training mit Sätzen, Steigerungs-Tipp und Pausen-Timer">
+  <img src="docs/screenshots/pr.jpg" width="200" alt="NEW PR bei einer neuen Bestleistung">
+  <img src="docs/screenshots/uebung.jpg" width="200" alt="Übung im Detail mit Verlaufsdiagramm">
+</p>
 
-1. Auf dem Android-Handy rechts unter **Releases** die neueste Version öffnen und `KINTORE-2.x.apk` herunterladen.
-2. Die Datei öffnen. Android fragt einmal, ob der Browser Apps installieren darf: erlauben, dann installieren.
-   Die Warnung „Unbekannte App“ ist normal, weil KINTORE nicht aus dem Play Store kommt.
+## Download
+
+Die neueste Version gibt es unter **[Releases](../../releases/latest)** als `KINTORE-2.x.apk`.
+
+1. Die APK auf dem Android-Handy herunterladen und öffnen.
+2. Android fragt einmal, ob der Browser Apps installieren darf. Erlauben, dann installieren.
+   Der Hinweis „Unbekannte App“ erscheint, weil KINTORE nicht aus dem Play Store kommt.
 3. Beim ersten Pausen-Timer fragt Android nach Mitteilungen. Erlauben, damit sich der Timer auch bei gesperrtem Handy meldet.
 
-**Updates:** Neue Version herunterladen und einfach über die alte installieren. Deine Daten bleiben erhalten.
+Updates werden einfach über die vorhandene Version installiert. Die Daten bleiben dabei erhalten.
 
-## Was die App kann
+## Funktionen
 
-- **Training eintragen:** Vorlagen für Pull, Push und Beine (frei anpassbar), Gewicht und Wiederholungen mit großen
-  Plus/Minus-Knöpfen, letzter Wert wird vorgeschlagen, Notizen pro Satz, vergessene Trainings nachtragen.
-- **Steigerungs-Tipp:** Doppelprogression je Übung. Schaffst du überall die Obergrenze deines Wiederholungsbereichs,
-  schlägt die App mehr Gewicht vor.
-- **Pausen-Timer** mit Vibration und Mitteilung bei gesperrtem Handy.
-- **NEW PR!** – neue Bestleistungen werden gefeiert.
-- **Level und Rang (E bis SS):** XP für jeden Satz und jeden Rekord.
-- **Tages-Quest:** zeigt nach der Rotation Pull → Push → Beine → Ruhetag, was heute dran ist, mit Zielwerten.
-- **Wochen-Radar:** Sätze pro Muskelgruppe der letzten 7 Tage und deine Serie an Wochen mit mindestens 3 Trainings.
-- **Übungen:** über 100 Übungen, Diagramme, Bestwerte je Wiederholungszahl, Schätzung für 1 bis 12 Wiederholungen,
-  Scheibenrechner für die Langhantel.
-- **Körpergewicht** mit 7-Tage-Schnitt und optionalem Zielgewicht.
-- **Eigenes Hintergrundbild**, **Backup** als Datei, **Import aus FitNotes** (Backup-Datei `.fitnotes`).
+- **Training eintragen** mit Vorlagen für Pull, Push und Beine (frei anpassbar), großen Plus/Minus-Knöpfen,
+  Notizen pro Satz und dem Nachtragen vergessener Trainings
+- **Steigerungs-Tipp** nach Doppelprogression: Wer überall die Obergrenze des Wiederholungsbereichs schafft,
+  bekommt mehr Gewicht vorgeschlagen
+- **Pausen-Timer** mit Vibration und Mitteilung bei gesperrtem Handy
+- **NEW PR!** bei jeder neuen Bestleistung
+- **Level und Rang** von E bis SS, XP für jeden Satz und jeden Rekord
+- **Tages-Quest:** zeigt nach der Rotation Pull → Push → Beine → Ruhetag, was heute dran ist
+- **Wochen-Radar** mit Sätzen pro Muskelgruppe und einer Serie für Wochen mit mindestens 3 Trainings
+- **Über 100 Übungen** mit Diagrammen, Bestwerten je Wiederholungszahl, Schätzung für 1 bis 12 Wiederholungen
+  und Scheibenrechner für die Langhantel
+- **Körpergewicht** mit 7-Tage-Schnitt und optionalem Zielgewicht
+- **Eigenes Hintergrundbild**, **Backup als Datei** und **Import aus FitNotes**
 
-## Daten und Datenschutz
+## Datenschutz
 
-KINTORE baut keine Internetverbindung auf. Die Daten liegen nur auf dem Handy (plus einer Kopie im App-Ordner).
-Über **Einstellungen → Backup speichern** kannst du eine Sicherung anlegen, z. B. für einen Handywechsel.
+KINTORE stellt keine Internetverbindung her. Alle Einträge bleiben lokal auf dem Gerät.
+Über *Einstellungen → Backup speichern* lässt sich eine Sicherung anlegen, z. B. für einen Handywechsel.
 
-## Für Entwickler
+## Technik
 
-- `www/` ist die App selbst: HTML, CSS und JavaScript-Module ohne Build-Schritt.
-  Ansehen im Browser: `python3 -m http.server 8080 --directory www`.
-- Jeder Push auf `main` baut über `.github/workflows/build-apk.yml` mit Capacitor eine signierte APK und
-  veröffentlicht sie als Release.
-- Der Signaturschlüssel liegt verschlüsselt in `signing/kintore.jks.enc`. Der Build braucht das Secret
-  `KEYSTORE_PASSWORD`. Wer das Projekt kopiert, muss einen eigenen Schlüssel anlegen.
-- Startdaten (Übungsliste und Vorlagen): `node scripts/make-starter.mjs`.
+- Web-App aus HTML, CSS und JavaScript-Modulen in einer Android-Hülle mit [Capacitor](https://capacitorjs.com) 7
+- Jeder Push auf `main` baut über GitHub Actions eine signierte APK und veröffentlicht sie als Release
+- Der Signaturschlüssel liegt verschlüsselt in `signing/kintore.jks.enc`, das Passwort im Secret `KEYSTORE_PASSWORD`.
+  Kopien des Projekts brauchen einen eigenen Schlüssel.
+- Im Browser ansehen: `python3 -m http.server 8080 --directory www`
+- Übungsliste und Vorlagen für den Start: `node scripts/make-starter.mjs`
+
+Die Screenshots zeigen Beispieldaten.

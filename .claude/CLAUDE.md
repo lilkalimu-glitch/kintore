@@ -1,7 +1,7 @@
 # KINTORE 筋トレ – Hinweise für Claude
 
-Öffentliches Repository einer Android-App: Gym-Tracker im Neon-Anime-Stil. Der Besitzer schreibt Deutsch;
-antworte ihm auf Deutsch, kurz und in einfacher Sprache.
+Öffentliches Repository einer Android-App: Gym-Tracker im Neon-Anime-Stil.
+Projektsprache ist Deutsch: Texte in der App, Code-Kommentare, Commit-Nachrichten und Doku.
 
 ## Regeln
 - Keine persönlichen Trainings- oder Körperdaten committen. `www/data/seed.json` enthält nur Übungsliste und Vorlagen
@@ -13,7 +13,7 @@ antworte ihm auf Deutsch, kurz und in einfacher Sprache.
 
 ## Bauen und ausliefern
 - Jeder Push auf `main` startet `.github/workflows/build-apk.yml`. Ergebnis: Release `v2.<run>` mit `KINTORE-2.<run>.apk`, versionCode 100 + Lauf (muss immer steigen).
-- Reine Doku-Änderungen (`*.md`) lösen keinen Build aus.
+- Reine Doku-Änderungen (`*.md`, `docs/`, `.claude/`) lösen keinen Build aus.
 - Build-Logs lassen sich aus Claude-Sitzungen nicht laden. Bei Fehlern schreibt der Schritt „Fehler melden“ die letzten
   Log-Zeilen als Annotations: `gh api repos/<owner>/<repo>/check-runs/<job-id>/annotations`.
 
