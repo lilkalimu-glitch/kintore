@@ -12,7 +12,7 @@ antworte ihm auf Deutsch, kurz und in einfacher Sprache.
   Versionen nicht mehr über die alte installieren und Nutzer verlieren beim Neuinstallieren ihre Daten.
 
 ## Bauen und ausliefern
-- Jeder Push auf `main` startet `.github/workflows/build-apk.yml`. Ergebnis: Release `v1.<run>` mit `KINTORE-1.<run>.apk`.
+- Jeder Push auf `main` startet `.github/workflows/build-apk.yml`. Ergebnis: Release `v2.<run>` mit `KINTORE-2.<run>.apk`, versionCode 100 + Lauf (muss immer steigen).
 - Reine Doku-Änderungen (`*.md`) lösen keinen Build aus.
 - Build-Logs lassen sich aus Claude-Sitzungen nicht laden. Bei Fehlern schreibt der Schritt „Fehler melden“ die letzten
   Log-Zeilen als Annotations: `gh api repos/<owner>/<repo>/check-runs/<job-id>/annotations`.

@@ -14,6 +14,11 @@ concurrency:
   group: apk-build
   cancel-in-progress: true
 
+env:
+  # Versionsnummer 2.<Lauf>, versionCode 100 + Lauf (muss immer steigen, sonst lässt Android kein Update zu)
+  APP_MAJOR: '2'
+  CODE_OFFSET: '100'
+
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -86,27 +91,27 @@ jobs:
           mkdir -p out
           APK=$(find android/app/build/outputs/apk/release -name '*.apk' | head -n 1)
           echo "Gefunden: $APK"
-          cp "$APK" "out/KINTORE-1.${{ github.run_number }}.apk"
+          cp "$APK" "out/KINTORE-${APP_MAJOR}.${{ github.run_number }}.apk"
           ls -la out
 
       - name: APK als Artefakt speichern
         uses: actions/upload-artifact@v4
         with:
-          name: KINTORE-1.${{ github.run_number }}
+          name: KINTORE-${{ env.APP_MAJOR }}.${{ github.run_number }}
           path: out/*.apk
 
       - name: Release mit APK veröffentlichen
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v1.${{ github.run_number }}"
+          TAG="v${APP_MAJOR}.${{ github.run_number }}"
           if gh release view "$TAG" --repo "${{ github.repository }}" > /dev/null 2>&1; then
             gh release upload "$TAG" out/*.apk --clobber --repo "${{ github.repository }}"
           else
             gh release create "$TAG" out/*.apk \
               --repo "${{ github.repository }}" \
               --target "${{ github.sha }}" \
-              --title "KINTORE 1.${{ github.run_number }}" \
+              --title "KINTORE ${APP_MAJOR}.${{ github.run_number }}" \
               --notes "KINTORE-APK herunterladen und auf dem Android-Handy öffnen. Neue Versionen einfach über die alte installieren, deine Daten bleiben erhalten." \
               --latest
           fi

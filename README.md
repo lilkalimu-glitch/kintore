@@ -5,7 +5,7 @@ bleibt auf deinem Handy.
 
 ## Installieren
 
-1. Auf dem Android-Handy rechts unter **Releases** die neueste Version öffnen und `KINTORE-1.x.apk` herunterladen.
+1. Auf dem Android-Handy rechts unter **Releases** die neueste Version öffnen und `KINTORE-2.x.apk` herunterladen.
 2. Die Datei öffnen. Android fragt einmal, ob der Browser Apps installieren darf: erlauben, dann installieren.
    Die Warnung „Unbekannte App“ ist normal, weil KINTORE nicht aus dem Play Store kommt.
 3. Beim ersten Pausen-Timer fragt Android nach Mitteilungen. Erlauben, damit sich der Timer auch bei gesperrtem Handy meldet.

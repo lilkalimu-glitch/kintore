@@ -140,14 +140,16 @@ def manifest():
 
 
 def version():
-    run = os.environ.get("GITHUB_RUN_NUMBER", "1")
+    run = int(os.environ.get("GITHUB_RUN_NUMBER", "1"))
+    major = os.environ.get("APP_MAJOR", "1")
+    code = int(os.environ.get("CODE_OFFSET", "0")) + run
     text = read(GRADLE)
-    text, n1 = re.subn(r"versionCode\s+\d+", f"versionCode {int(run)}", text)
-    text, n2 = re.subn(r'versionName\s+"[^"]*"', f'versionName "1.{run}"', text)
+    text, n1 = re.subn(r"versionCode\s+\d+", f"versionCode {code}", text)
+    text, n2 = re.subn(r'versionName\s+"[^"]*"', f'versionName "{major}.{run}"', text)
     if "checkReleaseBuilds" not in text:
         text += "\nandroid {\n    lint {\n        checkReleaseBuilds false\n        abortOnError false\n    }\n}\n"
     write(GRADLE, text)
-    print(f"Version 1.{run} (versionCode {run}); Treffer {n1}/{n2}")
+    print(f"Version {major}.{run} (versionCode {code}); Treffer {n1}/{n2}")
 
 
 def main_activity():

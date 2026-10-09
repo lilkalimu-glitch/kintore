@@ -35,7 +35,8 @@ for (const [name, pkg] of Object.entries(PLUGINS)) {
 writeFileSync('www/vendor/plugins.js', bundle);
 
 const run = process.env.GITHUB_RUN_NUMBER;
+const major = process.env.APP_MAJOR || '1';
 if (run) {
-  writeFileSync('www/js/version.js', `// Automatisch beim Bauen gesetzt.\nexport const VERSION = '1.${run}';\n`);
-  console.log('Version 1.' + run);
+  writeFileSync('www/js/version.js', `// Automatisch beim Bauen gesetzt.\nexport const VERSION = '${major}.${run}';\n`);
+  console.log(`Version ${major}.${run}`);
 }
