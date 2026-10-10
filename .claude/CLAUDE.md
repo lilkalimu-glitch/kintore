@@ -21,6 +21,10 @@ Projektsprache ist Deutsch: Texte in der App, Code-Kommentare, Commit-Nachrichte
 ## Aufbau
 - `www/`: die App, ohne Build-Schritt (ES-Module). Einstieg `js/app.js`, Ansichten `js/view-*.js`, Sheets `js/sheets.js`.
 - Alle Datenänderungen laufen über `js/ops.js`, Berechnungen (Rekorde, Level, Quest, Tipps) in `js/stats.js`.
+- Rang-Pfad: Belohnungen, Stationen und Rang-Abzeichen in `js/look.js`, die Seite in `js/view-rank.js`.
+  Abgeholte Stationen und der angelegte Look liegen in `state.rewards`, Bonus-XP (Tages-Quest, Ruhetag-Quest,
+  Wochen-Serie) als Einträge in `state.bonus`. Die Neon-Farbe läuft über die CSS-Variablen `--acc*` und
+  `:root[data-accent]`; Pink bleibt der Standard.
 - Daten liegen auf dem Handy (IndexedDB plus Datei-Kopie). Neue Felder oder Formatänderungen immer in `migrate()` in
   `js/ops.js` abfangen, damit vorhandene Daten erhalten bleiben.
 - `scripts/patch-android.py` passt das von Capacitor erzeugte Android-Projekt an (Icon, Startbild, dunkle Leisten,

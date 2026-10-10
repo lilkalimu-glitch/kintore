@@ -55,7 +55,7 @@ export function navigate(name, id, { replace = false } = {}) {
   const hash = '#/' + name + (id != null ? '/' + encodeURIComponent(id) : '');
   if (location.hash === hash) {
     app.route = parseHash();
-    render();
+    render({ entering: true });
     window.scrollTo(0, 0);
     return;
   }
@@ -70,7 +70,7 @@ export function onHashChange() {
   const prev = app.route;
   scrollMemory.set(routeKey(prev), window.scrollY);
   app.route = parseHash();
-  render();
+  render({ entering: true });
   const keep = ['uebungen', 'verlauf'].includes(app.route.name) ? scrollMemory.get(routeKey(app.route)) : 0;
   window.scrollTo(0, keep || 0);
 }
@@ -79,13 +79,14 @@ export function onHashChange() {
 const afterHooks = [];
 export const onAfterRender = (fn) => afterHooks.push(fn);
 
-export function render() {
+// entering: Seite wird gerade neu geöffnet (nicht nur nach einer Änderung neu gezeichnet).
+export function render({ entering = false } = {}) {
   const view = views[app.route.name] || views.start;
   const main = document.getElementById('view');
   if (!main || !app.state) return;
   main.innerHTML = view.render(app.route.params);
   main.dataset.route = app.route.name;
-  view.after?.(main, app.route.params);
+  view.after?.(main, app.route.params, { entering });
   bindCharts(main);
   for (const fn of afterHooks) fn();
   app.ui.newSetId = null;

@@ -21,22 +21,42 @@ export function bodyRef(state) {
 
 // ---------- Level & Rang ----------
 const XP_K = 55;
-const RANKS = [
-  { min: 0, id: 'E' }, { min: 6, id: 'D' }, { min: 12, id: 'C' }, { min: 20, id: 'B' },
-  { min: 35, id: 'A' }, { min: 50, id: 'S' }, { min: 70, id: 'SS' },
+export const RANKS = [
+  { min: 1, id: 'E', color: '#8591B0' }, { min: 6, id: 'D', color: '#5BFFB0' }, { min: 12, id: 'C', color: '#3CF0FF' },
+  { min: 20, id: 'B', color: '#9B6BFF' }, { min: 35, id: 'A', color: '#FF4FA3' }, { min: 50, id: 'S', color: '#FFA586' },
+  { min: 70, id: 'SS', color: '#FFE45C' },
 ];
 export const rankOf = (level) => [...RANKS].reverse().find((r) => level >= r.min).id;
+export const rankById = (id) => RANKS.find((r) => r.id === id) || RANKS[0];
 export const xpForSet = (s) => (s.r > 0 ? 10 + Math.min(s.r, 30) : 0);
 export const PR_XP = 50;
+// XP, ab der ein Level erreicht ist.
+export const xpAt = (level) => (level <= 1 ? 0 : XP_K * level * level);
 
 export function levelInfo(xp) {
   const level = Math.max(1, Math.floor(Math.sqrt(xp / XP_K)));
-  const base = level === 1 ? 0 : XP_K * level * level;
-  const next = XP_K * (level + 1) * (level + 1);
+  const base = xpAt(level);
+  const next = xpAt(level + 1);
   const rank = rankOf(level);
+  const cur = rankById(rank);
   const nextRank = RANKS.find((r) => r.min > level);
-  return { xp, level, rank, base, next, toNext: next - xp, progress: (xp - base) / (next - base), nextRank: nextRank ? { id: nextRank.id, level: nextRank.min } : null };
+  const rankBase = xpAt(cur.min);
+  const rankNext = nextRank ? xpAt(nextRank.min) : null;
+  return {
+    xp, level, rank, base, next, toNext: next - xp, progress: (xp - base) / (next - base),
+    nextRank: nextRank ? { id: nextRank.id, level: nextRank.min, xp: rankNext } : null,
+    rankProgress: nextRank ? (xp - rankBase) / (rankNext - rankBase) : 1,
+    toRank: nextRank ? rankNext - xp : 0,
+  };
 }
+
+// ---------- Bonus-XP ----------
+export const QUEST_XP = 100;
+export const REST_XP = 50;
+// Wochenbonus wächst mit der Serie: 100 XP, je Woche 25 mehr, höchstens 300.
+export const weekXp = (streak) => 100 + 25 * Math.min(Math.max(streak - 1, 0), 8);
+// Sätze für die Tages-Quest: zwei pro Übung der Vorlage, 8-12.
+export const questTarget = (tpl) => (tpl?.ex?.length ? Math.min(12, Math.max(8, tpl.ex.length * 2)) : 10);
 
 // ---------- Abgeleitete Daten (einmal pro Änderung berechnet) ----------
 export function derive(state) {
@@ -110,9 +130,16 @@ export function derive(state) {
   }
   xp += prIds.size * PR_XP;
 
+  // Bonus-XP aus Tages-Quest, Ruhetag-Quest und Wochen-Serie (werden beim Erreichen gespeichert).
+  const bonusByDay = new Map();
+  for (const b of state.bonus || []) {
+    xp += b.xp;
+    bonusByDay.set(b.d, (bonusByDay.get(b.d) || 0) + b.xp);
+  }
+
   return {
     exById, bw, loadOf, sorted, setsByEx, sessionsByEx, days, dates, lastUsed,
-    prIds, prEvents, bestE1,
+    prIds, prEvents, bestE1, bonusByDay,
     level: levelInfo(xp),
     totals: { sets: setCount, days: dates.length, tonnage },
   };
@@ -209,6 +236,12 @@ export function weekCats(d, end = today()) {
   return counts;
 }
 
+// Serie: Wochen mit mindestens 3 Trainings in Folge.
+// Alle 4 Serien-Wochen gibt es einen Schutz (höchstens 2). Eine verpasste Woche verbraucht dann
+// einen Schutz, statt die Serie zu beenden. Die laufende Woche zählt erst, wenn sie geschafft ist.
+export const SHIELD_EVERY = 4;
+export const SHIELD_MAX = 2;
+
 export function weekStreak(d) {
   const perWeek = new Map();
   for (const date of d.dates) {
@@ -217,15 +250,46 @@ export function weekStreak(d) {
   }
   const current = weekStart(today());
   let streak = 0;
-  if ((perWeek.get(current) || 0) >= 3) streak++;
-  let w = addDays(current, -7);
-  while ((perWeek.get(w) || 0) >= 3) { streak++; w = addDays(w, -7); }
+  let shields = 0;
+  const protectedWeeks = [];
+  const success = () => {
+    streak++;
+    if (streak % SHIELD_EVERY === 0) shields = Math.min(SHIELD_MAX, shields + 1);
+  };
+  if (d.dates.length) {
+    let w = weekStart(d.dates[0]);
+    for (let guard = 0; w < current && guard < 5000; guard++) {
+      if ((perWeek.get(w) || 0) >= 3) success();
+      else if (streak > 0 && shields > 0) { shields--; protectedWeeks.push(w); }
+      else { streak = 0; protectedWeeks.length = 0; }
+      w = addDays(w, 7);
+    }
+  }
+  const thisWeek = perWeek.get(current) || 0;
+  if (thisWeek >= 3) success();
   const days = [];
   for (let i = 0; i < 7; i++) {
     const date = addDays(current, i);
     days.push({ d: date, trained: d.days.has(date), future: date > today() });
   }
-  return { streak, thisWeek: perWeek.get(current) || 0, days };
+  return {
+    streak, thisWeek, days, shields, protectedWeeks, week: current,
+    nextShieldIn: shields >= SHIELD_MAX ? null : SHIELD_EVERY - (streak % SHIELD_EVERY),
+  };
+}
+
+// ---------- Tages-Quest ----------
+// Trainingstag: genug Arbeitssätze schaffen. Ruhetag: Körpergewicht eintragen.
+export function questGoal(state, d, q = nextQuest(state, d)) {
+  const t = today();
+  const event = (k) => (state.bonus || []).find((b) => b.k === k && b.d === t) || null;
+  if (q.kind === 'rest') {
+    const ev = event('rest');
+    return { kind: 'body', target: 1, count: state.body.some((b) => b.d === t) ? 1 : 0, xp: REST_XP, done: !!ev };
+  }
+  const ev = event('quest');
+  const count = (d.days.get(t)?.sets || []).filter((s) => s.r > 0).length;
+  return { kind: 'sets', target: ev?.n || questTarget(q.tpl), count, xp: QUEST_XP, done: !!ev };
 }
 
 // ---------- Übung im Detail ----------
@@ -265,6 +329,7 @@ export function daySummary(state, d, date) {
     if (s.r > 0) sets++;
     if (d.prIds.has(s.id)) { prs++; xp += PR_XP; }
   }
+  xp += d.bonusByDay?.get(date) || 0;
   const sess = state.sessions?.[date];
   const times = day.sets.map((s) => s.t).filter(Boolean);
   let dur = null;

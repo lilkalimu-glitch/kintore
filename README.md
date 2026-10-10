@@ -7,6 +7,7 @@ Gym-Tracker für Android im Neon/Anime-Look.
   <img src="docs/screenshots/training.jpg" width="200" alt="Training">
   <img src="docs/screenshots/pr.jpg" width="200" alt="Neuer Rekord">
   <img src="docs/screenshots/uebung.jpg" width="200" alt="Übung im Detail">
+  <img src="docs/screenshots/rang.jpg" width="200" alt="Rang-Pfad">
 </p>
 
 ## Download
@@ -19,7 +20,9 @@ Neue Versionen einfach über die alte installieren, die Daten bleiben.
 
 - Training mit Vorlagen (Pull, Push, Beine), Pausen-Timer und Notizen
 - Steigerungs-Tipp nach Doppelprogression
-- Rekorde mit PR-Animation, Level und Ränge
+- Rekorde mit PR-Animation, Level und Ränge von E bis SS
+- Rang-Pfad mit Belohnungen zum Abholen: Neon-Farben, Titel, Rahmen und Neon-Schilder
+- Tages-Quest und Wochen-Serie mit Bonus-XP, Serien-Schutz für verpasste Wochen
 - Diagramme und 1RM-Schätzung pro Übung, Scheibenrechner für die Langhantel
 - Kalender, Körpergewicht, eigenes Hintergrundbild
 - Backup und Import aus FitNotes

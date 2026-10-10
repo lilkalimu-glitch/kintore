@@ -9,6 +9,7 @@ import { applyBackground } from './bg.js';
 import { confirmSheet, templatesSheet } from './sheets.js';
 import { toast } from './fx.js';
 import { VERSION } from './version.js';
+import { equipped } from './look.js';
 
 let bgCache = null;
 
@@ -25,6 +26,7 @@ views.einstellungen = {
     const st = s.settings;
     const d = D();
     const bwAuto = !(Number(st.bwManual) > 0);
+    const look = equipped(s, d.level.level);
     return `
     <header class="head has-back">
       <span class="jp-mark" aria-hidden="true">設定</span>
@@ -51,6 +53,7 @@ views.einstellungen = {
 
     <h2 class="group-title">Aussehen</h2>
     <section class="card"><ul class="set-list">
+      <li><button class="row-btn" data-act="look-open">${icon('sparkle')}<span class="grow">Dein Look<small>${esc(Object.values(look).map((it) => it.name).join(', '))}</small></span>${icon('right')}</button></li>
       <li><span class="bg-preview" data-bg-preview></span><span class="grow">Hintergrundbild</span>
         <label class="btn-ghost small">Wählen<input type="file" accept="image/*" data-bg-file class="visually-hidden"></label></li>
       <li data-bg-only><span class="grow">Abdunkeln</span><input type="range" min="0" max="0.9" step="0.05" value="${st.bgDim}" data-range="bgDim" aria-label="Abdunkeln" style="max-width:150px"></li>

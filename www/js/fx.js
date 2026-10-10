@@ -1,5 +1,6 @@
-// Effekte: NEW PR!, Level-Up, Mission Complete, kurze Hinweise.
-import { esc, kg, int, fmtDuration } from './util.js';
+// Effekte: NEW PR!, Level-Up, Rang-Aufstieg, Belohnungen, Quest-Banner, Mission Complete, kurze Hinweise.
+import { esc, kg, int, fmtDuration, icon } from './util.js';
+import { TYPES, emblem, itemShowcase, itemOrb, itemLabel, rankColor } from './look.js';
 
 const root = () => document.getElementById('fx-root');
 const reduced = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -24,11 +25,12 @@ function sparkles() {
   return spots.map(([x, y], i) => `<span class="fx-spark" style="left:${x}%;top:${y}%;--d:${i * 70}ms">✦</span>`).join('');
 }
 
-function show(html, { autoClose = 2600, cls = '' } = {}) {
+function show(html, { autoClose = 2600, cls = '', style = '', onAct = null } = {}) {
   return new Promise((resolve) => {
     const el = document.createElement('div');
     el.className = 'fx ' + cls + (reduced() ? ' fx-still' : '');
     el.setAttribute('role', 'alert');
+    if (style) el.setAttribute('style', style);
     el.innerHTML = html;
     root().appendChild(el);
     let done = false;
@@ -39,10 +41,12 @@ function show(html, { autoClose = 2600, cls = '' } = {}) {
       setTimeout(() => { el.remove(); resolve(); }, 260);
     };
     el.addEventListener('click', (e) => {
+      const act = e.target.closest('[data-fx-act]');
+      if (act) { close(); onAct?.(act.dataset.fxAct); return; }
       if (e.target.closest('[data-fx-keep]')) return;
       close();
     });
-    el.querySelector('[data-fx-close]')?.addEventListener('click', close);
+    el.querySelectorAll('[data-fx-close]').forEach((b) => b.addEventListener('click', close));
     if (autoClose) setTimeout(close, autoClose);
   });
 }
@@ -57,6 +61,12 @@ async function run() {
   busy = false;
 }
 const enqueue = (job) => { queue.push(job); run(); };
+
+const rewardLine = (rewards) => {
+  if (!rewards?.length) return '';
+  const what = rewards.length > 2 ? `${rewards.length} Belohnungen` : rewards.map((r) => `${TYPES[r.type].name} ${itemLabel(r)}`).join(', ');
+  return `<div class="fx-reward">${icon('gift')}<span>Neu im Rang-Pfad: ${esc(what)}</span></div>`;
+};
 
 export function prBurst({ name, w, r, bw, e1, gain }) {
   enqueue(() => show(`
@@ -73,17 +83,97 @@ export function prBurst({ name, w, r, bw, e1, gain }) {
     </div>`, { cls: 'fx-pr' }));
 }
 
-export function levelUp({ level, rank, rankUp }) {
+export function levelUp({ level, rank, rewards = [] }) {
   enqueue(() => show(`
     ${speedLines('#3CF0FF')}
     <div class="fx-tone" aria-hidden="true"></div>
     ${sparkles()}
     <div class="fx-card fx-card-lv">
-      <div class="fx-jp" aria-hidden="true">${rankUp ? 'ランクアップ' : 'レベルアップ'}</div>
-      <div class="fx-big">${rankUp ? 'RANK UP!' : 'LEVEL UP!'}</div>
+      <div class="fx-jp" aria-hidden="true">レベルアップ</div>
+      <div class="fx-big">LEVEL UP!</div>
       <div class="fx-val">Level ${level}</div>
-      <div class="fx-sub">${rankUp ? `Neuer Rang: <b class="rank-inline rank-${esc(rank)}">${esc(rank)}</b>` : `Rang ${esc(rank)}`}</div>
-    </div>`, { cls: 'fx-lv', autoClose: 2800 }));
+      <div class="fx-sub">Rang ${esc(rank)}</div>
+      ${rewardLine(rewards)}
+    </div>`, { cls: 'fx-lv', autoClose: rewards.length ? 3200 : 2800 }));
+}
+
+// Rang-Aufstieg: altes Abzeichen lädt auf und zerfällt, das neue erscheint mit Lichtstrahlen.
+export function rankUp({ from, to, level, frame = 'hex', rewards = [] }) {
+  enqueue(() => show(`
+    <div class="rk-rays" aria-hidden="true"></div>
+    <div class="fx-tone" aria-hidden="true"></div>
+    <div class="rk-flash" aria-hidden="true"></div>
+    <div class="rk-wrap">
+      <div class="rk-stage" aria-hidden="true">
+        <div class="rk-old">${emblem(from, frame, 112)}</div>
+        <div class="rk-wave"></div>
+        <div class="rk-new">${emblem(to, frame, 136)}</div>
+      </div>
+      <div class="rk-copy">
+        <div class="fx-jp" aria-hidden="true">ランクアップ</div>
+        <div class="fx-big">RANK UP!</div>
+        <div class="rk-name">Rang <b class="rank-inline rank-${esc(to)}">${esc(to)}</b><span>Level ${level}</span></div>
+        ${rewardLine(rewards)}
+      </div>
+      <div class="rk-hint">Antippen zum Schließen</div>
+    </div>`, { cls: 'fx-rank', autoClose: rewards.length ? 3600 : 3000, style: `--rc0:${rankColor(from)};--rc1:${rankColor(to)}` }));
+}
+
+// Eine Station abholen: Belohnung zeigen, auf Wunsch direkt anlegen.
+export function rewardReveal({ items, rankId, onEquip }) {
+  enqueue(() => show(`
+    <div class="rw-rays" aria-hidden="true"></div>
+    <div class="fx-tone" aria-hidden="true"></div>
+    ${sparkles()}
+    <div class="fx-card fx-card-rw" data-fx-keep>
+      <div class="fx-jp" aria-hidden="true">報酬</div>
+      <div class="rw-show ${items.length > 1 ? 'multi' : ''}">
+        ${items.map((it) => `<figure>${itemShowcase(it, rankId)}<figcaption><small>${esc(TYPES[it.type].name)}</small><b>${esc(itemLabel(it))}</b></figcaption></figure>`).join('')}
+      </div>
+      <div class="row-actions">
+        <button class="btn-ghost" data-fx-close>Später</button>
+        <button class="btn-neon" data-fx-act="equip">Anlegen</button>
+      </div>
+    </div>`, { cls: 'fx-rw', autoClose: 0, onAct: (act) => { if (act === 'equip') onEquip?.(); } }));
+}
+
+// Mehrere Stationen auf einmal abholen.
+export function rewardSummary({ items, onLook }) {
+  enqueue(() => show(`
+    <div class="rw-rays" aria-hidden="true"></div>
+    <div class="fx-tone" aria-hidden="true"></div>
+    ${sparkles()}
+    <div class="fx-card fx-card-rw" data-fx-keep>
+      <div class="fx-jp" aria-hidden="true">報酬</div>
+      <div class="fx-big fx-big-sm">${items.length} Belohnungen</div>
+      <ul class="rw-list">
+        ${items.map((it, i) => `<li style="--i:${i}"><span class="orb is-done">${itemOrb(it)}</span><span><small>${esc(TYPES[it.type].name)}</small><b>${esc(itemLabel(it))}</b></span></li>`).join('')}
+      </ul>
+      <div class="row-actions">
+        <button class="btn-ghost" data-fx-close>Ok</button>
+        <button class="btn-neon" data-fx-act="look">Look ändern</button>
+      </div>
+    </div>`, { cls: 'fx-rw', autoClose: 0, onAct: (act) => { if (act === 'look') onLook?.(); } }));
+}
+
+// Kleines Banner oben (blockiert nichts), z. B. Tages-Quest geschafft.
+export function banner({ jp, text, xp }) {
+  enqueue(() => new Promise((resolve) => {
+    const el = document.createElement('div');
+    el.className = 'fx-banner' + (reduced() ? ' fx-still' : '');
+    el.setAttribute('role', 'status');
+    el.innerHTML = `<span class="fb-jp" aria-hidden="true">${esc(jp)}</span><b>${esc(text)}</b><em>+${int(xp)} XP</em>`;
+    root().appendChild(el);
+    let done = false;
+    const close = () => {
+      if (done) return;
+      done = true;
+      el.classList.add('fb-out');
+      setTimeout(() => { el.remove(); resolve(); }, 240);
+    };
+    el.addEventListener('click', close);
+    setTimeout(close, 2300);
+  }));
 }
 
 export function missionComplete({ title, dur, sets, vol, prs, xp }) {

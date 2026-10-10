@@ -1,12 +1,13 @@
 // Alle Änderungen an den Daten laufen über diese Funktionen.
 import { app, D, commit, render, replaceState } from './core.js';
 import { today, round2, kg } from './util.js';
-import { e1rmOf, daySummary } from './stats.js';
+import { e1rmOf, daySummary, nextQuest, questGoal, weekStreak, weekXp, QUEST_XP, REST_XP } from './stats.js';
 import { completeExercise } from './model.js';
 import { fixName } from './fitnotes.js';
-import { prBurst, levelUp, missionComplete, toast } from './fx.js';
+import { prBurst, levelUp, rankUp, missionComplete, toast, banner } from './fx.js';
 import { startTimer, stopTimer } from './timer.js';
 import { haptic, vibrate } from './native.js';
+import { STATIONS, DEFAULT_LOOK, TYPE_ORDER, itemOf, equipped } from './look.js';
 
 export const DEFAULT_SETTINGS = {
   restDefault: 120,
@@ -38,6 +39,16 @@ export function migrate(raw) {
     s.settings.bgBlur = DEFAULT_SETTINGS.bgBlur;
   }
   s.meta = s.meta || {};
+  // Bonus-XP (Tages-Quest, Ruhetag-Quest, Wochen-Serie) und Belohnungen aus dem Rang-Pfad.
+  s.bonus = Array.isArray(s.bonus)
+    ? s.bonus.filter((b) => b && typeof b.d === 'string' && typeof b.k === 'string' && Number.isFinite(b.xp) && b.xp > 0 && b.xp <= 1000)
+    : [];
+  const rw = s.rewards && typeof s.rewards === 'object' ? s.rewards : {};
+  const valid = new Set(STATIONS.filter((st) => st.lv > 1).map((st) => st.lv));
+  const claimed = Array.isArray(rw.claimed) ? [...new Set(rw.claimed.map(Number).filter((n) => valid.has(n)))].sort((a, b) => a - b) : [];
+  const equip = { ...DEFAULT_LOOK };
+  for (const type of TYPE_ORDER) if (itemOf(type, rw.equip?.[type])) equip[type] = rw.equip[type];
+  s.rewards = { claimed, equip };
   const setsByEx = new Map();
   for (const x of s.sets) {
     if (!setsByEx.has(x.ex)) setsByEx.set(x.ex, []);
@@ -53,6 +64,59 @@ export function migrate(raw) {
 }
 
 const nextId = (list) => list.reduce((m, x) => Math.max(m, x.id || 0), 0) + 1;
+
+// ---------- Bonus-XP und Level-Aufstieg ----------
+// Prüft Tages-Quest, Ruhetag-Quest und Wochen-Serie und speichert neue Boni (ohne neu zu zeichnen).
+function grantBonuses({ rest = false, week = true } = {}) {
+  const s = app.state;
+  const d = D();
+  const t = today();
+  const add = [];
+  const goal = questGoal(s, d, nextQuest(s, d));
+  if (goal.kind === 'sets' && !goal.done && goal.count >= goal.target) add.push({ d: t, k: 'quest', xp: QUEST_XP, n: goal.target });
+  if (rest && goal.kind === 'body' && !goal.done && goal.count > 0) add.push({ d: t, k: 'rest', xp: REST_XP });
+  const ws = week ? weekStreak(d) : null;
+  if (ws && ws.thisWeek >= 3 && !s.bonus.some((b) => b.k === 'week' && b.w === ws.week)) {
+    add.push({ d: t, k: 'week', w: ws.week, xp: weekXp(ws.streak), n: ws.streak });
+  }
+  if (add.length) commit((st) => { st.bonus.push(...add); }, { render: false });
+  return add;
+}
+
+function bonusBanners(list) {
+  for (const b of list) {
+    if (b.k === 'quest') banner({ jp: '達成', text: 'Tages-Quest geschafft', xp: b.xp });
+    else if (b.k === 'rest') banner({ jp: '休息日', text: 'Ruhetag-Quest geschafft', xp: b.xp });
+    else if (b.k === 'week') banner({ jp: '連続', text: b.n > 1 ? `Serie: ${b.n} Wochen` : 'Woche geschafft', xp: b.xp });
+  }
+  if (list.length) vibrate([40, 60, 40]);
+}
+
+// Nach einer Änderung: Level-Up oder Rang-Aufstieg feiern, neue Belohnungen nennen.
+function celebrate(before) {
+  const after = D().level;
+  if (after.level <= before.level) return;
+  const rewards = STATIONS.filter((st) => st.lv > Math.max(1, before.level) && st.lv <= after.level).flatMap((st) => st.items);
+  if (after.rank !== before.rank) {
+    vibrate([60, 60, 120, 60, 240]);
+    rankUp({ from: before.rank, to: after.rank, level: after.level, frame: equipped(app.state, after.level).frame.id, rewards });
+  } else {
+    levelUp({ level: after.level, rank: after.rank, rewards });
+  }
+}
+
+// ---------- Rang-Pfad ----------
+export function claimStations(levels) {
+  commit((s) => {
+    const set = new Set(s.rewards.claimed);
+    for (const lv of levels) set.add(lv);
+    s.rewards.claimed = [...set].sort((a, b) => a - b);
+  });
+}
+
+export function equipItems(items) {
+  commit((s) => { for (const it of items) s.rewards.equip[it.type] = it.id; });
+}
 
 // ---------- Training ----------
 export function startSession(tplId = null, date = today()) {
@@ -127,15 +191,16 @@ export function addSet(exId, w, r) {
       s.sessions[date].start ||= Date.now();
     }
   }, { render: false });
+  const bonuses = r > 0 ? grantBonuses() : [];
   app.ui.newSetId = id;
   render();
   haptic('MEDIUM');
-  const after = D().level;
   if (isPR) {
     vibrate([70, 70, 160]);
     prBurst({ name: ex.name, w, r, bw: ex.bw, e1, gain: e1 - prevBest });
   }
-  if (after.level > before.level) levelUp({ level: after.level, rank: after.rank, rankUp: after.rank !== before.rank });
+  bonusBanners(bonuses);
+  celebrate(before);
   const st = app.state.settings;
   if (st.restAuto && date === today()) {
     const secs = st.useExerciseRest ? ex.rest || st.restDefault : st.restDefault;
@@ -231,11 +296,16 @@ export function deleteTemplate(id) {
 
 // ---------- Körpergewicht ----------
 export function setBody(d, value) {
+  const before = D().level;
   commit((s) => {
     s.body = s.body.filter((b) => b.d !== d);
     s.body.push({ d, kg: round2(value) });
     s.body.sort((a, b) => a.d.localeCompare(b.d));
-  });
+  }, { render: false });
+  const bonuses = d === today() ? grantBonuses({ rest: true, week: false }) : [];
+  render();
+  bonusBanners(bonuses);
+  celebrate(before);
 }
 
 export function deleteBody(d) {

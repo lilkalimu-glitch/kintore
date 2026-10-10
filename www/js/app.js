@@ -1,17 +1,19 @@
 // Einstieg: Daten laden, Tabbar, Klicks verteilen, Android-Zurück-Taste.
-import { app, actions, render, navigate, parseHash, onHashChange, onPopState, closeSheet, sheetOpen, TOP, onAfterRender } from './core.js';
+import { app, D, actions, render, navigate, parseHash, onHashChange, onPopState, closeSheet, sheetOpen, TOP, onAfterRender } from './core.js';
 import { applyBackground } from './bg.js';
 import { loadState, persist, flushPersist, loadBg } from './store.js';
 import { migrate } from './ops.js';
 import { initTimer } from './timer.js';
 import { initNative, exitApp, isNative } from './native.js';
 import { icon } from './util.js';
+import { applyLook, equipped } from './look.js';
 import './view-start.js';
 import './view-training.js';
 import './view-exercises.js';
 import './view-history.js';
 import './view-body.js';
 import './view-settings.js';
+import './view-rank.js';
 
 const TABS = [
   { id: 'start', label: 'Start', icon: 'home' },
@@ -20,7 +22,10 @@ const TABS = [
   { id: 'verlauf', label: 'Verlauf', icon: 'calendar' },
   { id: 'koerper', label: 'Körper', icon: 'scale' },
 ];
-const TAB_OF = { uebung: 'uebungen', einstellungen: 'start' };
+const TAB_OF = { uebung: 'uebungen', einstellungen: 'start', rang: 'start' };
+
+// Neon-Farbe aus dem Rang-Pfad auf die ganze App legen.
+const updateLook = () => { if (app.state) applyLook(equipped(app.state, D().level.level)); };
 
 function renderTabs() {
   const nav = document.getElementById('tabs');
@@ -125,10 +130,11 @@ async function boot() {
   applyBackground(await loadBg());
   app.route = parseHash();
   if (!location.hash) history.replaceState(null, '', '#/start');
-  render();
+  render({ entering: true });
   updateTabs();
   window.KINTORE = { app };
 }
 
 onAfterRender(updateTabs);
+onAfterRender(updateLook);
 boot();

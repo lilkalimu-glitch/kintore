@@ -1,7 +1,7 @@
 // Training: Vorlage wählen, Sätze eintragen, Pausen-Timer, Steigerungs-Tipps.
 import { app, D, views, actions, navigate } from './core.js';
 import { esc, icon, kg, parseNum, round2, today, fmtDay, relDay, fmtDuration, fmtLoad, fmtSetText } from './util.js';
-import { progressionTip, plateLoad, dayTemplate, nextQuest, catColor } from './stats.js';
+import { progressionTip, plateLoad, dayTemplate, nextQuest, catColor, questGoal } from './stats.js';
 import { addSet, startSession, finishSession } from './ops.js';
 import { exerciseMenu, editSetSheet, addExerciseToSession, templatesSheet, confirmSheet } from './sheets.js';
 import { haptic } from './native.js';
@@ -95,6 +95,7 @@ function renderActive() {
   const tpl = s.templates.find((t) => t.id === a.tpl);
   const isToday = a.d === today();
   const start = s.sessions[a.d]?.start;
+  const goal = isToday ? questGoal(s, D(), nextQuest(s, D())) : null;
   return `
   <header class="head">
     <span class="jp-mark" aria-hidden="true">${esc(tpl?.jp || 'トレーニング')}</span>
@@ -103,6 +104,7 @@ function renderActive() {
       ${isToday
         ? `<span class="clock">${icon('timer')}<span data-elapsed>${start ? 'Seit ' + fmtDuration(Date.now() - start) : 'Bereit'}</span></span>`
         : `<span class="clock">${icon('calendar')}<span>Nachtrag für ${esc(fmtDay(a.d))}</span></span>`}
+      ${goal?.kind === 'sets' ? `<span class="q-chip ${goal.done ? 'is-done' : ''}" title="Tages-Quest">${icon(goal.done ? 'check' : 'target')}${goal.done ? 'Quest geschafft' : `Quest ${goal.count}/${goal.target}`}</span>` : ''}
       <span class="spacer"></span>
       <button class="btn-ghost small" data-act="finish">${isToday ? 'Beenden' : 'Fertig'}</button>
     </div>
