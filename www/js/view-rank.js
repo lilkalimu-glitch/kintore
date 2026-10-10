@@ -1,13 +1,20 @@
 // Rang-Pfad: alle Ränge von E bis SS, Belohnungen zum Abholen und der eigene Look.
 import { app, D, views, actions, navigate, openSheet } from './core.js';
 import { esc, icon, int, clamp } from './util.js';
-import { RANKS, xpAt, PR_XP, QUEST_XP, REST_XP, weekXp, SHIELD_EVERY, SHIELD_MAX } from './stats.js';
-import { STATIONS, TYPES, TYPE_ORDER, ITEMS, emblem, itemOrb, itemLabel, equipped, readyStations, owned, stationAt } from './look.js';
+import { RANKS, xpAt, PR_XP, QUEST_XP, REST_XP, LIFT_XP, LIFT_CAP, weekXp, SHIELD_EVERY, SHIELD_MAX } from './stats.js';
+import {
+  STATIONS, TYPES, TYPE_ORDER, ITEMS, RARITIES, emblem, rewardOrb, rankChip, itemLabel, itemRank, rarityOf, topRarity,
+  equipped, readyStations, owned, stationAt,
+} from './look.js';
+import { bannerArt } from './art.js';
 import { claimStations, equipItems } from './ops.js';
 import { rewardReveal, rewardSummary, toast } from './fx.js';
+import { vibrate } from './native.js';
+import { avatarUrl } from './me.js';
 
 const reduced = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+const titleClass = (it) => `tt-${rarityOf(it).id}`;
 
 // ---------- Kopf: aktueller Rang ----------
 function hero(lv, look, ready) {
@@ -15,11 +22,11 @@ function hero(lv, look, ready) {
   const pct = (clamp(lv.rankProgress, 0, 1) * 100).toFixed(1);
   return `<section class="card rp-hero rank-${esc(lv.rank)}">
     <div class="rp-top">
-      <div class="rp-emb">${emblem(lv.rank, look.frame.id, 96)}</div>
+      <div class="rp-emb">${emblem(lv.rank, look.frame.id, 96, '', { fx: true })}</div>
       <div class="rp-info">
         <small>Dein Rang</small>
         <h2>Rang <span class="rank-inline rank-${esc(lv.rank)}">${esc(lv.rank)}</span></h2>
-        <div class="title-tag">${esc(look.title.name)}</div>
+        <div class="title-tag ${titleClass(look.title)}">${esc(look.title.name)}</div>
         <span class="rp-lv">Level ${lv.level}, ${int(lv.xp)} XP</span>
       </div>
     </div>
@@ -65,22 +72,25 @@ function roadNode(st, lv, claimed, nextLv) {
   if (st.lv === 1) state = 'done';
   else if (reached) state = claimed.has(st.lv) ? 'done' : 'ready';
   else if (st.lv === nextLv) state = 'next';
+  const rar = st.items.length ? topRarity(st.items).id : 'n';
   const orb = st.rank
     ? `<span class="n-emb">${emblem(st.rank.id, 'hex', 64)}</span>`
-    : `<span class="orb">${itemOrb(st.items[0])}</span>`;
+    : rewardOrb(st.items[0]);
   const badge = state === 'done' && st.lv > 1 ? `<span class="n-badge ok">${icon('check')}</span>`
     : state === 'locked' || state === 'next' ? `<span class="n-badge">${icon('lock')}</span>` : '';
   const foot = state === 'ready'
     ? `<button class="btn-claim small" data-act="claim" data-lv="${st.lv}">Abholen</button>`
     : state === 'next' ? `<span class="n-next">Noch ${int(xpAt(st.lv) - lv.xp)} XP</span>` : '';
   const just = app.ui.justClaimed?.includes(st.lv) ? 'just-claimed' : '';
-  return `<div class="node ${st.rank ? `is-rank rank-${esc(st.rank.id)}` : ''} st-${state} ${just}" data-lv="${st.lv}">
+  return `<div class="node ${st.rank ? `is-rank rank-${esc(st.rank.id)}` : ''} nr-${rar} st-${state} ${just}" data-lv="${st.lv}">
     <div class="n-lv">Lv ${st.lv}</div>
     <div class="n-orb">${orb}${badge}</div>
     <div class="n-text">${nodeText(st)}</div>
     ${foot}
   </div>`;
 }
+
+const rarityLegend = () => `<div class="rar-legend" aria-label="Seltenheit">${RARITIES.map((r) => `<span class="rar-${r.id}"><i></i>${esc(r.name)}</span>`).join('')}</div>`;
 
 function roadCard(s, lv, ready) {
   const claimed = new Set(s.rewards.claimed);
@@ -95,6 +105,7 @@ function roadCard(s, lv, ready) {
         <div class="road-you" aria-hidden="true"><span class="ry-chip">LV ${lv.level}</span><span class="ry-dot"></span></div>
       </div>
     </div>
+    ${rarityLegend()}
   </section>`;
 }
 
@@ -104,10 +115,11 @@ function lookCard(look) {
     <div class="card-title"><h2>Dein Look</h2><button class="link-btn" data-act="look-open">Ändern</button></div>
     <div class="look-grid">
       ${TYPE_ORDER.map((t) => `<button class="look-tile" data-act="look-open" data-type="${t}">
-        <span class="orb">${itemOrb(look[t])}</span>
+        ${rewardOrb(look[t], { chip: false })}
         <span class="lt-text"><small>${esc(TYPES[t].name)}</small><b class="${t === 'sign' ? 'jp' : ''}">${esc(look[t].name)}</b></span>
       </button>`).join('')}
     </div>
+    <button class="btn-ghost btn-block look-profile" data-act="go" data-to="profil">${icon('sparkle')} Profil ansehen</button>
   </section>`;
 }
 
@@ -116,11 +128,13 @@ function rulesCard() {
     <div class="card-title"><h2>So gibt es XP</h2></div>
     <ul class="rule-list">
       <li><span>Jeder Satz</span><b>10 XP + 1 pro Wdh.</b></li>
+      <li><span>Gewichts-Bonus pro Satz</span><b>bis +${LIFT_XP * LIFT_CAP} XP</b></li>
       <li><span>Neuer Rekord</span><b>+${PR_XP} XP</b></li>
       <li><span>Tages-Quest</span><b>+${QUEST_XP} XP</b></li>
       <li><span>Ruhetag-Quest</span><b>+${REST_XP} XP</b></li>
       <li><span>Woche mit 3 Trainings</span><b>+${weekXp(1)}-${weekXp(9)} XP</b></li>
     </ul>
+    <p class="rules-note">Jede Übung hat einen eigenen Maßstab aus typischen Werten, so zählen Beinpresse und Curls gleich fair. Ein Satz auf diesem Niveau bringt ${LIFT_XP} XP extra, schwerere Sätze mehr.</p>
     <p class="rules-note">Der Wochenbonus steigt mit deiner Serie. Alle ${SHIELD_EVERY} Serien-Wochen gibt es einen Serien-Schutz, höchstens ${SHIELD_MAX}. Schaffst du eine Woche nicht, rettet er deine Serie.</p>
   </section>`;
 }
@@ -227,15 +241,26 @@ function scrollRoadTo(lvl) {
 }
 
 // ---------- Abholen ----------
+// Daten fürs eigene Profilbild, damit neue Effekte gleich daran zu sehen sind.
+const meInfo = () => {
+  const lv = D().level;
+  return { img: avatarUrl(), initial: app.state.profile?.name || '', frameId: equipped(app.state, lv.level).frame.id };
+};
+
+// Je seltener, desto stärker die Vibration.
+const BUZZ = { n: [30], s: [40, 50, 60], e: [50, 60, 160], l: [60, 50, 60, 50, 260] };
+
 function claimOne(lvl, onEquipped = null) {
   const st = stationAt(lvl);
   const lv = D().level;
   if (!st || st.lv <= 1 || st.lv > lv.level || app.state.rewards.claimed.includes(st.lv)) return;
   app.ui.justClaimed = [st.lv];
   claimStations([st.lv]);
+  vibrate(BUZZ[topRarity(st.items).id]);
   rewardReveal({
     items: st.items,
     rankId: lv.rank,
+    me: meInfo(),
     onEquip: () => {
       equipItems(st.items);
       toast(st.items.length > 1 ? 'Alles angelegt' : `${itemLabel(st.items[0])} angelegt`);
@@ -252,7 +277,9 @@ actions['claim-all'] = () => {
   if (list.length === 1) { claimOne(list[0].lv); return; }
   app.ui.justClaimed = list.map((st) => st.lv);
   claimStations(list.map((st) => st.lv));
-  rewardSummary({ items: list.flatMap((st) => st.items), onLook: () => lookSheet() });
+  const items = list.flatMap((st) => st.items);
+  vibrate(BUZZ[topRarity(items).id]);
+  rewardSummary({ items, onLook: () => lookSheet() });
 };
 actions['road-to'] = (ds) => scrollRoadTo(Number(ds.lv));
 actions['look-open'] = (ds) => lookSheet(ds.type || null);
@@ -260,8 +287,9 @@ actions['rank-back'] = () => { if (history.length > 1) history.back(); else navi
 
 // ---------- Look ändern ----------
 function optionPreview(it, rankId) {
-  if (it.type === 'color') return `<span class="orb">${itemOrb(it)}</span>`;
+  if (it.type === 'color' || it.type === 'effect') return rewardOrb(it, { chip: false });
   if (it.type === 'frame') return `<span class="lo-emb">${emblem(rankId, it.id, 46)}</span>`;
+  if (it.type === 'banner') return `<span class="lo-bn">${bannerArt(it.id)}</span>`;
   return '';
 }
 
@@ -269,12 +297,15 @@ function lookOption(it, ctx) {
   const has = owned(app.state, ctx.level, it);
   const ready = !has && it.lv <= ctx.level;
   const on = ctx.look[it.type].id === it.id;
-  const state = on ? 'Aktiv' : has ? '' : ready ? 'Abholen' : `Lv ${it.lv}`;
-  return `<button class="look-opt lo-${it.type} ${on ? 'is-on' : ''} ${has ? '' : ready ? 'is-ready' : 'is-locked'}" data-type="${it.type}" data-id="${it.id}" aria-pressed="${on}">
+  const rar = rarityOf(it);
+  const state = on ? 'Aktiv' : has ? rar.name : ready ? 'Abholen' : `Lv ${it.lv}`;
+  const nameCls = it.type === 'sign' ? 'jp' : it.type === 'title' ? `tt tt-${rar.id}` : '';
+  return `<button class="look-opt lo-${it.type} rar-${rar.id} ${on ? 'is-on' : ''} ${has ? '' : ready ? 'is-ready' : 'is-locked'}" data-type="${it.type}" data-id="${it.id}" aria-pressed="${on}" aria-label="${esc(`${TYPES[it.type].name} ${itemLabel(it)}, ${rar.name}, Rang ${itemRank(it)}`)}">
+    ${rankChip(itemRank(it))}
     ${optionPreview(it, ctx.rank)}
-    <span class="lo-name ${it.type === 'sign' ? 'jp' : ''}">${esc(it.name)}</span>
+    <span class="lo-name ${nameCls}">${esc(it.name)}</span>
     ${it.type === 'sign' ? `<span class="lo-de">${esc(it.de)}</span>` : ''}
-    ${state ? `<small>${has || ready ? '' : icon('lock')}${state}</small>` : ''}
+    <small>${has || ready ? '' : icon('lock')}${state}</small>
   </button>`;
 }
 
@@ -284,7 +315,7 @@ export function lookSheet(focusType = null) {
     const ctx = { level: lv.level, rank: lv.rank, look: equipped(app.state, lv.level) };
     return `
       <h2>Dein Look</h2>
-      <p class="lead">Neues holst du im Rang-Pfad ab.</p>
+      <p class="lead">Neues holst du im Rang-Pfad ab. Banner und Effekt zeigt dein Profil.</p>
       ${TYPE_ORDER.map((t) => `<div class="look-sec" data-sec="${t}">
         <h3>${esc(TYPES[t].plural)}</h3>
         <div class="look-opts look-${t}">${ITEMS.filter((it) => it.type === t).map((it) => lookOption(it, ctx)).join('')}</div>

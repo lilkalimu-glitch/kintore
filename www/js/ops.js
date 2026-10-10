@@ -1,7 +1,7 @@
 // Alle Änderungen an den Daten laufen über diese Funktionen.
 import { app, D, commit, render, replaceState } from './core.js';
 import { today, round2, kg } from './util.js';
-import { e1rmOf, daySummary, nextQuest, questGoal, weekStreak, weekXp, QUEST_XP, REST_XP } from './stats.js';
+import { e1rmOf, daySummary, nextQuest, questGoal, weekStreak, weekXp, levelInfo, QUEST_XP, REST_XP } from './stats.js';
 import { completeExercise } from './model.js';
 import { fixName } from './fitnotes.js';
 import { prBurst, levelUp, rankUp, missionComplete, toast, banner } from './fx.js';
@@ -22,6 +22,20 @@ export const DEFAULT_SETTINGS = {
   barWeight: 20,
   plates: [20, 15, 10, 5, 2.5, 1.25],
 };
+
+// Profil: was dort zu sehen ist, lässt sich einzeln ausblenden.
+export const PROFILE_PARTS = ['motto', 'level', 'lifts', 'stats', 'collection'];
+export const NAME_MAX = 24;
+export const MOTTO_MAX = 80;
+
+function cleanProfile(raw, exIds) {
+  const p = raw && typeof raw === 'object' ? raw : {};
+  const text = (v, max) => (typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, max) : '');
+  const show = {};
+  for (const k of PROFILE_PARTS) show[k] = typeof p.show?.[k] === 'boolean' ? p.show[k] : true;
+  const lifts = Array.isArray(p.lifts) ? [...new Set(p.lifts.map(Number).filter((id) => exIds.has(id)))].slice(0, 3) : [];
+  return { name: text(p.name, NAME_MAX), motto: text(p.motto, MOTTO_MAX), lifts, show };
+}
 
 export function migrate(raw) {
   const s = raw && typeof raw === 'object' ? raw : {};
@@ -60,7 +74,30 @@ export function migrate(raw) {
   s.templates = s.templates.map((t) => ({ ...t, ex: (t.ex || []).filter((id) => exIds.has(id)) }));
   if (s.active && (s.active.d !== today() && !s.active.backfill)) s.active = null;
   if (s.active) s.active.ex = (s.active.ex || []).filter((id) => exIds.has(id));
+  s.profile = cleanProfile(s.profile, exIds);
   return s;
+}
+
+// Einmal nach dem Update auf die neue XP-Rechnung: altes und neues Level merken,
+// damit die Startseite erklärt, warum das Level gestiegen ist.
+export function noteXpRule() {
+  const s = app.state;
+  if ((s.meta.xpRule || 1) >= 2) return;
+  const d = D();
+  const from = levelInfo(d.legacyXp).level;
+  const to = d.level.level;
+  commit((st) => {
+    st.meta.xpRule = 2;
+    if (st.sets.length && to > from) st.meta.xpNote = { from, to };
+  }, { render: false });
+}
+
+// ---------- Profil ----------
+export function saveProfile(patch) {
+  commit((s) => {
+    const next = { ...s.profile, ...patch, show: { ...s.profile.show, ...(patch.show || {}) } };
+    s.profile = cleanProfile(next, new Set(s.exercises.map((e) => e.id)));
+  });
 }
 
 const nextId = (list) => list.reduce((m, x) => Math.max(m, x.id || 0), 0) + 1;

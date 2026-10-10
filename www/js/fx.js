@@ -1,6 +1,9 @@
 // Effekte: NEW PR!, Level-Up, Rang-Aufstieg, Belohnungen, Quest-Banner, Mission Complete, kurze Hinweise.
 import { esc, kg, int, fmtDuration, icon } from './util.js';
-import { TYPES, emblem, itemShowcase, itemOrb, itemLabel, rankColor } from './look.js';
+import {
+  TYPES, RARITIES, emblem, itemShowcase, rewardOrb, rankChip, itemLabel, itemRank, rankColor, rarityOf, rarityIndex, topRarity,
+} from './look.js';
+import { fireRow } from './art.js';
 
 const root = () => document.getElementById('fx-root');
 const reduced = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -25,7 +28,8 @@ function sparkles() {
   return spots.map(([x, y], i) => `<span class="fx-spark" style="left:${x}%;top:${y}%;--d:${i * 70}ms">✦</span>`).join('');
 }
 
-function show(html, { autoClose = 2600, cls = '', style = '', onAct = null } = {}) {
+// lockMs: so lange zählt Antippen nicht, damit der Auftakt seltener Belohnungen nicht weggetippt wird.
+function show(html, { autoClose = 2600, cls = '', style = '', onAct = null, lockMs = 0 } = {}) {
   return new Promise((resolve) => {
     const el = document.createElement('div');
     el.className = 'fx ' + cls + (reduced() ? ' fx-still' : '');
@@ -33,6 +37,7 @@ function show(html, { autoClose = 2600, cls = '', style = '', onAct = null } = {
     if (style) el.setAttribute('style', style);
     el.innerHTML = html;
     root().appendChild(el);
+    const t0 = performance.now();
     let done = false;
     const close = () => {
       if (done) return;
@@ -41,6 +46,7 @@ function show(html, { autoClose = 2600, cls = '', style = '', onAct = null } = {
       setTimeout(() => { el.remove(); resolve(); }, 260);
     };
     el.addEventListener('click', (e) => {
+      if (lockMs && !reduced() && performance.now() - t0 < lockMs) return;
       const act = e.target.closest('[data-fx-act]');
       if (act) { close(); onAct?.(act.dataset.fxAct); return; }
       if (e.target.closest('[data-fx-keep]')) return;
@@ -119,41 +125,67 @@ export function rankUp({ from, to, level, frame = 'hex', rewards = [] }) {
     </div>`, { cls: 'fx-rank', autoClose: rewards.length ? 3600 : 3000, style: `--rc0:${rankColor(from)};--rc1:${rankColor(to)}` }));
 }
 
+// Auftakt je nach Seltenheit: Episch lädt kurz auf, Legendär mit Flammen und Funken.
+function rarityIntro(r) {
+  if (r !== 'e' && r !== 'l') return '';
+  return `<div class="rw-charge" aria-hidden="true"><i></i><b></b></div><div class="rw-flash" aria-hidden="true"></div>
+    ${r === 'l' ? `<div class="rw-fire" aria-hidden="true">${fireRow(11, 5)}</div><div class="rw-embers" aria-hidden="true">${emberRain()}</div>` : ''}`;
+}
+const LOCK = { n: 0, s: 0, e: 950, l: 1500 };
+
+function emberRain() {
+  let out = '';
+  for (let i = 0; i < 18; i++) out += `<i style="left:${(i * 53) % 100}%;--t:${(2 + ((i * 7) % 10) / 6).toFixed(2)}s;--d:${(1.2 + ((i * 13) % 20) / 10).toFixed(2)}s;--dx:${((i * 17) % 40) - 20}px"></i>`;
+  return out;
+}
+
+const rarityHead = (top, rk) => `<div class="rw-head"><span class="rw-rar">${esc(top.name)}</span><span class="rw-from">${rankChip(rk)}aus Rang ${esc(rk)}</span></div>`;
+
 // Eine Station abholen: Belohnung zeigen, auf Wunsch direkt anlegen.
-export function rewardReveal({ items, rankId, onEquip }) {
+// me: eigenes Profilbild, damit ein neuer Effekt gleich daran zu sehen ist.
+export function rewardReveal({ items, rankId, me = {}, onEquip }) {
+  const top = topRarity(items);
+  const rk = itemRank(items[0]);
   enqueue(() => show(`
+    ${rarityIntro(top.id)}
     <div class="rw-rays" aria-hidden="true"></div>
     <div class="fx-tone" aria-hidden="true"></div>
     ${sparkles()}
     <div class="fx-card fx-card-rw" data-fx-keep>
-      <div class="fx-jp" aria-hidden="true">報酬</div>
+      ${rarityHead(top, rk)}
+      <div class="fx-jp" aria-hidden="true">${esc(top.jp)}</div>
       <div class="rw-show ${items.length > 1 ? 'multi' : ''}">
-        ${items.map((it) => `<figure>${itemShowcase(it, rankId)}<figcaption><small>${esc(TYPES[it.type].name)}</small><b>${esc(itemLabel(it))}</b></figcaption></figure>`).join('')}
+        ${items.map((it) => `<figure>${itemShowcase(it, rankId, me)}<figcaption><small>${esc(TYPES[it.type].name)}</small><b>${esc(itemLabel(it))}</b></figcaption></figure>`).join('')}
       </div>
       <div class="row-actions">
         <button class="btn-ghost" data-fx-close>Später</button>
         <button class="btn-neon" data-fx-act="equip">Anlegen</button>
       </div>
-    </div>`, { cls: 'fx-rw', autoClose: 0, onAct: (act) => { if (act === 'equip') onEquip?.(); } }));
+    </div>`, { cls: `fx-rw rw-${top.id}`, autoClose: 0, lockMs: LOCK[top.id], onAct: (act) => { if (act === 'equip') onEquip?.(); } }));
 }
 
-// Mehrere Stationen auf einmal abholen.
+// Mehrere Stationen auf einmal abholen. Die seltensten stehen oben.
 export function rewardSummary({ items, onLook }) {
+  const top = topRarity(items);
+  const sorted = [...items].sort((a, b) => rarityIndex(b) - rarityIndex(a) || b.lv - a.lv);
+  const counts = RARITIES.map((r) => [r, items.filter((it) => rarityOf(it).id === r.id).length]).filter(([, n]) => n).reverse();
   enqueue(() => show(`
+    ${rarityIntro(top.id)}
     <div class="rw-rays" aria-hidden="true"></div>
     <div class="fx-tone" aria-hidden="true"></div>
     ${sparkles()}
     <div class="fx-card fx-card-rw" data-fx-keep>
       <div class="fx-jp" aria-hidden="true">報酬</div>
       <div class="fx-big fx-big-sm">${items.length} Belohnungen</div>
+      <div class="rw-counts">${counts.map(([r, n]) => `<span class="rar-${r.id}"><i></i>${n} ${esc(r.name)}</span>`).join('')}</div>
       <ul class="rw-list">
-        ${items.map((it, i) => `<li style="--i:${i}"><span class="orb is-done">${itemOrb(it)}</span><span><small>${esc(TYPES[it.type].name)}</small><b>${esc(itemLabel(it))}</b></span></li>`).join('')}
+        ${sorted.map((it, i) => `<li class="rar-${rarityOf(it).id}" style="--i:${Math.min(i, 12)}">${rewardOrb(it, { chip: false, cls: 'is-done' })}<span><small>${esc(TYPES[it.type].name)}</small><b>${esc(itemLabel(it))}</b></span><em>${esc(rarityOf(it).name)}</em>${rankChip(itemRank(it))}</li>`).join('')}
       </ul>
       <div class="row-actions">
         <button class="btn-ghost" data-fx-close>Ok</button>
         <button class="btn-neon" data-fx-act="look">Look ändern</button>
       </div>
-    </div>`, { cls: 'fx-rw', autoClose: 0, onAct: (act) => { if (act === 'look') onLook?.(); } }));
+    </div>`, { cls: `fx-rw rw-${top.id} rw-sum`, autoClose: 0, lockMs: LOCK[top.id], onAct: (act) => { if (act === 'look') onLook?.(); } }));
 }
 
 // Kleines Banner oben (blockiert nichts), z. B. Tages-Quest geschafft.

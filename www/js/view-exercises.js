@@ -3,7 +3,8 @@ import { app, D, views, actions, navigate, render, openSheet, closeSheet } from 
 import { esc, icon, kg, int, num1, relDay, fmtDay, fmtShort, today, addDays, fmtLoad, fmtSetText } from './util.js';
 import { CATEGORIES, CAT } from './model.js';
 import { sparkline, lineChart } from './charts.js';
-import { exerciseRecords, trend30, weightFor, catColor, e1rmOf } from './stats.js';
+import { exerciseRecords, trend30, weightFor, catColor, e1rmOf, liftXp, LIFT_XP } from './stats.js';
+import { scaleOf, typicalSet } from './scale.js';
 import { updateExercise, deleteExercise, addToSession, startSession } from './ops.js';
 import { confirmSheet, newExerciseSheet } from './sheets.js';
 import { toast } from './fx.js';
@@ -87,6 +88,23 @@ actions['new-ex'] = () => newExerciseSheet({ name: app.ui.exSearch, onCreated: (
 // ---------- Detail ----------
 const RANGES = { '3m': 91, '6m': 182, '1j': 365, alle: 100000 };
 
+// Maßstab für den Gewichts-Bonus: typischer Satz und was der eigene beste Satz bringt.
+function scaleCard(ex, d) {
+  const sc = d.scales?.get(ex.id) ?? scaleOf(ex);
+  const t = typicalSet(sc);
+  if (!t) return '';
+  const typ = t.bw ? (t.w > 0 ? `+${kg(t.w)} kg × ${t.r}` : `${t.r} Wdh.`) : `${kg(t.w)} kg × ${t.r}`;
+  let best = 0;
+  for (const s of d.setsByEx.get(ex.id) || []) best = Math.max(best, liftXp(sc, s.w, s.r));
+  return `<section class="card pad">
+    <div class="card-title"><h2>XP-Maßstab</h2><span class="hint">Gewichts-Bonus pro Satz</span></div>
+    <div class="kv xs-kv">
+      <div><span>Typischer Satz, +${LIFT_XP} XP</span><b>${typ}</b></div>
+      <div><span>Dein bester Satz</span><b>${best ? `+${best} XP` : '-'}</b></div>
+    </div>
+  </section>`;
+}
+
 function chartFor(ex, d) {
   const sessions = d.sessionsByEx.get(ex.id) || [];
   const from = addDays(today(), -RANGES[app.ui.range]);
@@ -168,6 +186,7 @@ views.uebung = {
           return `<tr><td>${r} Wdh.</td><td>${ex.bw ? (w > 0 ? '+' + kg(Math.round(w * 2) / 2) + ' kg' : 'BW') : kg(Math.round(w * 2) / 2) + ' kg'}</td></tr>`;
         }).join('')}</tbody></table>
       </section>` : `<section class="card pad"><p class="soft" style="margin:0">Noch keine Sätze.</p></section>`}
+      ${scaleCard(ex, d)}
       <section class="card">
         <ul class="set-list">
           <li><span class="grow">Wdh.-Bereich</span><div class="range-pick">${miniStep('range-lo', ex.repMin, 'Untergrenze')}<span class="muted">bis</span>${miniStep('range-hi', ex.repMax, 'Obergrenze')}</div></li>

@@ -4,11 +4,12 @@ import { esc, icon, int, fmtLong, today, relDay, fmtSetText, fmtDate, daysBetwee
 import { nextQuest, progressionTip, weekCats, weekStreak, daySummary, questGoal, weekXp, SHIELD_MAX } from './stats.js';
 import { radarChart } from './charts.js';
 import { startSession } from './ops.js';
-import { emblem, equipped, readyStations } from './look.js';
+import { emblem, equipped, readyStations, rarityOf, signSparks } from './look.js';
+import { myAvatar } from './me.js';
 
 function rankBadge(lv, look, ready) {
   return `<div class="rank-badge">
-    ${emblem(lv.rank, look.frame.id, 58)}
+    ${emblem(lv.rank, look.frame.id, 58, '', { fx: true })}
     ${ready ? `<span class="badge-dot" aria-label="${ready} ${ready === 1 ? 'Belohnung' : 'Belohnungen'} bereit">${ready}</span>` : ''}
     <small>Rang</small>
   </div>`;
@@ -184,6 +185,14 @@ function noticeCard(s) {
       <button class="btn-ghost small" data-act="notice-ok" data-k="welcomeDone">Ok</button>
     </section>`;
   }
+  // Einmal nach dem Update: neue XP-Rechnung erklären.
+  if (m.xpNote && typeof m.xpNote === 'object') {
+    return `<section class="card pad notice">
+      <div class="card-title"><h2>Neue XP-Rechnung</h2><span class="jp" aria-hidden="true">経験値</span></div>
+      <p class="soft">Schwere Sätze bringen jetzt mehr XP. Jede Übung hat dafür einen eigenen Maßstab. Dein Level ist von <b>${m.xpNote.from}</b> auf <b>${m.xpNote.to}</b> gestiegen.</p>
+      <div class="row-actions"><button class="btn-ghost small" data-act="go" data-to="rang">Zum Rang-Pfad</button><button class="btn-ghost small" data-act="notice-ok" data-k="xpNote">Ok</button></div>
+    </section>`;
+  }
   const lastBackup = m.lastBackup;
   const lastSet = s.sets.reduce((a, x) => (x.t && x.t > a ? x.t : a), 0);
   const due = lastSet && (!lastBackup || daysBetween(lastBackup, today()) >= 30) && (!m.backupSnooze || daysBetween(m.backupSnooze, today()) >= 7);
@@ -209,17 +218,18 @@ views.start = {
     const sign = look.sign;
     return `
     <section class="hero">
-      <div class="neon-sign sign-${[...sign.name].length}" role="img" aria-label="${esc(sign.name)}, japanisch für ${esc(sign.de)}">${esc(sign.name)}</div>
+      <div class="neon-sign sign-${[...sign.name].length} sg-${rarityOf(sign).id}" role="img" aria-label="${esc(sign.name)}, japanisch für ${esc(sign.de)}">${esc(sign.name)}${signSparks(sign)}</div>
       <div>
         <div class="brand">
           <div class="brand-name"><b>KINTORE</b><span>${esc(fmtLong(today()))}</span></div>
+          <button class="av-btn" data-act="go" data-to="profil" aria-label="Profil">${myAvatar({ size: 40, deco: false, effect: 'none' })}</button>
           <button class="icon-btn" data-act="go" data-to="einstellungen" aria-label="Einstellungen">${icon('sliders')}</button>
         </div>
         <div class="card status is-link" data-act="go" data-to="rang" role="button" tabindex="0" aria-label="Rang-Pfad öffnen. Level ${lv.level}, Rang ${esc(lv.rank)}">
           <div class="status-top">
             <div class="lv-col">
               <div class="lv"><small>LV</small><b>${lv.level}</b></div>
-              <div class="title-tag">${esc(look.title.name)}</div>
+              <div class="title-tag tt-${rarityOf(look.title).id}">${esc(look.title.name)}</div>
             </div>
             ${rankBadge(lv, look, ready)}
           </div>

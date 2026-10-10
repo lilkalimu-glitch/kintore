@@ -1,9 +1,10 @@
 """Erzeugt Beispieldaten (keine echten Trainingsdaten) für Tests der App.
 
-Aufruf: python3 .claude/tests/beispieldaten.py <tage> <ausgabe.json> [luecke]
+Aufruf: python3 .claude/tests/beispieldaten.py <tage> <ausgabe.json> [luecke|max]
   tage    Wie viele Tage zurück trainiert wird. 0 ergibt eine leere App mit Startdaten.
   luecke  Lässt vor gut einer Woche Trainings aus, damit der Serien-Schutz greift.
-Richtwerte: 85 Tage ergeben etwa Level 19 (Rang C, kurz vor B), 120 Tage etwa Level 23.
+  max     Gibt so viel Bonus-XP, dass der höchste Rang erreicht ist und alle Belohnungen bereitliegen.
+Richtwerte (XP mit Gewichts-Bonus): 85 Tage ergeben etwa Level 25 (Rang B), 120 Tage etwa Level 27.
 """
 import datetime
 import json
@@ -18,6 +19,7 @@ def main():
     days = int(sys.argv[1]) if len(sys.argv) > 1 else 85
     out = sys.argv[2] if len(sys.argv) > 2 else 'beispiel.json'
     gap = len(sys.argv) > 3 and sys.argv[3] == 'luecke'
+    top = len(sys.argv) > 3 and sys.argv[3] == 'max'
     random.seed(7)
     seed = json.loads((ROOT / 'www' / 'data' / 'seed.json').read_text(encoding='utf-8'))
     tpls = {t['id']: t for t in seed['templates']}
@@ -44,7 +46,9 @@ def main():
     state = dict(seed)
     state['sets'] = sets
     state['body'] = body
-    state['meta'] = {'welcomeDone': bool(sets), 'lastBackup': today.isoformat()}
+    state['meta'] = {'welcomeDone': bool(sets), 'lastBackup': today.isoformat(), 'xpRule': 2}
+    if top:
+        state['bonus'] = [{'d': (today - datetime.timedelta(days=400 + i)).isoformat(), 'k': 'quest', 'xp': 1000, 'n': 10} for i in range(300)]
     Path(out).write_text(json.dumps(state), encoding='utf-8')
     print(f'{out}: {len(sets)} Sätze an {len({s["d"] for s in sets})} Tagen')
 

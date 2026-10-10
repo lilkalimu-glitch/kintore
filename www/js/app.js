@@ -2,7 +2,7 @@
 import { app, D, actions, render, navigate, parseHash, onHashChange, onPopState, closeSheet, sheetOpen, TOP, onAfterRender } from './core.js';
 import { applyBackground } from './bg.js';
 import { loadState, persist, flushPersist, loadBg } from './store.js';
-import { migrate } from './ops.js';
+import { migrate, noteXpRule } from './ops.js';
 import { initTimer } from './timer.js';
 import { initNative, exitApp, isNative } from './native.js';
 import { icon } from './util.js';
@@ -14,6 +14,8 @@ import './view-history.js';
 import './view-body.js';
 import './view-settings.js';
 import './view-rank.js';
+import './view-profile.js';
+import { initAvatar } from './me.js';
 
 const TABS = [
   { id: 'start', label: 'Start', icon: 'home' },
@@ -22,7 +24,7 @@ const TABS = [
   { id: 'verlauf', label: 'Verlauf', icon: 'calendar' },
   { id: 'koerper', label: 'Körper', icon: 'scale' },
 ];
-const TAB_OF = { uebung: 'uebungen', einstellungen: 'start', rang: 'start' };
+const TAB_OF = { uebung: 'uebungen', einstellungen: 'start', rang: 'start', profil: 'start' };
 
 // Neon-Farbe aus dem Rang-Pfad auf die ganze App legen.
 const updateLook = () => { if (app.state) applyLook(equipped(app.state, D().level.level)); };
@@ -109,6 +111,7 @@ async function boot() {
   }
   app.state = migrate(loaded.state);
   if (loaded.origin !== 'db') persist(app.state);
+  noteXpRule();
 
   renderTabs();
   initTimer(() => app.state.settings);
@@ -128,6 +131,7 @@ async function boot() {
   });
 
   applyBackground(await loadBg());
+  await initAvatar();
   app.route = parseHash();
   if (!location.hash) history.replaceState(null, '', '#/start');
   render({ entering: true });

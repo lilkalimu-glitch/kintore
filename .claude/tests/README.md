@@ -7,8 +7,9 @@ Die Beispieldaten sind erfunden, echte Trainingsdaten gehören nicht ins Repo.
 
 ```sh
 python3 -m http.server 8080 --directory www > /dev/null 2>&1 &
-python3 .claude/tests/beispieldaten.py 85 /tmp/kt/beispiel.json      # etwa Level 19, kurz vor Rang B
+python3 .claude/tests/beispieldaten.py 85 /tmp/kt/beispiel.json      # etwa Level 25, Rang B
 python3 .claude/tests/beispieldaten.py 120 /tmp/kt/luecke.json luecke # Serie mit geretteter Woche
+python3 .claude/tests/beispieldaten.py 85 /tmp/kt/max.json max        # höchster Rang, alle Belohnungen bereit
 ```
 
 ## Ablauf bei einer Änderung
@@ -23,6 +24,9 @@ python3 .claude/tests/beispieldaten.py 120 /tmp/kt/luecke.json luecke # Serie mi
 5. Leere App prüfen: `python3 .claude/tests/screenshots.py leer /tmp/kt/leer`
 6. Logik prüfen: `node .claude/tests/logik.test.mjs`
 7. Animationen mit `--bewegung` aufnehmen und die Bilder ansehen.
+
+Seltenheiten im Pfad prüfen: mit `max.json` die Seite `rang` öffnen und Stationen einzeln abholen (Level 3 Normal,
+24 Selten, 41 Episch, 52 Legendär). Das Profil liegt unter `profil`.
 
 `screenshots.py` meldet Konsolenfehler und horizontales Scrollen und endet dann mit Exit-Code 1.
 Über `await import('./js/ops.js')` in `page.evaluate` lassen sich Sätze eintragen, um Level-Up, Rang-Aufstieg

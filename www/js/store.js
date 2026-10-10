@@ -118,4 +118,9 @@ export function flushPersist() {
 
 export const loadBg = () => idbGet(BG_KEY);
 export const saveBg = (dataUrl) => (dataUrl ? idbSet(BG_KEY, dataUrl) : idbDel(BG_KEY));
+
+// Profilbild: wie das Hintergrundbild getrennt von den Trainingsdaten gespeichert.
+const AVATAR_KEY = 'avatar';
+export const loadAvatar = () => idbGet(AVATAR_KEY);
+export const saveAvatar = (dataUrl) => (dataUrl ? idbSet(AVATAR_KEY, dataUrl) : idbDel(AVATAR_KEY));
 export const clearAll = async () => { await idbDel(KEY); await idbDel(BG_KEY); };

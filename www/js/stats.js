@@ -1,6 +1,7 @@
 // Berechnungen: Bestleistungen, Level, Wochen-Radar, Rotation, Steigerungs-Tipps.
 import { CAT, RADAR_CATS } from './model.js';
 import { today, addDays, daysBetween, weekStart, round2 } from './util.js';
+import { scaleOf, BODY } from './scale.js';
 
 // Geschätztes Maximum für 1 Wiederholung (Epley, ab 12 Wdh. gedeckelt).
 export const e1rmOf = (load, reps) => {
@@ -28,8 +29,23 @@ export const RANKS = [
 ];
 export const rankOf = (level) => [...RANKS].reverse().find((r) => level >= r.min).id;
 export const rankById = (id) => RANKS.find((r) => r.id === id) || RANKS[0];
-export const xpForSet = (s) => (s.r > 0 ? 10 + Math.min(s.r, 30) : 0);
 export const PR_XP = 50;
+
+// ---------- XP pro Satz ----------
+// Grundwert: 10 XP plus 1 pro Wiederholung (höchstens 30), wie bisher.
+// Dazu der Gewichts-Bonus: geschätztes 1RM des Satzes im Verhältnis zum Maßstab der Übung (scale.js).
+// Ein Satz auf typischem Niveau bringt LIFT_XP, doppelt so stark das Doppelte, mehr zählt nicht.
+// Weil der Bonus nur dazukommt, hat niemand durch die neue Rechnung weniger XP als vorher.
+export const LIFT_XP = 15;
+export const LIFT_CAP = 2;
+export const baseXp = (s) => (s.r > 0 ? 10 + Math.min(s.r, 30) : 0);
+export function liftRatio(scale, w, r) {
+  if (!scale || !(r > 0)) return 0;
+  const load = scale.bw ? BODY + Math.max(0, w || 0) : w;
+  return load > 0 ? e1rmOf(load, r) / scale.ref : 0;
+}
+export const liftXp = (scale, w, r) => Math.round(LIFT_XP * Math.min(LIFT_CAP, liftRatio(scale, w, r)));
+export const xpForSet = (s, scale = null) => baseXp(s) + liftXp(scale, s.w, s.r);
 // XP, ab der ein Level erreicht ist.
 export const xpAt = (level) => (level <= 1 ? 0 : XP_K * level * level);
 
@@ -120,12 +136,17 @@ export function derive(state) {
     }
   }
 
+  // Maßstab einmal pro Übung bestimmen.
+  const scales = new Map(state.exercises.map((e) => [e.id, scaleOf(e)]));
   let xp = 0;
+  let liftTotal = 0;
   let tonnage = 0;
   let setCount = 0;
   for (const s of sorted) {
     if (s.r > 0) setCount++;
-    xp += xpForSet(s);
+    const lift = liftXp(scales.get(s.ex), s.w, s.r);
+    xp += baseXp(s) + lift;
+    liftTotal += lift;
     tonnage += loadOf(exById.get(s.ex), s.w) * Math.min(s.r, 100);
   }
   xp += prIds.size * PR_XP;
@@ -139,8 +160,10 @@ export function derive(state) {
 
   return {
     exById, bw, loadOf, sorted, setsByEx, sessionsByEx, days, dates, lastUsed,
-    prIds, prEvents, bestE1, bonusByDay,
+    prIds, prEvents, bestE1, bonusByDay, scales,
     level: levelInfo(xp),
+    // XP nach der alten Rechnung (ohne Gewichts-Bonus), für den Hinweis nach dem Update.
+    legacyXp: xp - liftTotal,
     totals: { sets: setCount, days: dates.length, tonnage },
   };
 }
@@ -325,7 +348,7 @@ export function daySummary(state, d, date) {
   let sets = 0;
   for (const s of day.sets) {
     vol += d.loadOf(d.exById.get(s.ex), s.w) * s.r;
-    xp += xpForSet(s);
+    xp += xpForSet(s, d.scales?.get(s.ex));
     if (s.r > 0) sets++;
     if (d.prIds.has(s.id)) { prs++; xp += PR_XP; }
   }
