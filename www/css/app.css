@@ -1425,7 +1425,7 @@ body.intro-open { overflow: hidden; }
 .lp-cfx { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
 .lp-cfx > .efx { position: absolute; inset: 0; }
 .lp-row { position: relative; z-index: 2; display: flex; align-items: flex-end; gap: 16px; margin-top: -26px; padding: 0 12px 12px 18px; }
-.lp-av { flex: none; margin-right: 4px; }
+.lp-av { flex: none; margin-right: 12px; }
 .lp-txt { display: grid; gap: 2px; min-width: 0; padding-bottom: 2px; }
 .lp-name { font: italic 700 20px/1.1 var(--font-display); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; background: linear-gradient(92deg, #fff 10%, var(--acc-tint2) 55%, #BDF8FF 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .lp .title-tag { margin-top: 0; font-size: 12px; }
