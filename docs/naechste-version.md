@@ -1,15 +1,17 @@
 # Nächste Version von KINTORE
 
 Stand: 10. Oktober 2026. Aktuelle Version: 2.6 (Seltenheit, XP nach Gewicht, Profil).
-Geplant für Version 2.7: eigene Knöpfe, ein volleres Profil, klare Bedienung mit kurzer Einführung und neue Banner
-nach Vorlagen des Besitzers.
+Geplant für Version 2.7: eine App, die jeder sofort versteht. Dazu ruhigere eigene Knöpfe, ein volleres Profil,
+eine kurze Einführung, klare Rückmeldungen, nichts springt mehr zurück, und neue Banner nach Vorlagen des Besitzers.
+Vorher wird gründlich recherchiert, wie man eine App wirklich benutzerfreundlich baut (Punkt 7).
 
 Dieser Plan ist mit dem Besitzer abgestimmt. Was hier steht, ist entschieden. Neue Ideen, die hier
 nicht stehen, erst mit ihm absprechen und nicht einfach einbauen.
 
 ## Ziel
 
-Das Profil soll voll und hochwertig wirken, und man soll sofort verstehen, wo man was findet und ändert.
+Die App soll für jeden einfach zu bedienen sein und dabei hochwertig aussehen. Das Profil soll voll wirken,
+und man soll sofort verstehen, wo man was findet und ändert. Der Neon-Anime-Stil bleibt und wird besser.
 
 ## 1. Eigene Knöpfe statt Standard-Look
 
@@ -17,6 +19,9 @@ Das Profil soll voll und hochwertig wirken, und man soll sofort verstehen, wo ma
       KI-App aus. Sie bekommen einen eigenen KINTORE-Stil.
 - [ ] Eckige Neon-Knöpfe mit abgeschrägten Ecken wie in einem Game-Menü, ohne Glitzer-Symbol.
 - [ ] Bearbeiten als kleiner Stift direkt am Profilbild statt eines großen Knopfs.
+- [ ] Weniger Glas: Ein Kollege fand die glasartigen Knöpfe übertrieben. Knöpfe sehen normaler und ruhiger aus,
+      ohne dicken Glanz und ohne buntes Leuchten darunter. Das betrifft vor allem den großen Hauptknopf
+      (zum Beispiel Speichern, Anlegen, Training beenden) und die durchsichtigen Knöpfe daneben.
 
 ## 2. Profil voller
 
@@ -35,6 +40,29 @@ Das Profil soll voll und hochwertig wirken, und man soll sofort verstehen, wo ma
 
 - [ ] Neue Banner im Stil der Referenzbilder, die der Besitzer schickt.
 
+## 5. Nichts springt zurück
+
+- [ ] Nach dem Antippen bleibt man genau da, wo man war. Keine Leiste, keine Liste und kein Fenster springt an den
+      Anfang zurück oder baut sich sichtbar neu auf.
+- [ ] Gefunden: Unter Übungen springt die Leiste mit den Muskelgruppen nach dem Antippen wieder an den Anfang.
+      Beim Bearbeiten einer Vorlage baut sich das Fenster nach jedem Antippen neu auf.
+- [ ] Alle Seiten und Fenster darauf durchgehen, nicht nur die gefundenen Stellen.
+
+## 6. Klare Rückmeldung
+
+- [ ] Nach jeder Aktion sieht man klar, dass sie geklappt hat.
+- [ ] Körpergewicht: Ist das heutige Gewicht eingetragen, sieht man das auf der Seite, nicht nur kurz als Hinweis.
+      Man erkennt also jederzeit, dass für heute schon etwas drin ist.
+
+## 7. Für jeden einfach zu bedienen
+
+- [ ] Vor dem Bauen gründlich und professionell recherchieren, wie man eine App wirklich benutzerfreundlich baut:
+      Richtlinien von Google und Apple, Regeln für Barrierefreiheit (WCAG) und bewährte Usability-Regeln.
+      Daraus eine kurze Liste mit Regeln für KINTORE machen und die ganze App danach prüfen.
+- [ ] Die App ist so einfach, dass wirklich jeder sie ohne Erklärung versteht, auch ohne Technik-Erfahrung
+      oder mit Einschränkungen, zum Beispiel beim Sehen oder beim Tippen.
+- [ ] Der Stil bleibt erhalten und wird dabei verbessert.
+
 ## Noch offen
 
 Vor dem Bauen kurz beim Besitzer nachfragen:
@@ -48,6 +76,16 @@ Steht in `fahrplan.md`: Online-Funktionen, App Stores und ein neues Design.
 
 ## Hinweise für die Umsetzung
 
+- Reihenfolge: zuerst die Recherche aus Punkt 7, weil sie Knöpfe, Einführung und Rückmeldungen beeinflusst.
+  Dem Besitzer die Regeln kurz zeigen, bevor viel umgebaut wird.
+- Muskelgruppen-Leiste: `actions['ex-cat']` in `www/js/view-exercises.js` zeichnet die ganze Seite neu, dabei geht
+  die Position der Leiste verloren (gemessen: von 368 auf 0).
+- Vorlage bearbeiten: `templateEditor` in `www/js/sheets.js` ruft bei jedem Antippen `openSheet` neu auf. Das
+  Fenster entsteht neu, die Einblend-Animation läuft wieder und die Scroll-Position im Fenster geht verloren.
+- Körpergewicht: `actions['body-save']` in `www/js/view-body.js` zeigt nach dem Speichern nur einen kurzen
+  `toast`, die Karte zum Eintragen sieht danach aus wie vorher.
+- Prüfhilfe: `python3 .claude/tests/springen.py <state.json>` misst, ob Ansichten nach dem Antippen zurückspringen.
+  Neue Stellen dort ergänzen.
 - Knöpfe: `.btn-neon`, `.btn-ghost`, `.btn-claim` und `.link-btn` in `www/css/app.css` werden in der ganzen App
   benutzt. Der neue Stil ändert deshalb viele Seiten, im Bildvergleich darf sich sonst nichts verschieben.
   Das Glitzer-Symbol (`sparkle`) steckt in mehreren Knöpfen und Zeilen.

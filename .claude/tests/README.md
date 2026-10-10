@@ -24,6 +24,8 @@ python3 .claude/tests/beispieldaten.py 85 /tmp/kt/max.json max        # höchste
 5. Leere App prüfen: `python3 .claude/tests/screenshots.py leer /tmp/kt/leer`
 6. Logik prüfen: `node .claude/tests/logik.test.mjs`
 7. Animationen mit `--bewegung` aufnehmen und die Bilder ansehen.
+8. Springen prüfen: `python3 .claude/tests/springen.py /tmp/kt/beispiel.json` misst, ob Leisten, Listen oder
+   Fenster nach dem Antippen zurückspringen oder sich neu aufbauen. Stand 2.6: zwei bekannte Stellen springen.
 
 Seltenheiten im Pfad prüfen: mit `max.json` die Seite `rang` öffnen und Stationen einzeln abholen (Level 3 Normal,
 24 Selten, 41 Episch, 52 Legendär). Das Profil liegt unter `profil`.
