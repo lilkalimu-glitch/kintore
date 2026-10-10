@@ -21,7 +21,10 @@ Neue Versionen einfach über die alte installieren, die Daten bleiben.
 - Training mit Vorlagen (Pull, Push, Beine), Pausen-Timer und Notizen
 - Steigerungs-Tipp nach Doppelprogression
 - Rekorde mit PR-Animation, Level und Ränge von E bis SS
-- Rang-Pfad mit Belohnungen zum Abholen: Neon-Farben, Titel, Rahmen und Neon-Schilder
+- Rang-Pfad mit Belohnungen zum Abholen: Neon-Farben, Titel, Rahmen, Neon-Schilder, Banner und Effekte
+- Seltenheit von Normal bis Legendär, je nach Rang, aus dem eine Belohnung kommt
+- XP nach Gewicht mit eigenem Maßstab pro Übung, so zählen Beinpresse und Curls gleich fair
+- Profil mit Banner, Profilbild im Rahmen, Bestwerten und Sammlung
 - Tages-Quest und Wochen-Serie mit Bonus-XP, Serien-Schutz für verpasste Wochen
 - Diagramme und 1RM-Schätzung pro Übung, Scheibenrechner für die Langhantel
 - Kalender, Körpergewicht, eigenes Hintergrundbild
