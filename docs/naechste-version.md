@@ -1,7 +1,8 @@
 # Nächste Version von KINTORE
 
-Stand: 10. Oktober 2026. Aktuelle Version: 2.7 (einfache Bedienung, eigene Knöpfe, volleres Profil,
-9 neue Banner nach Vorlagen des Besitzers).
+Stand: 10. Oktober 2026. Aktuelle Version: 2.8 (Release v2.8). Darin steckt der ganze Plan 2.7: einfache Bedienung,
+eigene Knöpfe, volleres Profil und 9 neue Banner nach Vorlagen des Besitzers. Die Nummer der APK zählt jeden Build mit,
+deshalb heißt sie 2.8.
 
 Für die nächste Version ist noch nichts geplant. Neue Wünsche mit dem Besitzer abstimmen und dann hier eintragen,
 alles Spätere in `fahrplan.md`. Schreibt der Besitzer nur `kintore`, ihn fragen, was als Nächstes kommt.
