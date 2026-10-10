@@ -3,6 +3,10 @@
 Öffentliches Repository einer Android-App: Gym-Tracker im Neon-Anime-Stil.
 Projektsprache ist Deutsch: Texte in der App, Code-Kommentare, Commit-Nachrichten und Doku.
 
+## Nächste Version
+Der abgestimmte Plan steht in `docs/naechste-version.md`. Schreibt der Besitzer nur `kintore`, diesen Plan umsetzen:
+erst die Punkte unter "Noch offen" klären, dann bauen, testen und ausliefern. Erledigtes dort abhaken.
+
 ## Regeln
 - Keine persönlichen Trainings- oder Körperdaten committen. `www/data/seed.json` enthält nur Übungsliste und Vorlagen
   und wird mit `node scripts/make-starter.mjs` erzeugt.
@@ -34,7 +38,10 @@ Projektsprache ist Deutsch: Texte in der App, Code-Kommentare, Commit-Nachrichte
 
 ## Testen
 - `python3 -m http.server 8080 --directory www` und im Handy-Format (393 × 852) mit Playwright oder Browser prüfen.
+- Fertige Hilfen in `.claude/tests/` (Anleitung in der README dort): Beispieldaten erzeugen, Screenshots aller Seiten,
+  Bildvergleich vorher/nachher und Logik-Tests für Level, XP, Serie und Belohnungen.
 - Vor dem Push: keine Konsolenfehler, kein horizontales Scrollen, alle Ansichten aufrufbar, auch mit leeren Daten.
+  Seiten, die sich nicht ändern sollen, per Bildvergleich gegen den Stand vorher prüfen.
 
 ## Texte in der App
 Kurz und umgangssprachlich, wie ein normaler Gym-Tracker. Keine Gedankenstriche, keine Pfeile im Fließtext,
