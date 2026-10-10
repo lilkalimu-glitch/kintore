@@ -37,7 +37,7 @@ Vor dem Bauen kurz beim Besitzer nachfragen:
 
 ## Später, nicht in der nächsten Version
 
-- Online-Version, in der andere mitmachen und Profile ansehen können.
+Steht in `fahrplan.md`: Online-Funktionen, App Stores und ein neues Design.
 
 ## Hinweise für die Umsetzung
 

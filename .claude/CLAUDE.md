@@ -3,9 +3,13 @@
 Öffentliches Repository einer Android-App: Gym-Tracker im Neon-Anime-Stil.
 Projektsprache ist Deutsch: Texte in der App, Code-Kommentare, Commit-Nachrichten und Doku.
 
-## Nächste Version
-Der abgestimmte Plan steht in `docs/naechste-version.md`. Schreibt der Besitzer nur `kintore`, diesen Plan umsetzen:
-erst die Punkte unter "Noch offen" klären, dann bauen, testen und ausliefern. Erledigtes dort abhaken.
+## Pläne
+- `docs/naechste-version.md`: abgestimmter Plan für die nächste Version. Schreibt der Besitzer nur `kintore`, diesen
+  Plan umsetzen: erst die Punkte unter "Noch offen" klären, dann bauen, testen und ausliefern.
+- `docs/fahrplan.md`: grobe Pläne für später (Online, App Stores, Design). Nicht ohne Absprache bauen.
+- Erledigtes abhaken (`[x]`), nicht löschen.
+- Neue Wünsche des Besitzers sauber umformulieren, von ihm bestätigen lassen und dann eintragen: alles für die nächste
+  Version in `docs/naechste-version.md`, alles Spätere in `docs/fahrplan.md`.
 
 ## Regeln
 - Keine persönlichen Trainings- oder Körperdaten committen. `www/data/seed.json` enthält nur Übungsliste und Vorlagen
