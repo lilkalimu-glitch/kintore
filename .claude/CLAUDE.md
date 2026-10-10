@@ -59,7 +59,8 @@ Projektsprache ist Deutsch: Texte in der App, Code-Kommentare, Commit-Nachrichte
 - `python3 -m http.server 8080 --directory www` und im Handy-Format (393 × 852) mit Playwright oder Browser prüfen.
 - Fertige Hilfen in `.claude/tests/` (Anleitung in der README dort): Beispieldaten erzeugen, Screenshots aller Seiten,
   Bildvergleich vorher/nachher, Logik-Tests für Level, XP, Serie und Belohnungen, Springen und die Regeln für die
-  Bedienung (`bedienung.py`: Tippflächen, Namen für TalkBack, Schriftgröße, 130 % System-Schrift).
+  Bedienung (`bedienung.py`: Tippflächen, Namen für TalkBack, Schriftgröße, 130 % System-Schrift) und Tempo
+  (`tempo.py`: Reaktionszeit mit gedrosseltem Prozessor wie auf einem Mittelklasse-Handy, Ziele aus dem Plan).
 - Vor dem Push: keine Konsolenfehler, kein horizontales Scrollen, alle Ansichten aufrufbar, auch mit leeren Daten.
   Seiten, die sich nicht ändern sollen, per Bildvergleich gegen den Stand vorher prüfen.
 
@@ -69,6 +70,10 @@ keine typografischen Anführungszeichen, keine rhetorischen Fragen, keine Werbes
 und keine Beteuerungen zum Datenschutz. Bereiche mit Bindestrich schreiben (`8-12 Wdh.`).
 
 ## Design
+Wird mit dem Plan in `docs/naechste-version.md` (Schritt 1) umgebaut: neuer ruhiger Standard wie eine Store-App,
+ohne Glas, Leuchten und japanische Zeichen, dazu ein helles Design. Der bisherige Look bleibt als Design Neon.
+Bis der Umbau fertig ist, beschreibt der Rest dieses Abschnitts den bisherigen Look, danach nur noch das Design Neon.
+
 Navy-Grund, Glas-Karten, Neon-Glow in Pink, Cyan und Violett. Schriften: Adventor (Titel und Zahlen), Inter (Text).
 Japanische Schriftzeichen nur als Deko (Neon-Schild, Wasserzeichen in Seitenköpfen, Banner). Keine bekannten
 Anime-Figuren, auch nicht aus Referenzbildern des Besitzers: nur Stimmung, Farben und Motive übernehmen.

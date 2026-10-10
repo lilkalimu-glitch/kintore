@@ -4,8 +4,142 @@ Stand: 10. Oktober 2026. Aktuelle Version: 2.8 (Release v2.8). Darin steckt der 
 eigene Knöpfe, volleres Profil und 9 neue Banner nach Vorlagen des Besitzers. Die Nummer der APK zählt jeden Build mit,
 deshalb heißt sie 2.8.
 
-Für die nächste Version ist noch nichts geplant. Neue Wünsche mit dem Besitzer abstimmen und dann hier eintragen,
-alles Spätere in `fahrplan.md`. Schreibt der Besitzer nur `kintore`, ihn fragen, was als Nächstes kommt.
+Der Plan unten ist am 10. Oktober 2026 mit dem Besitzer abgestimmt. Er kommt in drei Schritten, jeder Schritt endet
+mit einer eigenen APK zum Testen: erst Schritt 1, dann 2, dann 3. Erledigtes abhaken, nicht löschen.
+
+## Warum
+
+Rückmeldungen zu Version 2.8 aus dem Umfeld des Besitzers: Manche Knöpfe sehen immer noch nach KI aus, die App
+reagiert etwas verzögert, und für die japanischen Zeichen wurde er ausgelacht. Er will deshalb eine schnellere App,
+ein deutlich erweitertes Profil und ein Design, das wie eine Store-App wirkt und nicht kitschig. Designs und Sprache
+sollen umstellbar sein, Werte beim Eintragen und im Profil realistisch. Claude sollte außerdem überlegen, was im
+Vergleich zu Store-Apps fehlt. Das Ergebnis steht für später in `fahrplan.md` unter "Funktionen wie in Store-Apps".
+
+## Noch offen
+
+- [ ] Entwürfe: Nach der Tempo-APK 2 bis 3 Seiten im neuen Standard-Design als Entwurf zeigen, zum Beispiel Start,
+      Training und Profil. Der Besitzer bestätigt Akzentfarbe, Schrift und Knöpfe. Erst danach die ganze App umbauen.
+
+## Schritt 1: Schnell und erwachsen
+
+### Tempo (zuerst, als eigene APK noch im alten Look)
+
+- [ ] Jede Reaktion auf Antippen braucht unter 0,1 Sekunden, der Rang-Pfad öffnet in unter 0,3 Sekunden, Scrollen
+      läuft flüssig. Gemessen mit `.claude/tests/tempo.py`, Ausgangswerte unter "Hinweise für den Bau".
+- [ ] Nach einer Änderung wird nur neu gezeichnet, was sich wirklich ändert, nicht die ganze Seite.
+- [ ] Rang-Pfad: Nur die Stationen zeichnen, die man sieht oder gleich sieht. Animationen laufen nur, solange sie
+      zu sehen sind.
+- [ ] Look-Fenster: Vorschau und Auswahl nur für den offenen Reiter bauen.
+- [ ] Satz speichern bleibt auch mit Jahren an Verlauf schnell: nur nachrechnen, was sich geändert hat.
+- [ ] Sichern läuft im Hintergrund, die App stockt dabei nie, auch nicht auf dem Handy mit der Datei-Kopie.
+
+### Neues Standard-Design wie eine Store-App
+
+- [ ] Ruhiger dunkler Grund, flache Karten, eine Akzentfarbe, gerade klare Schrift ohne kursive Titel. Kein Glas,
+      kein Leuchten, keine Farbverläufe.
+- [ ] Neue Knöpfe: normal abgerundet, der Hauptknopf in der Akzentfarbe, die anderen grau. Keine abgeschrägten
+      Ecken mehr im Standard.
+- [ ] Alle Symbole aus einem einheitlichen Satz, gleiche Strichstärke und Größe.
+- [ ] Alle Seiten und Fenster umbauen, nicht nur einzelne: Start, Training, Übungen, Verlauf, Körper, Einstellungen,
+      Rang-Pfad, Profil, alle Fenster, Hinweise, Einführung und die Effekte beim Abholen.
+- [ ] Level, Rang, Rang-Pfad und Belohnungen bleiben, nur ruhiger dargestellt, zum Beispiel mit flachem
+      Rang-Abzeichen statt Leucht-Sechseck.
+- [ ] Neues App-Symbol und Startbild ohne Kanji und ohne Glitzer-Stern.
+
+### Japanische Zeichen
+
+- [ ] Im Standard keine japanischen Zeichen mehr: kein Neon-Schild auf der Startseite, keine Zeichen hinter den
+      Überschriften, kein 休息日 neben Ruhetag, kein 筋 als Platzhalter.
+- [ ] Ohne Foto zeigt das Profilbild die Initialen.
+- [ ] Der Name KINTORE bleibt, in lateinischer Schrift.
+- [ ] Neon-Schilder gibt es zusätzlich mit einem Wort statt Schriftzeichen, zum Beispiel DISZIPLIN.
+- [ ] Belohnungen mit Kanji (Neon-Schilder, einige Banner) bleiben im Rang-Pfad. Man muss sie nicht tragen.
+
+### Designs zum Wählen
+
+- [ ] In den Einstellungen: Dunkel (neu, Standard), Hell und Neon (der bisherige Look).
+- [ ] Im Design Neon lassen sich die japanischen Zeichen wieder einschalten.
+- [ ] Die Farben aus dem Rang-Pfad gelten in jedem Design als Akzentfarbe.
+
+## Schritt 2: Profil und realistische Werte
+
+### Profil
+
+- [ ] Angaben zur Person, alle freiwillig und ausblendbar: Größe, Alter, Geschlecht, Ziel (zum Beispiel Muskelaufbau
+      oder Kraft), Erfahrung, Trainingstage pro Woche und seit wann man trainiert.
+- [ ] Stärke-Einordnung: Bei Bankdrücken, Kniebeuge, Kreuzheben und weiteren Hauptübungen sieht man, wo man im
+      Verhältnis zum Körpergewicht steht, von Anfänger bis Elite.
+- [ ] Muskel-Karte: Körper von vorn und hinten, zeigt, welche Muskeln diese Woche trainiert wurden.
+- [ ] Erfolge: viele kleine Meilensteine, zum Beispiel 100 Trainings, 1.000 Sätze oder 100 kg Bankdrücken.
+- [ ] Mehr Statistik: Trainings pro Woche, Dauer und Volumen pro Muskelgruppe.
+- [ ] Profil als Bild teilen, zum Beispiel in WhatsApp oder Instagram.
+
+### Realistische Werte
+
+- [ ] Eingaben prüfen: Sieht ein Wert unrealistisch aus, fragt die App kurz nach, zum Beispiel bei 250 kg für Curls,
+      80 Wiederholungen oder 15 kg mehr Körpergewicht als beim letzten Eintrag. Das gilt überall gleich: Training,
+      Satz ändern, Körper und Einstellungen. Heute gehen beim Satz ändern sogar 5.000 kg oder 0 Wiederholungen durch.
+- [ ] Passende Startwerte: Eine Übung ohne Verlauf schlägt ein Gewicht vor, das zu Übung, Körpergewicht und
+      Erfahrung passt, statt immer 20 kg.
+
+### Einrichtung beim ersten Start
+
+- [ ] Kurz und überspringbar: Name, Ziel, Erfahrung und Körperdaten. Später im Profil änderbar.
+
+## Schritt 3: Sprachen
+
+- [ ] Deutsch, Englisch und Türkisch. Die App startet in der Sprache vom Handy und lässt sich in den Einstellungen
+      umstellen.
+- [ ] Übersetzt werden alle Texte, Muskelgruppen, Belohnungen, Datum und Zahlen. Übungsnamen bleiben, wie sie sind.
+
+## Geklärt
+
+- Am 10. Oktober 2026 mit dem Besitzer geklärt: Reihenfolge Tempo, Design, Profil, Sprachen. Das Design kommt vor
+  dem Profil, damit das neue Profil nicht zweimal gebaut wird.
+- Realistische Werte heißt: Eingaben prüfen, passende Startwerte und Körperdaten fürs Profil.
+- Sprachen: Deutsch, Englisch und Türkisch.
+- Japanische Zeichen: im Standard keine, im Design Neon wieder einschaltbar.
+
+## Hinweise für den Bau
+
+Gemessen am 10. Oktober 2026 mit `python3 .claude/tests/tempo.py`, Prozessor 4-fach gedrosselt wie bei einem
+Mittelklasse-Handy, mehrere Läufe. Daten aus `beispieldaten.py 85` und `beispieldaten.py 1100`:
+
+| Aktion | 816 Sätze | 10.608 Sätze (3 Jahre) |
+|---|---|---|
+| Start bis die Seite steht | 0,45-1,0 s | 0,65-0,95 s |
+| Rang-Pfad öffnen | 1,1-1,3 s | 1,0-1,2 s |
+| Look-Fenster öffnen | 0,4 s | 0,3-0,4 s |
+| Training starten | 0,1-0,17 s | 0,19-0,25 s |
+| Satz speichern | 0,07-0,17 s | 0,11-0,35 s |
+| Profil öffnen | 0,1-0,22 s | 0,1-0,16 s |
+| Tab Körper | 0,14 s | 0,11-0,13 s |
+| Andere Tabs, Plus und Minus, Muskelgruppe | unter 0,1 s | unter 0,1 s |
+
+- Rang-Pfad: knapp 3.000 Elemente auf einmal, 255-297 laufende Animationen, rund 240 Schatten und 70 Leuchtschriften.
+  Profil: 378 Elemente und 55-68 Animationen.
+- `render()` in `www/js/core.js` baut nach jeder Änderung die ganze Seite neu. `derive()` in `www/js/stats.js`
+  rechnet nach jeder Änderung den ganzen Verlauf neu (3 Jahre: etwa 25 ms pro Durchlauf, gedrosselt).
+- Grafik, die der Test nicht misst, die auf Android aber viel kostet: `backdrop-filter` auf jeder `.card`, auf
+  `#tabs`, `#timer` und `.sheet-backdrop`, über 100 Schatten mit Leuchten, Leuchtschrift (`text-shadow`) und
+  Endlos-Animationen, die bei jedem Bild neu malen (`dot-pulse`, `flow`, `holo`, `sign-on`). Auch im Design Neon die
+  Unschärfe durch fast deckende Flächen ersetzen.
+- Sichern: Im Browser blieb nach dem Speichern jede Blockade unter 50 ms. Auf dem Handy kommt die Datei-Kopie über
+  Capacitor dazu (`mirrorWrite` in `www/js/store.js`, der ganze Stand als Text, bei 3 Jahren etwa 620 KB). Das auf
+  dem Gerät prüfen.
+- Designs über CSS-Variablen und `:root[data-theme]`, die Akzentfarbe bleibt in `--acc*`. Neue Einstellungen
+  (Design, japanische Zeichen) in `state.settings` und in `migrate()` abfangen.
+- Nach dem Umbau den Abschnitt Design in `.claude/CLAUDE.md` neu schreiben: Der neue Look ist der Standard, Neon ist
+  eines von drei Designs. Die Regeln aus `docs/bedienung.md` gelten weiter. `bedienung.py` für jedes Design laufen
+  lassen, im hellen Design besonders auf Kontrast achten.
+- Teilen: `@capacitor/share` ist schon eingebunden. Das Bild fürs Profil selbst als SVG zeichnen und über ein Canvas
+  in ein PNG umwandeln.
+- Stärke-Richtwerte als eigene Tabelle (Verhältnis zum Körpergewicht, nach Geschlecht), keine Tabellen von anderen
+  Seiten übernehmen. Die Maßstäbe in `www/js/scale.js` sind ein Anfang.
+- Neue Profilfelder in `state.profile`, immer in `migrate()` abfangen. Keine echten Körperdaten committen.
+- Sprachen: In den Schriften fehlen ğ, Ğ, İ, ş und Ş. Vor Schritt 3 `scripts/build-fonts.py` erweitern und die
+  Schriften neu bauen. Texte in Wörterbücher ziehen, Datum und Zahlen über `Intl` in der gewählten Sprache. Die
+  Regeln für Texte in der App gelten in jeder Sprache.
 
 ## Erledigt in Version 2.7
 

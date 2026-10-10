@@ -20,8 +20,32 @@ Noch nichts davon ist im Detail geplant. Vor dem Bauen jeweils mit ihm abstimmen
 
 ## Design
 
+Beides steht seit dem 10. Oktober 2026 im Plan für die nächste Version (`naechste-version.md`, Schritt 1).
+
 - [ ] Sauber und professionell wie eine marktfertige App, die jeden anspricht
 - [ ] Design noch mal überdenken, damit es jeder gern benutzt und es nicht nur kitschig wirkt
+
+## Funktionen wie in Store-Apps
+
+Vorschläge von Claude nach einem Vergleich mit Hevy, Strong, Fitbod und Jefit. Am 10. Oktober 2026 vom Besitzer
+für später bestätigt. Einzelnes kann auch früher kommen.
+
+- [ ] Körpermaße (zum Beispiel Arm, Brust, Taille) und Fortschrittsfotos
+- [ ] Aufwärmsätze und Drop-Sätze
+- [ ] Anstrengung pro Satz (RPE)
+- [ ] Supersätze
+- [ ] Kurze Anleitung pro Übung
+- [ ] Training als Bild teilen
+- [ ] Erinnerung an Trainingstage
+- [ ] Widget für den Startbildschirm
+- [ ] Gewicht in Pfund (lb)
+- [ ] Export als Tabelle (CSV)
+- [ ] Verbindung zu Health Connect
+
+Quellen:
+- [Hevy: Funktionen](https://www.hevyapp.com/features/)
+- [Jefit: Vergleich von Trainings-Apps 2026](https://www.jefit.com/blog/10-best-workout-tracker-apps-in-2026-complete-comparison-guide)
+- [Sensai: Hevy, Strong, Fitbod und Jefit im Vergleich](https://www.sensai.fit/blog/hevy-vs-strong-vs-fitbod-vs-jefit)
 
 ## Gut zu wissen
 
