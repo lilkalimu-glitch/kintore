@@ -35,6 +35,7 @@ views.koerper = {
     const diff = a7 != null && p7 != null ? a7 - p7 : null;
     const goal = Number(s.settings.goalWeight) > 0 ? Number(s.settings.goalWeight) : null;
     const rev = [...list].reverse().slice(0, 30);
+    const todayEntry = list.find((b) => b.d === t);
     return `
     <header class="head">
       <span class="jp-mark" aria-hidden="true">体重</span>
@@ -54,12 +55,13 @@ views.koerper = {
         ${lineChart({ points: shown.map((b) => ({ x: b.d, y: b.kg, label: fmtShort(b.d) })), avg, goal, width: chartWidth(), height: 200, color: '#9B6BFF', yFmt: (v) => kg(Math.round(v * 10) / 10), unit: 'kg', label: 'Körpergewicht', area: true })}
         <div class="legend" style="margin:8px 0 0"><span><i style="border-top-color:#FF4FA3"></i>Schnitt 7 Tage</span></div>` : ''}
       </section>
-      <section class="card pad">
-        <div class="card-title"><h2>Eintragen</h2></div>
+      <section class="card pad body-entry ${todayEntry ? 'is-done' : ''}">
+        <div class="card-title"><h2>Eintragen</h2>${todayEntry ? '' : '<span class="hint">Heute noch offen</span>'}</div>
+        ${todayEntry ? `<div class="done-row ${app.ui.bodyJust ? 'is-new' : ''}">${icon('check')}<span>Heute eingetragen</span><b>${kg(todayEntry.kg)} kg</b></div>` : ''}
         <div class="entry-row">
           <label class="field" style="margin:0"><span>Datum</span><input class="input" type="date" data-body-date value="${t}" max="${t}"></label>
           <label class="field" style="margin:0"><span>Gewicht (kg)</span><input class="input input-big" inputmode="decimal" data-body-kg value="${last ? kg(last.kg) : ''}" placeholder="74,5"></label>
-          <button class="save-set" data-act="body-save" aria-label="Gewicht speichern">${icon('check')}</button>
+          <button class="save-set" data-act="body-save" aria-label="${todayEntry ? 'Gewicht speichern, ersetzt den Eintrag vom gewählten Tag' : 'Gewicht speichern'}">${icon('check')}</button>
         </div>
       </section>
       ${rev.length ? `<section class="card pad">
@@ -81,8 +83,11 @@ actions['body-save'] = () => {
   const v = parseNum(document.querySelector('[data-body-kg]')?.value);
   if (!(v > 20 && v < 400)) { toast('Bitte ein gültiges Gewicht eingeben.'); return; }
   if (d > today()) { toast('Das Datum liegt in der Zukunft.'); return; }
+  // Der Hinweis "Heute eingetragen" bleibt auf der Seite stehen und leuchtet einmal kurz auf.
+  app.ui.bodyJust = d === today();
   setBody(d, v);
-  toast(`${kg(v)} kg gespeichert`);
+  app.ui.bodyJust = false;
+  toast(d === today() ? `${kg(v)} kg für heute gespeichert` : `${kg(v)} kg für ${fmtDay(d)} gespeichert`);
 };
 actions['body-edit'] = (ds) => {
   const entry = app.state.body.find((b) => b.d === ds.d);
@@ -96,6 +101,7 @@ actions['body-edit'] = (ds) => {
       if (!(v > 20 && v < 400)) { toast('Bitte ein gültiges Gewicht eingeben.'); return; }
       await closeSheet();
       setBody(entry.d, v);
+      toast(`${kg(v)} kg gespeichert`);
     } else if (e.target.closest('[data-del]')) {
       await closeSheet();
       deleteBody(entry.d);

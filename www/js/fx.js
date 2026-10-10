@@ -232,5 +232,6 @@ export function toast(msg, action = null) {
   clearTimeout(toastTimer);
   el.innerHTML = `<div class="toast"><span>${esc(msg)}</span>${action ? `<button class="toast-btn">${esc(action.label)}</button>` : ''}</div>`;
   if (action) el.querySelector('.toast-btn').addEventListener('click', () => { el.innerHTML = ''; action.run(); });
-  toastTimer = setTimeout(() => { el.innerHTML = ''; }, action ? 5200 : 3200);
+  // Lange genug stehen lassen, um es in Ruhe zu lesen. Mit Knopf (zum Beispiel Rückgängig) länger.
+  toastTimer = setTimeout(() => { el.innerHTML = ''; }, action ? 6500 : 4000);
 }

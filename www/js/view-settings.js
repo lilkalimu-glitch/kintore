@@ -14,7 +14,7 @@ import { equipped, APP_TYPES } from './look.js';
 let bgCache = null;
 
 function sw(key, on) {
-  return `<label class="switch"><input type="checkbox" data-setting="${key}" ${on ? 'checked' : ''}><span></span></label>`;
+  return `<span class="switch"><input type="checkbox" data-setting="${key}" ${on ? 'checked' : ''}><span></span></span>`;
 }
 function mini(act, value, label) {
   return `<div class="mini-step"><button data-act="${act}" data-dir="-1" aria-label="${label} verringern">${icon('minus')}</button><output>${value}</output><button data-act="${act}" data-dir="1" aria-label="${label} erhöhen">${icon('plus')}</button></div>`;
@@ -36,11 +36,11 @@ views.einstellungen = {
 
     <h2 class="group-title">Pausen-Timer</h2>
     <section class="card"><ul class="set-list">
-      <li><span class="grow">Nach jedem Satz starten</span>${sw('restAuto', st.restAuto)}</li>
-      <li><span class="grow">Eigene Pause je Übung</span>${sw('useExerciseRest', st.useExerciseRest)}</li>
+      <li><label class="sw-row"><span class="grow">Nach jedem Satz starten</span>${sw('restAuto', st.restAuto)}</label></li>
+      <li><label class="sw-row"><span class="grow">Eigene Pause je Übung</span>${sw('useExerciseRest', st.useExerciseRest)}</label></li>
       <li><span class="grow">Standard-Pause</span>${mini('set-rest', fmtClock(st.restDefault), 'Standard-Pause')}</li>
-      <li><span class="grow">Vibration am Ende</span>${sw('restVibrate', st.restVibrate)}</li>
-      <li><span class="grow">Mitteilung bei gesperrtem Handy${isNative() ? '' : '<small>Nur in der Android-App</small>'}</span>${sw('restNotify', st.restNotify)}</li>
+      <li><label class="sw-row"><span class="grow">Vibration am Ende</span>${sw('restVibrate', st.restVibrate)}</label></li>
+      <li><label class="sw-row"><span class="grow">Mitteilung bei gesperrtem Handy${isNative() ? '' : '<small>Nur in der Android-App</small>'}</span>${sw('restNotify', st.restNotify)}</label></li>
     </ul></section>
 
     <h2 class="group-title">Training</h2>
@@ -48,13 +48,13 @@ views.einstellungen = {
       <li><button class="row-btn" data-act="edit-templates">${icon('layers')}<span class="grow">Vorlagen<small>${esc(s.templates.map((t) => t.name).join(', ') || 'Keine')}</small></span>${icon('right')}</button></li>
       <li><span class="grow">Langhantel</span>${mini('set-bar', kg(st.barWeight) + ' kg', 'Hantelgewicht')}</li>
       <li><button class="row-btn" data-act="set-bw">${icon('scale')}<span class="grow">Körpergewicht für Klimmzüge und Dips<small>${bwAuto ? `Automatisch: letzter Eintrag (${kg(d.bw)} kg)` : `Fest: ${kg(st.bwManual)} kg`}</small></span>${icon('right')}</button></li>
-      <li><button class="row-btn" data-act="set-goal">${icon('sparkle')}<span class="grow">Zielgewicht<small>${Number(st.goalWeight) > 0 ? `${kg(st.goalWeight)} kg` : 'Nicht gesetzt'}</small></span>${icon('right')}</button></li>
+      <li><button class="row-btn" data-act="set-goal">${icon('target')}<span class="grow">Zielgewicht<small>${Number(st.goalWeight) > 0 ? `${kg(st.goalWeight)} kg` : 'Nicht gesetzt'}</small></span>${icon('right')}</button></li>
     </ul></section>
 
     <h2 class="group-title">Aussehen</h2>
     <section class="card"><ul class="set-list">
       <li><button class="row-btn" data-act="go" data-to="profil">${icon('image')}<span class="grow">Profil<small>${esc(s.profile.name || 'Name und Bild')}</small></span>${icon('right')}</button></li>
-      <li><button class="row-btn" data-act="look-open">${icon('sparkle')}<span class="grow">Dein Look<small>${esc(APP_TYPES.map((t) => look[t].name).join(', '))}</small></span>${icon('right')}</button></li>
+      <li><button class="row-btn" data-act="look-open">${icon('palette')}<span class="grow">Dein Look<small>${esc(APP_TYPES.map((t) => look[t].name).join(', '))}</small></span>${icon('right')}</button></li>
       <li><span class="bg-preview" data-bg-preview></span><span class="grow">Hintergrundbild</span>
         <label class="btn-ghost small">Wählen<input type="file" accept="image/*" data-bg-file class="visually-hidden"></label></li>
       <li data-bg-only><span class="grow">Abdunkeln</span><input type="range" min="0" max="0.9" step="0.05" value="${st.bgDim}" data-range="bgDim" aria-label="Abdunkeln" style="max-width:150px"></li>
@@ -238,7 +238,7 @@ actions['set-bw'] = () => numberSheet({
   value: app.state.settings.bwManual,
   placeholder: kg(D().bw),
   allowEmpty: 'Automatisch verwenden',
-  onSave: (v) => commit((s) => { s.settings.bwManual = v; }),
+  onSave: (v) => { commit((s) => { s.settings.bwManual = v; }); toast(v ? `Fest: ${kg(v)} kg` : 'Nimmt jetzt den letzten Eintrag'); },
 });
 
 actions['set-goal'] = () => numberSheet({
@@ -247,7 +247,7 @@ actions['set-goal'] = () => numberSheet({
   value: app.state.settings.goalWeight,
   placeholder: 'z. B. 80',
   allowEmpty: 'Kein Ziel',
-  onSave: (v) => commit((s) => { s.settings.goalWeight = v; }),
+  onSave: (v) => { commit((s) => { s.settings.goalWeight = v; }); toast(v ? `Zielgewicht ${kg(v)} kg gespeichert` : 'Kein Zielgewicht mehr'); },
 });
 
 actions['bg-remove'] = async () => {
@@ -255,6 +255,7 @@ actions['bg-remove'] = async () => {
   bgCache = '';
   applyBackground(null);
   render();
+  toast('Hintergrundbild entfernt');
 };
 
 actions['backup-save'] = async () => {

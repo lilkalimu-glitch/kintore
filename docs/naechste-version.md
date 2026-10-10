@@ -1,105 +1,95 @@
 # Nächste Version von KINTORE
 
-Stand: 10. Oktober 2026. Aktuelle Version: 2.6 (Seltenheit, XP nach Gewicht, Profil).
-Geplant für Version 2.7: eine App, die jeder sofort versteht. Dazu ruhigere eigene Knöpfe, ein volleres Profil,
-eine kurze Einführung, klare Rückmeldungen, nichts springt mehr zurück, und neue Banner nach Vorlagen des Besitzers.
-Vorher wird gründlich recherchiert, wie man eine App wirklich benutzerfreundlich baut (Punkt 7).
+Stand: 10. Oktober 2026. Aktuelle Version: 2.7 (einfache Bedienung, eigene Knöpfe, volleres Profil,
+9 neue Banner nach Vorlagen des Besitzers).
 
-Dieser Plan ist mit dem Besitzer abgestimmt. Was hier steht, ist entschieden. Neue Ideen, die hier
-nicht stehen, erst mit ihm absprechen und nicht einfach einbauen.
+Für die nächste Version ist noch nichts geplant. Neue Wünsche mit dem Besitzer abstimmen und dann hier eintragen,
+alles Spätere in `fahrplan.md`. Schreibt der Besitzer nur `kintore`, ihn fragen, was als Nächstes kommt.
 
-## Ziel
+## Erledigt in Version 2.7
 
-Die App soll für jeden einfach zu bedienen sein und dabei hochwertig aussehen. Das Profil soll voll wirken,
-und man soll sofort verstehen, wo man was findet und ändert. Der Neon-Anime-Stil bleibt und wird besser.
+Ziel war: Die App soll für jeden einfach zu bedienen sein und dabei hochwertig aussehen. Das Profil soll voll
+wirken, und man soll sofort verstehen, wo man was findet und ändert. Der Neon-Anime-Stil bleibt und wird besser.
 
-## 1. Eigene Knöpfe statt Standard-Look
+### 1. Eigene Knöpfe statt Standard-Look
 
-- [ ] Die Knöpfe unten im Profil (Bearbeiten, Look) und ähnliche Knöpfe in der App sehen zu sehr nach typischer
+- [x] Die Knöpfe unten im Profil (Bearbeiten, Look) und ähnliche Knöpfe in der App sehen zu sehr nach typischer
       KI-App aus. Sie bekommen einen eigenen KINTORE-Stil.
-- [ ] Eckige Neon-Knöpfe mit abgeschrägten Ecken wie in einem Game-Menü, ohne Glitzer-Symbol.
-- [ ] Bearbeiten als kleiner Stift direkt am Profilbild statt eines großen Knopfs.
-- [ ] Weniger Glas: Ein Kollege fand die glasartigen Knöpfe übertrieben. Knöpfe sehen normaler und ruhiger aus,
+- [x] Eckige Neon-Knöpfe mit abgeschrägten Ecken wie in einem Game-Menü, ohne Glitzer-Symbol.
+- [x] Bearbeiten als kleiner Stift direkt am Profilbild statt eines großen Knopfs.
+- [x] Weniger Glas: Ein Kollege fand die glasartigen Knöpfe übertrieben. Knöpfe sehen normaler und ruhiger aus,
       ohne dicken Glanz und ohne buntes Leuchten darunter. Das betrifft vor allem den großen Hauptknopf
       (zum Beispiel Speichern, Anlegen, Training beenden) und die durchsichtigen Knöpfe daneben.
 
-## 2. Profil voller
+### 2. Profil voller
 
-- [ ] Das Profil soll nicht leer wirken, die Effekte sollen mehr zu sehen sein.
-- [ ] Größerer Banner und Effekte über die ganze Profilkarte statt nur ums Profilbild.
-- [ ] Abzeichen unter dem Namen, zum Beispiel Rang, Serie und Rekorde.
-- [ ] Neon-Kalender mit den letzten Trainingswochen.
+- [x] Das Profil soll nicht leer wirken, die Effekte sollen mehr zu sehen sein.
+- [x] Größerer Banner und Effekte über die ganze Profilkarte statt nur ums Profilbild.
+- [x] Abzeichen unter dem Namen, zum Beispiel Rang, Serie und Rekorde.
+- [x] Neon-Kalender mit den letzten Trainingswochen.
 
-## 3. Klar, wo was ist
+### 3. Klar, wo was ist
 
-- [ ] Man versteht sofort, wo man was findet und ändert.
-- [ ] Banner, Rahmen, Effekt und die anderen Teile vom Look lassen sich direkt im Profil antippen und ändern.
-- [ ] Kurze Einführung für Profil und Rang-Pfad: nur beim ersten Öffnen, wenige kurze Schritte, überspringbar.
+- [x] Man versteht sofort, wo man was findet und ändert.
+- [x] Banner, Rahmen, Effekt und die anderen Teile vom Look lassen sich direkt im Profil antippen und ändern.
+- [x] Kurze Einführung für Profil und Rang-Pfad: nur beim ersten Öffnen, wenige kurze Schritte, überspringbar.
 
-## 4. Banner nach Vorlagen des Besitzers
+### 4. Banner nach Vorlagen des Besitzers
 
-- [ ] Neue Banner im Stil der Referenzbilder, die der Besitzer schickt.
+- [x] Neue Banner im Stil der Referenzbilder, die der Besitzer schickt.
 
-## 5. Nichts springt zurück
+### 5. Nichts springt zurück
 
-- [ ] Nach dem Antippen bleibt man genau da, wo man war. Keine Leiste, keine Liste und kein Fenster springt an den
+- [x] Nach dem Antippen bleibt man genau da, wo man war. Keine Leiste, keine Liste und kein Fenster springt an den
       Anfang zurück oder baut sich sichtbar neu auf.
-- [ ] Gefunden: Unter Übungen springt die Leiste mit den Muskelgruppen nach dem Antippen wieder an den Anfang.
+- [x] Gefunden: Unter Übungen springt die Leiste mit den Muskelgruppen nach dem Antippen wieder an den Anfang.
       Beim Bearbeiten einer Vorlage baut sich das Fenster nach jedem Antippen neu auf.
-- [ ] Alle Seiten und Fenster darauf durchgehen, nicht nur die gefundenen Stellen.
+- [x] Alle Seiten und Fenster darauf durchgehen, nicht nur die gefundenen Stellen.
 
-## 6. Klare Rückmeldung
+### 6. Klare Rückmeldung
 
-- [ ] Nach jeder Aktion sieht man klar, dass sie geklappt hat.
-- [ ] Körpergewicht: Ist das heutige Gewicht eingetragen, sieht man das auf der Seite, nicht nur kurz als Hinweis.
+- [x] Nach jeder Aktion sieht man klar, dass sie geklappt hat.
+- [x] Körpergewicht: Ist das heutige Gewicht eingetragen, sieht man das auf der Seite, nicht nur kurz als Hinweis.
       Man erkennt also jederzeit, dass für heute schon etwas drin ist.
 
-## 7. Für jeden einfach zu bedienen
+### 7. Für jeden einfach zu bedienen
 
-- [ ] Vor dem Bauen gründlich und professionell recherchieren, wie man eine App wirklich benutzerfreundlich baut:
+- [x] Vor dem Bauen gründlich und professionell recherchieren, wie man eine App wirklich benutzerfreundlich baut:
       Richtlinien von Google und Apple, Regeln für Barrierefreiheit (WCAG) und bewährte Usability-Regeln.
       Daraus eine kurze Liste mit Regeln für KINTORE machen und die ganze App danach prüfen.
-- [ ] Die App ist so einfach, dass wirklich jeder sie ohne Erklärung versteht, auch ohne Technik-Erfahrung
+- [x] Die App ist so einfach, dass wirklich jeder sie ohne Erklärung versteht, auch ohne Technik-Erfahrung
       oder mit Einschränkungen, zum Beispiel beim Sehen oder beim Tippen.
-- [ ] Der Stil bleibt erhalten und wird dabei verbessert.
+- [x] Der Stil bleibt erhalten und wird dabei verbessert.
 
-## Noch offen
+### Geklärt
 
-Vor dem Bauen kurz beim Besitzer nachfragen:
+- Referenzbilder: 9 Bilder vom Besitzer (rote Pinselschrift, Auge, Manga-Seite, Lava-Palast, Ritter mit
+  Finsternis, Feuerwirbel, Lichtstrahl, Klinge im Regen, Schwarzes Loch). Am 10. Oktober 2026 mit ihm geklärt:
+  9 Banner, eins pro Bild, verteilt ab Level 15. Je höher, desto besonderer, ab Rang A bewegt.
+  Figuren aus den Bildern werden nicht nachgezeichnet, übernommen sind Stimmung, Farben und Motive.
 
-- Referenzbilder für die Banner: schickt der Besitzer im nächsten Chat. Erst ansehen, dann mit ihm klären,
-  wie viele Banner es werden und ab welchem Level sie kommen.
+### Hinweise aus Version 2.7
 
-## Später, nicht in der nächsten Version
-
-Steht in `fahrplan.md`: Online-Funktionen, App Stores und ein neues Design.
-
-## Hinweise für die Umsetzung
-
-- Reihenfolge: zuerst die Recherche aus Punkt 7, weil sie Knöpfe, Einführung und Rückmeldungen beeinflusst.
-  Dem Besitzer die Regeln kurz zeigen, bevor viel umgebaut wird.
-- Muskelgruppen-Leiste: `actions['ex-cat']` in `www/js/view-exercises.js` zeichnet die ganze Seite neu, dabei geht
-  die Position der Leiste verloren (gemessen: von 368 auf 0).
-- Vorlage bearbeiten: `templateEditor` in `www/js/sheets.js` ruft bei jedem Antippen `openSheet` neu auf. Das
-  Fenster entsteht neu, die Einblend-Animation läuft wieder und die Scroll-Position im Fenster geht verloren.
-- Körpergewicht: `actions['body-save']` in `www/js/view-body.js` zeigt nach dem Speichern nur einen kurzen
-  `toast`, die Karte zum Eintragen sieht danach aus wie vorher.
-- Prüfhilfe: `python3 .claude/tests/springen.py <state.json>` misst, ob Ansichten nach dem Antippen zurückspringen.
-  Neue Stellen dort ergänzen.
-- Knöpfe: `.btn-neon`, `.btn-ghost`, `.btn-claim` und `.link-btn` in `www/css/app.css` werden in der ganzen App
-  benutzt. Der neue Stil ändert deshalb viele Seiten, im Bildvergleich darf sich sonst nichts verschieben.
-  Das Glitzer-Symbol (`sparkle`) steckt in mehreren Knöpfen und Zeilen.
-- Profilbild: Antippen des Stifts öffnet Bearbeiten (Bild, Name, Motto). Antippen von Banner, Rahmen, Titel
-  oder Effekt öffnet die passende Auswahl (`lookSheet(type)` in `www/js/view-rank.js`).
-- Effekte über die ganze Karte: `effectParts()` in `www/js/art.js` liefert schon einen Teil `card`, bisher nur
-  beim Sternenregen. Auf dem Handy flüssig bleiben, nur `transform` und `opacity` bewegen.
-- Abzeichen und Kalender aus vorhandenen Daten: Rang aus `D().level`, Serie aus `weekStreak`, Rekorde aus
-  `D().prEvents`, Trainingstage aus `D().dates`.
-- Einführung: Gesehenes in `state.meta` merken (zum Beispiel `meta.intro`), mit "weniger Bewegung" ohne Animation.
-- Neue Banner zeichnet `www/js/art.js` bisher nur mit SVG und CSS. Wenn die Vorlagen echte Bilder brauchen,
-  vorher mit dem Besitzer klären, wie groß die APK dadurch werden darf.
-- Testen mit `.claude/tests/` (Beispieldaten, Screenshots, Bildvergleich, Logik-Tests).
-- Wenn ein Punkt fertig ist, hier abhaken (`[x]`) und den Stand oben anpassen.
+- Regeln für die Bedienung: `docs/bedienung.md`. Neue Ansichten und Knöpfe danach bauen und mit
+  `python3 .claude/tests/bedienung.py <state.json>` prüfen.
+- Neue Banner (nur SVG und CSS, in `www/js/banners.js`): Tusche 15, Klinge 19, Manga-Panel 22, Himmelslicht 28,
+  Finsternis 33 (selten, stehen still), Das Auge 40, Unterwelt 48 (episch, bewegt), Schwarzes Loch 60,
+  Feuersturm 65 (legendär). Wer schon weiter ist, kann sie nach dem Update gleich im Rang-Pfad abholen.
+  Kanji und Katakana darin sind Pfade aus Noto Serif CJK und Noto Sans CJK, dafür war kein neuer Schriftbau nötig.
+- Knöpfe: `.btn-neon` (Hauptknopf, gefüllt, dunkle Schrift), `.btn-ghost` (Rand), `.btn-danger` (Löschen),
+  `.btn-dashed` (Hinzufügen). Die abgeschrägte Form zeichnen `::before` und `::after`, der Knopf bleibt ein
+  Rechteck und damit voll antippbar. Kleine Knöpfe bekommen unsichtbar mehr Tippfläche über `::after`.
+- Nichts springt (`www/js/core.js`): Leisten mit `data-keep` behalten ihre Position, der angetippte Knopf bleibt
+  an seiner Stelle (gilt nicht für Knöpfe mit `data-anchor="none"`, zum Beispiel "Ältere anzeigen"),
+  Deko mit `data-persist` wird beim Neuzeichnen übernommen, damit Animationen weiterlaufen. `openSheet` tauscht
+  in einem offenen Fenster nur den Inhalt (`keep` behält die Scroll-Position) und gibt `.sheet-body` zurück.
+- Profil: Banner 184 px hoch, Effekte haben jetzt einen Teil `card` für die ganze Karte (`www/js/art.js`).
+  Neuer Profil-Teil `calendar` (Trainingstage der letzten 16 Wochen, ausblendbar).
+- Look ändern: ein Fenster mit Vorschau (Mini-Profil) und Reitern für die sechs Teile (`lookSheet(type)`).
+- Einführung: `www/js/intro.js`, gesehen steht in `state.meta.intro` (`profil`, `rang`).
+- Körper: Ist heute eingetragen, steht das dauerhaft auf der Karte zum Eintragen.
+- Android: Größere Schrift aus den Android-Einstellungen gilt jetzt auch in der App, höchstens 130 %
+  (`scripts/patch-android.py`). Vorher war die Schriftgröße fest.
 
 ## Erledigt in Version 2.6
 

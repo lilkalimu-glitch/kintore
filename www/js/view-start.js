@@ -136,7 +136,7 @@ function streakBlock(s, ws) {
   else shieldText = `Nächster Schutz in ${ws.nextShieldIn} ${ws.nextShieldIn === 1 ? 'Woche' : 'Wochen'}`;
   return `<div class="streak">${icon('flame')}<span>${ws.streak ? `<b>${ws.streak} ${ws.streak === 1 ? 'Woche' : 'Wochen'}</b> in Folge mit 3+ Trainings` : '3 Trainings in einer Woche starten eine Serie'}</span></div>
     <div class="streak-more">
-      <div class="sm-row">${icon('sparkle')}<span>${bonusText}</span></div>
+      <div class="sm-row">${icon('gift')}<span>${bonusText}</span></div>
       <div class="sm-row"><span class="shields" aria-label="${ws.shields} von ${SHIELD_MAX} Serien-Schutz">${slots}</span><span>${esc(shieldText)}</span></div>
     </div>`;
 }
@@ -218,7 +218,7 @@ views.start = {
     const sign = look.sign;
     return `
     <section class="hero">
-      <div class="neon-sign sign-${[...sign.name].length} sg-${rarityOf(sign).id}" role="img" aria-label="${esc(sign.name)}, japanisch für ${esc(sign.de)}">${esc(sign.name)}${signSparks(sign)}</div>
+      <div class="neon-sign sign-${[...sign.name].length} sg-${rarityOf(sign).id}" role="img" aria-label="${esc(sign.name)}, japanisch für ${esc(sign.de)}" data-persist="sign-${esc(sign.id)}">${esc(sign.name)}${signSparks(sign)}</div>
       <div>
         <div class="brand">
           <div class="brand-name"><b>KINTORE</b><span>${esc(fmtLong(today()))}</span></div>

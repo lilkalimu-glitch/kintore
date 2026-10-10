@@ -66,7 +66,7 @@ views.uebungen = {
       <p class="sub">${d.setsByEx.size ? `${d.setsByEx.size} trainiert, ${int(d.prEvents.length)} Rekorde` : `${app.state.exercises.filter((e) => !e.hidden).length} Übungen`}</p>
     </header>
     <label class="search">${icon('search')}<input type="search" placeholder="Übung suchen" value="${esc(ui.exSearch)}" data-ex-search aria-label="Übung suchen"></label>
-    <div class="cat-row" role="tablist" aria-label="Muskelgruppe">
+    <div class="cat-row" role="tablist" aria-label="Muskelgruppe" data-keep="cat-row">
       <button class="cat-chip ${ui.exCat === 'alle' ? 'is-on' : ''}" style="--c:#EEF1FF" data-act="ex-cat" data-cat="alle" role="tab" aria-selected="${ui.exCat === 'alle'}"><i></i>Alle</button>
       ${CATEGORIES.filter((c) => app.state.exercises.some((e) => e.cat === c.id && !e.hidden)).map((c) => `<button class="cat-chip ${ui.exCat === c.id ? 'is-on' : ''}" style="--c:${c.color}" data-act="ex-cat" data-cat="${c.id}" role="tab" aria-selected="${ui.exCat === c.id}"><i></i>${esc(c.name)}</button>`).join('')}
     </div>
@@ -81,7 +81,19 @@ views.uebungen = {
   },
 };
 
-actions['ex-cat'] = (ds) => { app.ui.exCat = ds.cat; render(); };
+// Nur Auswahl und Liste ändern sich, die Leiste bleibt, wo sie ist.
+actions['ex-cat'] = (ds) => {
+  app.ui.exCat = ds.cat;
+  const main = document.getElementById('view');
+  const body = main?.querySelector('[data-ex-body]');
+  if (!body) { render(); return; }
+  main.querySelectorAll('.cat-row .cat-chip').forEach((b) => {
+    const on = b.dataset.cat === ds.cat;
+    b.classList.toggle('is-on', on);
+    b.setAttribute('aria-selected', String(on));
+  });
+  body.innerHTML = listBody(D());
+};
 actions['toggle-unused'] = () => { app.ui.exShowAll = !app.ui.exShowAll; const b = document.querySelector('[data-ex-body]'); if (b) b.innerHTML = listBody(D()); };
 actions['new-ex'] = () => newExerciseSheet({ name: app.ui.exSearch, onCreated: (id) => navigate('uebung', id) });
 
@@ -177,7 +189,7 @@ views.uebung = {
       </section>
       <section class="card pad">
         <div class="card-title"><h2>Bestwerte</h2><span class="hint">je Wiederholungszahl</span></div>
-        <div class="rec-grid">${records.map((r) => `<div class="rec ${bestRec && r.r === bestRec.r ? 'best' : ''}"><span>${r.r} Wdh.</span><b>${fmtLoad(ex, r.w)}${ex.bw && !(r.w > 0) ? '' : ' kg'}</b></div>`).join('')}</div>
+        <div class="rec-grid">${records.map((r) => `<div class="rec ${bestRec && r.r === bestRec.r ? 'best' : ''}"><span>${r.r} Wdh.${bestRec && r.r === bestRec.r ? ` ${icon('star', 'rec-star')}<i class="visually-hidden">, bester Wert</i>` : ''}</span><b>${fmtLoad(ex, r.w)}${ex.bw && !(r.w > 0) ? '' : ' kg'}</b></div>`).join('')}</div>
       </section>
       <section class="card pad">
         <div class="card-title"><h2>Schätzung</h2><span class="hint">aus deinem 1RM</span></div>
@@ -192,8 +204,8 @@ views.uebung = {
           <li><span class="grow">Wdh.-Bereich</span><div class="range-pick">${miniStep('range-lo', ex.repMin, 'Untergrenze')}<span class="muted">bis</span>${miniStep('range-hi', ex.repMax, 'Obergrenze')}</div></li>
           <li><span class="grow">Gewichtssprung</span>${miniStep('inc', kg(ex.inc) + ' kg', 'Steigerung')}</li>
           <li><span class="grow">Pause</span>${miniStep('rest', Math.floor(ex.rest / 60) + ':' + String(ex.rest % 60).padStart(2, '0'), 'Pause')}</li>
-          <li><span class="grow">Langhantel<small>Scheiben pro Seite anzeigen</small></span><label class="switch"><input type="checkbox" data-ex-flag="bar" ${ex.bar ? 'checked' : ''}><span></span></label></li>
-          <li><span class="grow">Körpergewicht-Übung<small>Gewicht = Zusatzgewicht</small></span><label class="switch"><input type="checkbox" data-ex-flag="bw" ${ex.bw ? 'checked' : ''}><span></span></label></li>
+          <li><label class="sw-row"><span class="grow">Langhantel<small>Scheiben pro Seite anzeigen</small></span><span class="switch"><input type="checkbox" data-ex-flag="bar" ${ex.bar ? 'checked' : ''}><span></span></span></label></li>
+          <li><label class="sw-row"><span class="grow">Körpergewicht-Übung<small>Gewicht = Zusatzgewicht</small></span><span class="switch"><input type="checkbox" data-ex-flag="bw" ${ex.bw ? 'checked' : ''}><span></span></span></label></li>
           <li><button class="row-btn" data-act="ex-cat-pick">${icon('layers')}<span class="grow">Muskelgruppe<small>${esc(CAT[ex.cat]?.name || '')}</small></span>${icon('right')}</button></li>
           <li><button class="row-btn" data-act="ex-note">${icon('note')}<span class="grow">Notiz zur Übung<small>${esc(ex.notes ? ex.notes.slice(0, 60) : 'z. B. Sitzhöhe 4, Griff eng')}</small></span>${icon('right')}</button></li>
         </ul>
@@ -203,8 +215,8 @@ views.uebung = {
       ${hist.length ? `<section class="card pad">
         <div class="card-title"><h2>Verlauf</h2><span class="hint">${hist.length} Einheiten</span></div>
         ${shown.map((s) => `<div class="hist-day"><h3><span>${esc(fmtDay(s.d))}</span><span class="muted">1RM ${ex.bw ? '+' : ''}${kg(Math.round((ex.bw ? s.best - d.bw : s.best) * 10) / 10)} kg</span></h3>
-          <div class="hist-sets">${s.sets.map((x) => `<button class="hs ${d.prIds.has(x.id) ? 'is-pr' : ''}" data-act="edit-set" data-id="${x.id}">${fmtLoad(ex, x.w)}<small> × </small>${x.r}${x.note ? ` <small>${icon('note')}</small>` : ''}</button>`).join('')}</div></div>`).join('')}
-        ${hist.length > shown.length ? `<button class="link-btn" data-act="hist-more">Ältere anzeigen</button>` : ''}
+          <div class="hist-sets">${s.sets.map((x) => `<button class="hs ${d.prIds.has(x.id) ? 'is-pr' : ''}" data-act="edit-set" data-id="${x.id}" aria-label="${esc(`Satz ${fmtLoad(ex, x.w)}${ex?.bw && !(x.w > 0) ? '' : ' kg'} mal ${x.r}${d.prIds.has(x.id) ? ', Rekord' : ''}. Bearbeiten`)}">${d.prIds.has(x.id) ? '<i class="hs-pr" aria-hidden="true">PR</i>' : ''}${fmtLoad(ex, x.w)}<small> × </small>${x.r}${x.note ? ` <small>${icon('note')}</small>` : ''}</button>`).join('')}</div></div>`).join('')}
+        ${hist.length > shown.length ? `<button class="link-btn" data-act="hist-more" data-anchor="none">Ältere anzeigen</button>` : ''}
       </section>` : ''}
     </div>`;
   },
@@ -261,6 +273,7 @@ actions['ex-note'] = () => {
     const v = el.querySelector('[data-note]').value.trim();
     await closeSheet();
     updateExercise(ex.id, { notes: v });
+    toast(v ? 'Notiz gespeichert' : 'Notiz gelöscht');
   });
 };
 
@@ -285,6 +298,7 @@ actions['ex-more'] = () => {
         if (!n) return;
         await closeSheet();
         updateExercise(ex.id, { name: n });
+        toast('Name gespeichert');
       });
       return;
     }

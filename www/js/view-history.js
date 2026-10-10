@@ -43,7 +43,7 @@ function dayPanel(s, d, date) {
       const sets = day.sets.filter((x) => x.ex === id);
       return `<div class="day-ex" style="--c:${catColor(ex?.cat)}">
         <h4><i></i><button data-act="go" data-to="uebung" data-id="${id}">${esc(ex?.name || '')}</button></h4>
-        <div class="hist-sets">${sets.map((x) => `<button class="hs ${d.prIds.has(x.id) ? 'is-pr' : ''}" data-act="edit-set" data-id="${x.id}">${fmtLoad(ex, x.w)}<small> × </small>${x.r}${x.note ? ` <small>${icon('note')}</small>` : ''}</button>`).join('')}</div>
+        <div class="hist-sets">${sets.map((x) => `<button class="hs ${d.prIds.has(x.id) ? 'is-pr' : ''}" data-act="edit-set" data-id="${x.id}" aria-label="${esc(`Satz ${fmtLoad(ex, x.w)}${ex?.bw && !(x.w > 0) ? '' : ' kg'} mal ${x.r}${d.prIds.has(x.id) ? ', Rekord' : ''}. Bearbeiten`)}">${d.prIds.has(x.id) ? '<i class="hs-pr" aria-hidden="true">PR</i>' : ''}${fmtLoad(ex, x.w)}<small> × </small>${x.r}${x.note ? ` <small>${icon('note')}</small>` : ''}</button>`).join('')}</div>
       </div>`;
     })
     .join('');

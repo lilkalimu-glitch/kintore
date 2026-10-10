@@ -1,7 +1,7 @@
 // Belohnungen im Rang-Pfad: Neon-Farben, Titel, Rahmen, Neon-Schilder, Banner und Effekte.
 // Jede Station im Pfad hat ein Level. Ist es erreicht, kann man die Belohnung abholen und anlegen.
 // Die Seltenheit ergibt sich aus dem Rang der Station: je höher der Rang, desto besonderer.
-import { esc, icon } from './util.js';
+import { esc, icon, hashStr } from './util.js';
 import { RANKS, rankById, rankOf } from './stats.js';
 import { bannerArt, effectParts } from './art.js';
 
@@ -36,31 +36,40 @@ export const ITEMS = [
   { type: 'frame', id: 'star', name: 'Stern', lv: 12 },
   { type: 'effect', id: 'ring', name: 'Neon-Ring', lv: 13 },
   { type: 'color', id: 'toxic', name: 'Toxic', hex: '#3DFF8F', lv: 14 },
+  { type: 'banner', id: 'tusche', name: 'Tusche', lv: 15 },
   { type: 'title', id: 'eisenfresser', name: 'Eisenfresser', lv: 16 },
   { type: 'banner', id: 'sakura', name: 'Sakura', lv: 17 },
   { type: 'color', id: 'uv', name: 'Ultraviolett', hex: '#A974FF', lv: 18 },
+  { type: 'banner', id: 'klinge', name: 'Klinge', lv: 19 },
   { type: 'frame', id: 'crystal', name: 'Kristall', lv: 20 },
   { type: 'effect', id: 'manga', name: 'Manga-Linien', lv: 21 },
+  { type: 'banner', id: 'panel', name: 'Manga-Panel', lv: 22 },
   { type: 'title', id: 'prjaeger', name: 'PR-Jäger', lv: 23 },
   { type: 'banner', id: 'synthwave', name: 'Synthwave', lv: 24 },
   { type: 'sign', id: 'tanren', name: '鍛錬', de: 'Disziplin', lv: 26 },
+  { type: 'banner', id: 'himmelslicht', name: 'Himmelslicht', lv: 28 },
   { type: 'color', id: 'sunset', name: 'Sunset', hex: '#FF7A45', lv: 29 },
   { type: 'title', id: 'stahlwille', name: 'Stahlwille', lv: 32 },
+  { type: 'banner', id: 'finsternis', name: 'Finsternis', lv: 33 },
   { type: 'frame', id: 'crest', name: 'Wappen', lv: 35 },
   { type: 'banner', id: 'regen', name: 'Neon-Regen', lv: 37 },
   { type: 'title', id: 'ronin', name: 'Gym-Ronin', lv: 39 },
+  { type: 'banner', id: 'auge', name: 'Das Auge', lv: 40 },
   { type: 'effect', id: 'funken', name: 'Funken', lv: 41 },
   { type: 'sign', id: 'fukutsu', name: '不屈', de: 'Unbeugsam', lv: 43 },
   { type: 'banner', id: 'aurora', name: 'Polarlicht', lv: 45 },
   { type: 'color', id: 'crimson', name: 'Crimson', hex: '#FF3358', lv: 47 },
+  { type: 'banner', id: 'unterwelt', name: 'Unterwelt', lv: 48 },
   { type: 'effect', id: 'blitze', name: 'Blitze', lv: 49 },
   { type: 'frame', id: 'wings', name: 'Flügel', lv: 50 },
   { type: 'effect', id: 'flammen', name: 'Neon-Flammen', lv: 52 },
   { type: 'title', id: 'sensei', name: 'Sensei', lv: 54 },
   { type: 'banner', id: 'inferno', name: 'Inferno', lv: 56 },
   { type: 'sign', id: 'kakusei', name: '覚醒', de: 'Erwachen', lv: 58 },
+  { type: 'banner', id: 'horizont', name: 'Schwarzes Loch', lv: 60 },
   { type: 'title', id: 'titan', name: 'Titan', lv: 62 },
   { type: 'effect', id: 'sterne', name: 'Sternenregen', lv: 64 },
+  { type: 'banner', id: 'feuersturm', name: 'Feuersturm', lv: 65 },
   { type: 'color', id: 'gold', name: 'Gold', hex: '#FFC93D', lv: 66 },
   { type: 'banner', id: 'kosmos', name: 'Kosmos', lv: 68 },
   { type: 'frame', id: 'crown', name: 'Krone', lv: 70 },
@@ -215,10 +224,12 @@ function frameSparks(frameId) {
 
 // ---------- Rang-Abzeichen mit Rahmen ----------
 // fx: Glanz und Funkeln bei epischen und legendären Rahmen (für große Abzeichen).
+// Abzeichen mit Glanz bleiben beim Neuzeichnen stehen (data-persist), damit der Glanz nicht neu startet.
 export function emblem(rankId, frameId = 'hex', size = 60, cls = '', { fx = false } = {}) {
   const f = frameOf(frameId);
   const r = rankById(rankId);
-  return `<span class="emb rank-${esc(r.id)} ${r.id.length > 1 ? 'emb-wide' : ''} ${cls}" style="--es:${size}px;--cy:${f.cy};--fs:${f.fs}" aria-hidden="true">${fx ? frameSparks(frameId) : ''}<svg viewBox="0 0 100 100">${frameSvg(f)}${fx ? frameSheen(f, frameId) : ''}</svg><b>${esc(r.id)}</b></span>`;
+  const keep = fx ? ` data-persist="emb-${hashStr([r.id, frameId, size, cls].join('|'))}"` : '';
+  return `<span class="emb rank-${esc(r.id)} ${r.id.length > 1 ? 'emb-wide' : ''} ${cls}" style="--es:${size}px;--cy:${f.cy};--fs:${f.fs}" aria-hidden="true"${keep}>${fx ? frameSparks(frameId) : ''}<svg viewBox="0 0 100 100">${frameSvg(f)}${fx ? frameSheen(f, frameId) : ''}</svg><b>${esc(r.id)}</b></span>`;
 }
 
 // Nur der Rahmen, ohne Buchstaben (für kleine Vorschauen).
@@ -246,7 +257,8 @@ export function avatar({ frameId = 'hex', rankId = 'E', img = '', initial = '', 
   const jp = /[\u3000-\u9fff]/.test(ini);
   const fx = effectParts(effect);
   const frameIt = itemOf('frame', frameId);
-  return `<span class="av rank-${esc(rankId)} fr-${frameIt ? rarityOf(frameIt).id : 'n'} ${cls}" style="--av:${size}px" aria-hidden="true">${fx.back}
+  const keep = hashStr([frameId, rankId, img, ini, size, deco ? 1 : 0, cls, effect].join('|'));
+  return `<span class="av rank-${esc(rankId)} fr-${frameIt ? rarityOf(frameIt).id : 'n'} ${cls}" style="--av:${size}px" aria-hidden="true" data-persist="av-${keep}">${fx.back}
     <svg class="av-svg" viewBox="0 0 100 100" style="width:${w.toFixed(1)}px;height:${w.toFixed(1)}px;left:${left.toFixed(1)}px;top:${top.toFixed(1)}px">
       <defs><clipPath id="${id}">${mainShape(f.main, '')}</clipPath></defs>
       ${deco && f.deco ? f.deco() : ''}

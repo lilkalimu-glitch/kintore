@@ -24,7 +24,7 @@ export const DEFAULT_SETTINGS = {
 };
 
 // Profil: was dort zu sehen ist, lässt sich einzeln ausblenden.
-export const PROFILE_PARTS = ['motto', 'level', 'lifts', 'stats', 'collection'];
+export const PROFILE_PARTS = ['motto', 'level', 'calendar', 'lifts', 'stats', 'collection'];
 export const NAME_MAX = 24;
 export const MOTTO_MAX = 80;
 
@@ -52,7 +52,9 @@ export function migrate(raw) {
     s.settings.bgDim = DEFAULT_SETTINGS.bgDim;
     s.settings.bgBlur = DEFAULT_SETTINGS.bgBlur;
   }
-  s.meta = s.meta || {};
+  s.meta = s.meta && typeof s.meta === 'object' ? s.meta : {};
+  // Gesehene Einführungen (seit 2.7), zum Beispiel { profil: true, rang: true }.
+  if (s.meta.intro != null && (typeof s.meta.intro !== 'object' || Array.isArray(s.meta.intro))) delete s.meta.intro;
   // Bonus-XP (Tages-Quest, Ruhetag-Quest, Wochen-Serie) und Belohnungen aus dem Rang-Pfad.
   s.bonus = Array.isArray(s.bonus)
     ? s.bonus.filter((b) => b && typeof b.d === 'string' && typeof b.k === 'string' && Number.isFinite(b.xp) && b.xp > 0 && b.xp <= 1000)

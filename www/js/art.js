@@ -1,8 +1,11 @@
 // Bilder fürs Profil: Banner und Effekte, nur mit SVG und CSS gezeichnet.
+// Die dunklen Banner nach den Vorlagen des Besitzers (Version 2.7) stehen in banners.js.
 // Ab Episch bewegen sie sich. Bewegte Teile nutzen nur transform und opacity, damit es auf dem Handy flüssig bleibt.
 // Ohne Bewegung (Android-Einstellung "Animationen entfernen") bleibt ein ruhiges Bild stehen.
 
 // Fester Zufall, damit ein Banner immer gleich aussieht.
+import { DARK_BANNERS } from './banners.js';
+
 function rng(seed) {
   let s = seed >>> 0 || 1;
   return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
@@ -138,6 +141,7 @@ const BANNERS = {
   aurora: () => `${starsSvg(45, 46, { h: 110 })}<i class="au au1"></i><i class="au au2"></i><i class="au au3"></i>${mountains()}`,
   inferno: () => `<i class="if-glow"></i>${fireRow(13, 56)}<i class="if-front">${fireRow(9, 57)}</i>${embers(14, 58)}`,
   kosmos: () => `${starsSvg(68, 70)}<i class="gx"><i class="gx-disk"></i><i class="gx-core"></i></i>${twinkles(6, 69)}<i class="ss" style="--d:-1s;--y:18%"></i><i class="ss" style="--d:-4.6s;--y:42%"></i>`,
+  ...DARK_BANNERS,
 };
 
 export function bannerArt(id) {
@@ -183,15 +187,47 @@ function flameRing() {
   return spots.map(([x, b, w, h], i) => `<i class="ft" style="left:${x}%;bottom:${b}%;--w:${w}%;--h:${h}%;--t:${f1(0.75 + (i % 4) * 0.16)}s;--d:-${f1((i * 0.37) % 1.4)}s"></i>`).join('');
 }
 
+// ---------- Effekte über die ganze Profilkarte (seit 2.7) ----------
+// Sie liegen hinter Name und Text, damit alles lesbar bleibt. Mittelpunkt ist das Profilbild (--ax, --ay).
+function cardGlints() {
+  const spots = [[8, 10, 13], [31, 5, 9], [52, 16, 15], [77, 8, 10], [93, 27, 12], [89, 57, 9], [66, 71, 13], [10, 63, 10], [40, 88, 9], [83, 91, 12], [24, 38, 8], [58, 46, 8]];
+  return spots.map(([x, y, sz], i) => `<i class="cg" style="left:${x}%;top:${y}%;--s:${sz}px;--d:-${f1(i * 0.41)}s"></i>`).join('');
+}
+
+function cardLines() {
+  let lines = '';
+  for (let i = 0; i < 64; i++) {
+    const a = (i / 64) * Math.PI * 2 + (i % 3) * 0.02;
+    const r0 = 74 + ((i * 13) % 34);
+    lines += `<line x1="${f1(Math.cos(a) * r0)}" y1="${f1(Math.sin(a) * r0)}" x2="${f1(Math.cos(a) * 900)}" y2="${f1(Math.sin(a) * 900)}" stroke-width="${f1(0.6 + ((i * 7) % 4) * 0.55)}"/>`;
+  }
+  return `<svg class="cl" viewBox="-900 -900 1800 1800" aria-hidden="true">${lines}</svg>`;
+}
+
+function cardBolts() {
+  const one = (pts) => `<svg viewBox="0 0 40 100" aria-hidden="true"><polyline class="bz-g" points="${pts}"/><polyline class="bz-c" points="${pts}"/></svg>`;
+  return `<i class="cb" style="left:3%;top:22%;--r:-8deg;--d:-0.3s">${one('22,0 12,38 24,42 10,100')}</i><i class="cb" style="left:87%;top:8%;--r:14deg;--d:-1.6s">${one('18,0 28,30 14,46 26,58 16,100')}</i><i class="cb" style="left:90%;top:58%;--r:-18deg;--d:-2.4s">${one('22,0 12,38 24,42 10,100')}</i><i class="cb-edge"></i>`;
+}
+
+function cardFlames() {
+  const r = rng(152);
+  let out = '';
+  for (let i = 0; i < 15; i++) {
+    const x = (i + 0.5) / 15 * 100 + (r() - 0.5) * 5;
+    out += `<i class="cf" style="left:${f1(x)}%;--w:${f1(26 + r() * 26)}px;--h:${f1(46 + r() * 52)}px;--t:${f1(0.8 + r() * 0.7)}s;--d:-${f1(r() * 2)}s"></i>`;
+  }
+  return `<i class="cf-glow"></i>${out}`;
+}
+
 const EFFECTS = {
   none: () => ({}),
-  glitzer: () => ({ back: glints() }),
-  ring: () => ({ back: '<i class="rg rg1"></i><i class="rg rg2"></i>' }),
-  manga: () => ({ back: speedLines() }),
-  funken: () => ({ back: embers(13, 41, 'fs'), front: embers(9, 42, 'fs') }),
-  blitze: () => ({ back: bolts() }),
-  flammen: () => ({ back: `<i class="ft-glow"></i>${flameRing()}`, front: embers(7, 52, 'fe') }),
-  sterne: () => ({ back: twinkles(7, 64), card: '<i class="ss" style="--d:-0.4s;--y:12%"></i><i class="ss" style="--d:-2.2s;--y:34%"></i><i class="ss" style="--d:-3.9s;--y:6%"></i><i class="ss" style="--d:-5.1s;--y:48%"></i>' }),
+  glitzer: () => ({ back: glints(), card: cardGlints() }),
+  ring: () => ({ back: '<i class="rg rg1"></i><i class="rg rg2"></i>', card: '<i class="cr" style="--d:0s"></i><i class="cr" style="--d:-1.6s"></i><i class="cr" style="--d:-3.2s"></i>' }),
+  manga: () => ({ back: speedLines(), card: cardLines() }),
+  funken: () => ({ back: embers(13, 41, 'fs'), front: embers(9, 42, 'fs'), card: embers(16, 43, 'cs') }),
+  blitze: () => ({ back: bolts(), card: cardBolts() }),
+  flammen: () => ({ back: `<i class="ft-glow"></i>${flameRing()}`, front: embers(7, 52, 'fe'), card: `${cardFlames()}${embers(10, 53, 'cs')}` }),
+  sterne: () => ({ back: twinkles(7, 64), card: `${twinkles(9, 65)}<i class="ss" style="--d:-0.4s;--y:12%"></i><i class="ss" style="--d:-2.2s;--y:34%"></i><i class="ss" style="--d:-3.9s;--y:6%"></i><i class="ss" style="--d:-5.1s;--y:48%"></i>` }),
 };
 
 // Teile eines Effekts: back (hinter dem Bild), front (davor), card (über der ganzen Profilkarte).

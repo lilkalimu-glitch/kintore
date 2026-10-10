@@ -172,8 +172,11 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         try {
-            // Layout nicht durch die System-Schriftgröße sprengen lassen.
-            getBridge().getWebView().getSettings().setTextZoom(100);
+            // Größere Schrift aus den Android-Einstellungen gilt auch in der App (Barrierefreiheit),
+            // höchstens 130 %, damit das Layout hält. Kleinere Schrift als vorgesehen gibt es nicht.
+            float scale = getResources().getConfiguration().fontScale;
+            int zoom = Math.round(Math.min(Math.max(scale, 1f), 1.3f) * 100);
+            getBridge().getWebView().getSettings().setTextZoom(zoom);
         } catch (Exception ignored) {
         }
     }

@@ -1,18 +1,23 @@
-// Profil wie bei Discord: Banner, Profilbild im Rahmen, Name, Titel und Motto.
-// Darunter Level, Bestwerte, Statistik und die Sammlung aus dem Rang-Pfad. Jeder Teil lässt sich ausblenden.
+// Profil wie bei Discord: großer Banner, Profilbild im Rahmen, Name, Titel, Motto und Abzeichen.
+// Jeder Teil vom Look lässt sich direkt antippen und ändern. Der Stift am Profilbild öffnet Bearbeiten.
+// Darunter Trainings-Kalender, Level, Bestwerte, Statistik und die Sammlung. Jeder Teil lässt sich ausblenden.
 import { app, D, views, actions, navigate, openSheet, closeSheet, render } from './core.js';
-import { esc, icon, int, kg, fmtMonth, fmtSetText, relDay, clamp } from './util.js';
+import { esc, icon, int, kg, fmtMonth, fmtSetText, relDay, clamp, today, addDays, weekStart, parseIso, persistHtml } from './util.js';
 import { weekStreak, e1rmOf, catColor } from './stats.js';
 import { CAT } from './model.js';
 import {
-  ITEMS, TYPES, RARITIES, equipped, emblem, rewardOrb, ownedItems, rarityOf, rarityIndex, itemLabel, signSparks,
+  ITEMS, TYPES, TYPE_ORDER, RARITIES, equipped, emblem, rewardOrb, ownedItems, rarityOf, rarityIndex, itemLabel, signSparks, rankChip,
 } from './look.js';
 import { bannerArt, effectParts } from './art.js';
 import { saveProfile, NAME_MAX, MOTTO_MAX } from './ops.js';
 import { myAvatar, avatarUrl, setAvatar, squareImage } from './me.js';
 import { toast } from './fx.js';
+import { maybeIntro } from './intro.js';
 
 const reduced = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+// Kurze Namen der Look-Teile für die Leiste im Profil.
+const SHORT = { color: 'Farbe', title: 'Titel', frame: 'Rahmen', sign: 'Schild', banner: 'Banner', effect: 'Effekt' };
 
 // ---------- Bestwerte ----------
 // Bester Satz einer Übung nach geschätztem 1RM.
@@ -95,33 +100,104 @@ function collectionCard(s, lv) {
   </section>`;
 }
 
+// ---------- Neon-Kalender: die letzten 16 Wochen ----------
+const CAL_WEEKS = 16;
+const MON = new Intl.DateTimeFormat('de-DE', { month: 'short' });
+
+export function calendarData(d, weeks = CAL_WEEKS, end = today()) {
+  const first = addDays(weekStart(end), -7 * (weeks - 1));
+  const cells = [];
+  let trained = 0;
+  for (let i = 0; i < weeks * 7; i++) {
+    const date = addDays(first, i);
+    const day = d.days.get(date);
+    const n = day ? day.sets.filter((x) => x.r > 0).length : 0;
+    if (n && date <= end) trained++;
+    const lvl = !n ? 0 : n < 10 ? 1 : n < 20 ? 2 : 3;
+    cells.push({ date, lvl, future: date > end, today: date === end });
+  }
+  return { first, cells, trained };
+}
+
+function calendarCard(d) {
+  const { first, cells, trained } = calendarData(d);
+  // Monatsname über der ersten Woche eines Monats. Stehen zwei zu dicht, bleibt der spätere.
+  const marks = [];
+  let prev = '';
+  for (let w = 0; w < CAL_WEEKS; w++) {
+    const mon = addDays(first, w * 7);
+    if (mon.slice(0, 7) === prev) continue;
+    prev = mon.slice(0, 7);
+    marks.push({ w, label: MON.format(parseIso(mon)).replace('.', '') });
+  }
+  const kept = [];
+  for (let i = marks.length - 1; i >= 0; i--) {
+    const m = marks[i];
+    if (m.w > CAL_WEEKS - 2 || (kept.length && kept[0].w - m.w < 3)) continue;
+    kept.unshift(m);
+  }
+  const months = kept.map((m) => `<span style="grid-column:${m.w + 1} / span 3">${esc(m.label)}</span>`).join('');
+  const grid = cells.map((c, i) => `<i class="c16 l${c.lvl}${c.today ? ' is-today' : ''}${c.future ? ' is-future' : ''}" style="--i:${i}"></i>`).join('');
+  return `<section class="card pad pf-sec pf-cal">
+    <div class="card-title"><h2>Trainingstage</h2><span class="hint">Letzte ${CAL_WEEKS} Wochen</span></div>
+    <div class="c16-wrap" role="img" aria-label="${trained} Trainingstage in den letzten ${CAL_WEEKS} Wochen">
+      <div class="c16-days" aria-hidden="true"><span>Mo</span><span></span><span>Mi</span><span></span><span>Fr</span><span></span><span>So</span></div>
+      <div class="c16-main" aria-hidden="true">
+        <div class="c16-months">${months}</div>
+        <div class="c16-grid">${grid}</div>
+      </div>
+    </div>
+    <div class="c16-foot">
+      <span><b>${trained}</b> ${trained === 1 ? 'Tag' : 'Tage'} trainiert</span>
+      <span class="c16-legend" aria-hidden="true">Weniger<i class="c16 l0"></i><i class="c16 l1"></i><i class="c16 l2"></i><i class="c16 l3"></i>Mehr</span>
+    </div>
+  </section>`;
+}
+
 // ---------- Kopf mit Banner ----------
+function badges(d, lv, ws) {
+  const first = d.dates[0];
+  const prs = d.prEvents.length;
+  const out = [`<li class="pf-badge rank-${esc(lv.rank)}">${rankChip(lv.rank)}<span>Rang ${esc(lv.rank)}</span></li>`];
+  if (ws.streak) out.push(`<li class="pf-badge b-streak">${icon('flame')}<span>${ws.streak} ${ws.streak === 1 ? 'Woche' : 'Wochen'} Serie</span></li>`);
+  if (prs) out.push(`<li class="pf-badge b-pr">${icon('star')}<span>${int(prs)} ${prs === 1 ? 'Rekord' : 'Rekorde'}</span></li>`);
+  if (first) out.push(`<li class="pf-badge b-since">${icon('calendar')}<span>Seit ${esc(fmtMonth(first))}</span></li>`);
+  return `<ul class="pf-badges" aria-label="Abzeichen">${out.join('')}</ul>`;
+}
+
+function lookRow(look) {
+  return `<div class="pf-look">
+    <div class="pf-look-h"><span>Dein Look</span><small>Zum Ändern antippen</small></div>
+    <div class="pf-look-row">${TYPE_ORDER.map((t) => `<button class="pl-tile" data-act="look-open" data-type="${t}" aria-label="${esc(`${TYPES[t].name}: ${itemLabel(look[t])}. Ändern`)}">
+      ${rewardOrb(look[t], { chip: false })}<span>${SHORT[t]}</span>
+    </button>`).join('')}</div>
+  </div>`;
+}
+
 function headCard(s, d, lv, look, ws) {
   const p = s.profile;
   const fx = effectParts(look.effect.id);
-  const first = d.dates[0];
   const signRar = rarityOf(look.sign).id;
   return `<section class="card pf-card rank-${esc(lv.rank)}">
-    <div class="pf-banner">${bannerArt(look.banner.id)}
-      <div class="pf-sign sg-${signRar} sign-${[...look.sign.name].length}" aria-hidden="true">${esc(look.sign.name)}${signSparks(look.sign)}</div>
+    <div class="pf-banner">
+      <button class="pf-banner-btn" data-act="look-open" data-type="banner" aria-label="${esc(`Banner ${look.banner.name}. Ändern`)}">${persistHtml(bannerArt(look.banner.id), 'bn')}</button>
+      <span class="pf-hint" aria-hidden="true">${icon('palette')}</span>
+      <button class="pf-sign sg-${signRar} sign-${[...look.sign.name].length}" data-act="look-open" data-type="sign" aria-label="${esc(`Neon-Schild ${itemLabel(look.sign)}. Ändern`)}"><span aria-hidden="true">${esc(look.sign.name)}</span>${signSparks(look.sign)}</button>
     </div>
-    ${fx.card ? `<div class="pf-card-fx" aria-hidden="true">${fx.card}</div>` : ''}
+    ${fx.card ? `<div class="pf-cfx" aria-hidden="true">${persistHtml(fx.card, 'cfx')}</div>` : ''}
     <div class="pf-head">
-      <button class="pf-av" data-act="profile-edit" aria-label="Profilbild und Name ändern">${myAvatar({ size: 92 })}</button>
-      ${p.show.level ? `<button class="pf-rank" data-act="go" data-to="rang" aria-label="Rang ${esc(lv.rank)}, Level ${lv.level}">${emblem(lv.rank, look.frame.id, 38)}<span><small>Level</small><b>${lv.level}</b></span></button>` : ''}
+      <div class="pf-avwrap">
+        <button class="pf-av" data-act="look-open" data-type="frame" aria-label="${esc(`Rahmen ${look.frame.name}. Ändern`)}">${myAvatar({ size: 104 })}</button>
+        <button class="pf-pen" data-act="profile-edit" aria-label="Profilbild und Name ändern">${icon('edit')}</button>
+      </div>
+      ${p.show.level ? `<button class="pf-rank" data-act="go" data-to="rang" aria-label="Rang-Pfad öffnen. Rang ${esc(lv.rank)}, Level ${lv.level}">${emblem(lv.rank, look.frame.id, 38)}<span><small>Level</small><b>${lv.level}</b></span></button>` : ''}
     </div>
     <div class="pf-body">
-      ${p.name ? `<h2 class="pf-name nm-${rarityOf(look.color).id}">${esc(p.name)}</h2>` : '<button class="pf-noname" data-act="profile-edit">Name eintragen</button>'}
-      <div class="title-tag tt-${rarityOf(look.title).id}">${esc(look.title.name)}</div>
+      ${p.name ? `<h2 class="pf-name-h"><button class="pf-name nm-${rarityOf(look.color).id}" data-act="profile-edit" aria-label="${esc(`${p.name}. Name ändern`)}">${esc(p.name)}</button></h2>` : '<button class="pf-noname" data-act="profile-edit">Name eintragen</button>'}
+      <div><button class="title-tag pf-title tt-${rarityOf(look.title).id}" data-act="look-open" data-type="title" aria-label="${esc(`Titel ${look.title.name}. Ändern`)}">${esc(look.title.name)}</button></div>
       ${p.show.motto && p.motto ? `<p class="pf-motto">${esc(p.motto)}</p>` : ''}
-      ${first || ws.streak ? `<div class="pf-meta">
-        ${first ? `<span>${icon('calendar')}Dabei seit ${esc(fmtMonth(first))}</span>` : ''}
-        ${ws.streak ? `<span>${icon('flame')}${ws.streak} ${ws.streak === 1 ? 'Woche' : 'Wochen'} Serie</span>` : ''}
-      </div>` : ''}
-      <div class="row-actions pf-actions">
-        <button class="btn-ghost small" data-act="profile-edit">${icon('edit')} Bearbeiten</button>
-        <button class="btn-ghost small" data-act="look-open" data-type="banner">${icon('sparkle')} Look</button>
-      </div>
+      ${badges(d, lv, ws)}
+      ${lookRow(look)}
     </div>
   </section>`;
 }
@@ -141,6 +217,7 @@ views.profil = {
     </header>
     <div class="stack">
       ${headCard(s, d, lv, look, ws)}
+      ${show.calendar ? calendarCard(d) : ''}
       ${show.level ? levelCard(lv, look) : ''}
       ${show.lifts ? liftsCard(s, d) : ''}
       ${show.stats ? statsCard(d, ws) : ''}
@@ -148,18 +225,27 @@ views.profil = {
     </div>`;
   },
   after(main, params, { entering = false } = {}) {
-    if (entering && !reduced()) main.querySelector('.pf-card')?.classList.add('enter');
+    if (!entering) return;
+    if (!reduced()) {
+      main.querySelector('.pf-card')?.classList.add('enter');
+      main.querySelector('.pf-cal')?.classList.add('enter');
+    }
+    maybeIntro('profil', [
+      { sel: '.pf-pen', text: 'Mit dem Stift änderst du dein Profilbild und deinen Namen.' },
+      { sel: '.pf-banner', text: 'Tipp direkt auf den Banner, um ihn zu wechseln. Ein Tipp aufs Profilbild wechselt den Rahmen.' },
+      { sel: '.pf-look', text: 'Hier siehst du deinen ganzen Look. Neue Teile holst du dir im Rang-Pfad ab.' },
+    ]);
   },
 };
 
 actions['profile-back'] = () => { if (history.length > 1) history.back(); else navigate('start'); };
 
 // ---------- Bearbeiten ----------
-const sw = (key, on) => `<label class="switch"><input type="checkbox" data-show="${key}" ${on ? 'checked' : ''}><span></span></label>`;
+const sw = (key, on) => `<span class="switch"><input type="checkbox" data-show="${key}" ${on ? 'checked' : ''}><span></span></span>`;
 
 function editSheet() {
   const p = app.state.profile;
-  const draw = () => `
+  const el = openSheet(`
     <h2>Profil bearbeiten</h2>
     <div class="pf-edit-top">
       <span class="pf-edit-av" data-av>${myAvatar({ size: 64, effect: 'none' })}</span>
@@ -172,39 +258,37 @@ function editSheet() {
     <label class="field"><span>Motto</span><input class="input" data-motto maxlength="${MOTTO_MAX}" value="${esc(p.motto)}" placeholder="z. B. Kein Tag ohne Klimmzüge" autocomplete="off"></label>
     <h3 class="sheet-sub">Auf dem Profil zeigen</h3>
     <ul class="set-list pf-switches">
-      <li><span class="grow">Motto</span>${sw('motto', p.show.motto)}</li>
-      <li><span class="grow">Level und Rang</span>${sw('level', p.show.level)}</li>
-      <li><span class="grow">Bestwerte</span>${sw('lifts', p.show.lifts)}</li>
-      <li><span class="grow">Statistik</span>${sw('stats', p.show.stats)}</li>
-      <li><span class="grow">Sammlung<small>Alles aus dem Rang-Pfad</small></span>${sw('collection', p.show.collection)}</li>
+      <li><label class="sw-row"><span class="grow">Motto</span>${sw('motto', p.show.motto)}</label></li>
+      <li><label class="sw-row"><span class="grow">Level und Rang</span>${sw('level', p.show.level)}</label></li>
+      <li><label class="sw-row"><span class="grow">Trainingstage<small>Kalender der letzten ${CAL_WEEKS} Wochen</small></span>${sw('calendar', p.show.calendar)}</label></li>
+      <li><label class="sw-row"><span class="grow">Bestwerte</span>${sw('lifts', p.show.lifts)}</label></li>
+      <li><label class="sw-row"><span class="grow">Statistik</span>${sw('stats', p.show.stats)}</label></li>
+      <li><label class="sw-row"><span class="grow">Sammlung<small>Alles aus dem Rang-Pfad</small></span>${sw('collection', p.show.collection)}</label></li>
     </ul>
-    <div class="sheet-actions"><button class="btn-neon btn-block" data-save>Speichern</button></div>`;
-  const el = openSheet(draw());
+    <div class="sheet-actions"><button class="btn-neon btn-block" data-save>Speichern</button></div>`);
   const repaintAv = () => { const box = el.querySelector('[data-av]'); if (box) box.innerHTML = myAvatar({ size: 64, effect: 'none' }); };
-  const bindFile = () => {
-    el.querySelector('[data-av-file]')?.addEventListener('change', async (e) => {
-      const f = e.target.files?.[0];
-      e.target.value = '';
-      if (!f) return;
-      try {
-        await setAvatar(await squareImage(f));
-        repaintAv();
-        const btns = el.querySelector('.pf-edit-btns');
-        if (btns && !btns.querySelector('[data-av-del]')) btns.insertAdjacentHTML('beforeend', '<button class="btn-ghost small" data-av-del>Entfernen</button>');
-        render();
-        toast('Profilbild gesetzt');
-      } catch (err) {
-        toast(err.message || 'Bild konnte nicht geladen werden.');
-      }
-    });
-  };
-  bindFile();
+  el.querySelector('[data-av-file]')?.addEventListener('change', async (e) => {
+    const f = e.target.files?.[0];
+    e.target.value = '';
+    if (!f) return;
+    try {
+      await setAvatar(await squareImage(f));
+      repaintAv();
+      const btns = el.querySelector('.pf-edit-btns');
+      if (btns && !btns.querySelector('[data-av-del]')) btns.insertAdjacentHTML('beforeend', '<button class="btn-ghost small" data-av-del>Entfernen</button>');
+      render();
+      toast('Profilbild gesetzt');
+    } catch (err) {
+      toast(err.message || 'Bild konnte nicht geladen werden.');
+    }
+  });
   el.addEventListener('click', async (e) => {
     if (e.target.closest('[data-av-del]')) {
       await setAvatar(null);
       e.target.closest('[data-av-del]').remove();
       repaintAv();
       render();
+      toast('Profilbild entfernt');
       return;
     }
     if (!e.target.closest('[data-save]')) return;
@@ -238,7 +322,7 @@ function liftsSheet() {
     ${list.length ? `<ul class="pick-list pf-pick" data-list>${rows()}</ul>` : '<p class="soft">Noch keine Übung trainiert.</p>'}
     <div class="sheet-actions">
       <button class="btn-neon btn-block" data-done>Fertig</button>
-      <button class="btn-ghost" data-auto>Automatisch wählen</button>
+      <button class="btn-ghost btn-block" data-auto>Automatisch wählen</button>
     </div>`);
   el.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-lift]');
@@ -247,13 +331,18 @@ function liftsSheet() {
       if (chosen.includes(id)) chosen = chosen.filter((x) => x !== id);
       else if (chosen.length >= 3) { toast('Höchstens 3 Übungen'); return; }
       else chosen.push(id);
-      el.querySelector('[data-list]').innerHTML = rows();
+      // Nur die angetippte Zeile ändert sich, die Liste bleibt stehen.
+      const on = chosen.includes(id);
+      b.classList.toggle('is-on', on);
+      b.setAttribute('aria-pressed', String(on));
+      b.querySelector('.in').innerHTML = on ? icon('check') : '';
       return;
     }
     if (e.target.closest('[data-auto]')) chosen = [];
     else if (!e.target.closest('[data-done]')) return;
     await closeSheet();
     saveProfile({ lifts: chosen });
+    toast(chosen.length ? 'Bestwerte gespeichert' : 'Bestwerte werden automatisch gewählt');
   });
 }
 

@@ -146,8 +146,9 @@ t('Stationen', () => {
 });
 t('Abholen und Anlegen', () => {
   const s = baseState();
-  // 9 Stationen aus Version 2.5 plus 5 neue mit Bannern und Effekten (Level 3, 5, 9, 13, 17)
-  assert.equal(readyStations(s, 19).length, 14);
+  // 9 Stationen aus Version 2.5, 5 neue mit Bannern und Effekten (Level 3, 5, 9, 13, 17)
+  // und 2 neue Banner aus Version 2.7 (Level 15 und 19)
+  assert.equal(readyStations(s, 19).length, 16);
   assert.equal(readyStations(s, 1).length, 0);
   s.rewards.claimed = [4];
   s.rewards.equip.color = 'eis';
@@ -282,5 +283,76 @@ t('Profil wird aufgeräumt', () => {
   assert.equal(equipped(s, 60).effect.id, 'flammen');
   assert.equal(equipped(s, 40).effect.id, 'none');
 });
+
+// ---------- Version 2.7: neue Banner, Kalender, Einführung ----------
+const { bannerArt } = await import(W + 'art.js');
+const { calendarData } = await import(W + 'view-profile.js').catch(() => ({}));
+const NEW_BANNERS = { tusche: 15, klinge: 19, panel: 22, himmelslicht: 28, finsternis: 33, auge: 40, unterwelt: 48, horizont: 60, feuersturm: 65 };
+
+t('9 neue Banner ab Level 15, je höher desto seltener', () => {
+  const list = ITEMS.filter((it) => it.type === 'banner' && NEW_BANNERS[it.id]);
+  assert.equal(list.length, 9);
+  for (const it of list) {
+    assert.equal(it.lv, NEW_BANNERS[it.id], it.id);
+    const html = bannerArt(it.id);
+    assert.ok(html.includes(`bn-${it.id}`), 'eigene Zeichnung fehlt: ' + it.id);
+    assert.ok(!/<image|url\(http|\.png|\.jpg/.test(html), 'Bilddatei in ' + it.id);
+    assert.equal(bannerArt(it.id), html, 'Banner sieht nicht immer gleich aus: ' + it.id);
+  }
+  const rar = Object.fromEntries(list.map((it) => [it.id, rarityOf(it).name]));
+  assert.equal(rar.tusche, 'Selten');
+  assert.equal(rar.finsternis, 'Selten');
+  assert.equal(rar.auge, 'Episch');
+  assert.equal(rar.unterwelt, 'Episch');
+  assert.equal(rar.horizont, 'Legendär');
+  assert.equal(rar.feuersturm, 'Legendär');
+});
+
+t('Neue Banner: Wer schon weiter ist, kann sie gleich abholen, nichts geht verloren', () => {
+  const s = baseState();
+  const old = STATIONS.filter((st) => st.lv > 1 && st.lv <= 30 && !Object.values(NEW_BANNERS).includes(st.lv)).map((st) => st.lv);
+  s.rewards.claimed = [...old];
+  s.rewards.equip = { color: 'uv', title: 'grinder', frame: 'crystal', sign: 'konjo', banner: 'synthwave', effect: 'manga' };
+  const ready = readyStations(s, 30).map((st) => st.lv);
+  assert.deepEqual(ready, [15, 19, 22, 28]);
+  const m = migrate(structuredClone(s));
+  assert.deepEqual(m.rewards.claimed, old);
+  assert.equal(equipped(m, 30).banner.id, 'synthwave');
+  assert.equal(equipped(m, 30).effect.id, 'manga');
+});
+
+t('Profil: Kalender ist an, alte Einstellungen bleiben', () => {
+  const a = migrate({ exercises: [], sets: [], profile: { show: { stats: false } } });
+  assert.equal(a.profile.show.calendar, true);
+  assert.equal(a.profile.show.stats, false);
+  const b = migrate({ exercises: [], sets: [], profile: { show: { calendar: false } } });
+  assert.equal(b.profile.show.calendar, false);
+});
+
+t('Einführung: gesehen bleibt gesehen, kaputte Werte fliegen raus', () => {
+  const a = migrate({ exercises: [], sets: [], meta: { intro: { profil: true }, welcomeDone: true } });
+  assert.deepEqual(a.meta.intro, { profil: true });
+  assert.equal(a.meta.welcomeDone, true);
+  const b = migrate({ exercises: [], sets: [], meta: { intro: 'ja' } });
+  assert.equal(b.meta.intro, undefined);
+  const c = migrate({ exercises: [], sets: [], meta: null });
+  assert.deepEqual(c.meta, {});
+});
+
+if (calendarData) {
+  t('Kalender: 16 Wochen, heute markiert, Trainingstage gezählt', () => {
+    const s = baseState();
+    s.sets.push({ id: 1, ex: 1, d: today(), w: 50, r: 8 });
+    for (let i = 0; i < 12; i++) s.sets.push({ id: 10 + i, ex: 1, d: addDays(today(), -3), w: 50, r: 8 });
+    s.sets.push({ id: 50, ex: 1, d: addDays(today(), -400), w: 50, r: 8 });
+    const c = calendarData(derive(s));
+    assert.equal(c.cells.length, 16 * 7);
+    assert.equal(c.cells.filter((x) => x.today).length, 1);
+    assert.equal(c.trained, 2);
+    assert.equal(c.cells.find((x) => x.today).lvl, 1);
+    assert.equal(c.cells.find((x) => x.date === addDays(today(), -3)).lvl, 2);
+    assert.equal(c.first, addDays(weekStart(today()), -7 * 15));
+  });
+}
 
 console.log(n, 'Tests bestanden');

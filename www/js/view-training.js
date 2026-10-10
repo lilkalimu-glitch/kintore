@@ -68,7 +68,7 @@ function exBlock(id) {
     </div>
     <p class="exb-last">${prev ? `${esc(cap(relDay(prev.d)))}: ${prev.sets.filter((s) => s.r > 0).map((s) => fmtSetText(ex, s)).join(', ')}` : 'Erstes Mal'}</p>
     <div class="chips">
-      ${tip ? `<span class="chip chip-tip ${tip.up ? 'up' : ''}">${icon(tip.up ? 'arrowUp' : 'sparkle')}${tip.up ? 'Gewicht hoch:' : 'Ziel:'} <b>${fmtSetText(ex, { w: tip.w, r: tip.r })}</b></span>` : ''}
+      ${tip ? `<span class="chip chip-tip ${tip.up ? 'up' : ''}">${icon(tip.up ? 'arrowUp' : 'target')}${tip.up ? 'Gewicht hoch:' : 'Ziel:'} <b>${fmtSetText(ex, { w: tip.w, r: tip.r })}</b></span>` : ''}
       ${ex.bar ? platesHtml(ex, draft.w) : ''}
       <span class="chip">${ex.repMin}-${ex.repMax} Wdh.</span>
     </div>

@@ -113,10 +113,26 @@ const P = {
   gift: 'M4 8.5h16v4H4zM5.5 12.5v8h13v-8M12 8.5v12M12 8.5C10.5 5.5 7 4.5 6.6 6.4S9.5 8.5 12 8.5c2.5 0 5.8.2 5.4-2.1S13.5 5.5 12 8.5',
   tag: 'M3.8 4.5h7.4l9 9-7.2 7.2-9.2-9zM8.3 9h.01',
   target: 'M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17zM12 7.8a4.2 4.2 0 1 0 0 8.4 4.2 4.2 0 0 0 0-8.4zM12 12h.01',
+  user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20.5c.9-3.6 3.9-5.8 7.5-5.8s6.6 2.2 7.5 5.8',
+  palette: 'M12 3.5a8.5 8.5 0 1 0 0 17c1.1 0 1.7-.7 1.7-1.5 0-1-.8-1.4-.8-2.3 0-.9.7-1.6 1.6-1.6h2.2c2.1 0 3.8-1.7 3.8-3.8 0-4.4-3.8-7.8-8.5-7.8zM7.6 12.2h.01M9.4 8h.01M14.4 7.8h.01',
 };
 
 export const icon = (name, cls = '') =>
   `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true"><path d="${P[name] || ''}"/></svg>`;
+
+// Kurzer Fingerabdruck eines Textes, zum Beispiel als Schlüssel für data-persist.
+export function hashStr(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0).toString(36);
+}
+
+// Setzt data-persist auf das erste Element eines HTML-Stücks. Der Schlüssel folgt aus dem Inhalt:
+// Ändert sich das HTML, ist es ein neues Element.
+export const persistHtml = (html, prefix = 'p') => html.replace(/^(\s*<[a-zA-Z][\w-]*)/, `$1 data-persist="${prefix}-${hashStr(html)}"`);
 
 export function debounce(fn, ms) {
   let t = null;

@@ -1,12 +1,13 @@
 // Rang-Pfad: alle Ränge von E bis SS, Belohnungen zum Abholen und der eigene Look.
 import { app, D, views, actions, navigate, openSheet } from './core.js';
-import { esc, icon, int, clamp } from './util.js';
+import { esc, icon, int, clamp, hashStr, persistHtml } from './util.js';
+import { maybeIntro } from './intro.js';
 import { RANKS, xpAt, PR_XP, QUEST_XP, REST_XP, LIFT_XP, LIFT_CAP, weekXp, SHIELD_EVERY, SHIELD_MAX } from './stats.js';
 import {
   STATIONS, TYPES, TYPE_ORDER, ITEMS, RARITIES, emblem, rewardOrb, rankChip, itemLabel, itemRank, rarityOf, topRarity,
-  equipped, readyStations, owned, stationAt,
+  equipped, readyStations, owned, stationAt, avatar,
 } from './look.js';
-import { bannerArt } from './art.js';
+import { bannerArt, effectParts } from './art.js';
 import { claimStations, equipItems } from './ops.js';
 import { rewardReveal, rewardSummary, toast } from './fx.js';
 import { vibrate } from './native.js';
@@ -101,7 +102,7 @@ function roadCard(s, lv, ready) {
       <div class="road" data-road>
         <div class="road-line" aria-hidden="true"></div>
         <div class="road-lit" aria-hidden="true"><i></i></div>
-        ${STATIONS.map((st) => roadNode(st, lv, claimed, next?.lv)).join('')}
+        ${STATIONS.map((st) => persistHtml(roadNode(st, lv, claimed, next?.lv), 'nd')).join('')}
         <div class="road-you" aria-hidden="true"><span class="ry-chip">LV ${lv.level}</span><span class="ry-dot"></span></div>
       </div>
     </div>
@@ -119,7 +120,7 @@ function lookCard(look) {
         <span class="lt-text"><small>${esc(TYPES[t].name)}</small><b class="${t === 'sign' ? 'jp' : ''}">${esc(look[t].name)}</b></span>
       </button>`).join('')}
     </div>
-    <button class="btn-ghost btn-block look-profile" data-act="go" data-to="profil">${icon('sparkle')} Profil ansehen</button>
+    <button class="btn-ghost btn-block look-profile" data-act="go" data-to="profil">${icon('user')} Profil ansehen</button>
   </section>`;
 }
 
@@ -164,6 +165,13 @@ views.rang = {
     if (entering && !reduced()) main.querySelector('.rp-hero')?.classList.add('enter');
     setupRoad(main, entering);
     app.ui.justClaimed = null;
+    if (entering) {
+      maybeIntro('rang', [
+        { sel: '.rp-hero', text: 'Hier stehen dein Rang und die XP bis zum nächsten Rang.' },
+        { sel: '.road-card', text: 'Auf dem Pfad liegen Belohnungen. Ab dem Level darüber kannst du sie abholen.' },
+        { sel: '.look-card', text: 'Abgeholtes legst du hier an. Es zeigt sich in der App und auf deinem Profil.' },
+      ]);
+    }
   },
 };
 
@@ -286,6 +294,17 @@ actions['look-open'] = (ds) => lookSheet(ds.type || null);
 actions['rank-back'] = () => { if (history.length > 1) history.back(); else navigate('start'); };
 
 // ---------- Look ändern ----------
+// Ein Fenster mit Vorschau oben (Mini-Profil), Reitern für die sechs Teile und den Optionen darunter.
+// Antippen legt an, die Vorschau zeigt es sofort. Nichts baut sich neu auf: Nur geänderte Teile werden ersetzt.
+const LEAD = {
+  color: 'Die Neon-Farbe färbt die ganze App.',
+  title: 'Der Titel steht unter deinem Namen.',
+  frame: 'Der Rahmen liegt um dein Profilbild und dein Rang-Abzeichen.',
+  sign: 'Das Neon-Schild leuchtet auf der Startseite und auf deinem Profil.',
+  banner: 'Der Banner ist das große Bild oben in deinem Profil.',
+  effect: 'Der Effekt liegt um dein Profilbild und über deiner Profilkarte.',
+};
+
 function optionPreview(it, rankId) {
   if (it.type === 'color' || it.type === 'effect') return rewardOrb(it, { chip: false });
   if (it.type === 'frame') return `<span class="lo-emb">${emblem(rankId, it.id, 46)}</span>`;
@@ -293,54 +312,121 @@ function optionPreview(it, rankId) {
   return '';
 }
 
-function lookOption(it, ctx) {
+function optionState(it, ctx) {
   const has = owned(app.state, ctx.level, it);
   const ready = !has && it.lv <= ctx.level;
   const on = ctx.look[it.type].id === it.id;
   const rar = rarityOf(it);
-  const state = on ? 'Aktiv' : has ? rar.name : ready ? 'Abholen' : `Lv ${it.lv}`;
-  const nameCls = it.type === 'sign' ? 'jp' : it.type === 'title' ? `tt tt-${rar.id}` : '';
-  return `<button class="look-opt lo-${it.type} rar-${rar.id} ${on ? 'is-on' : ''} ${has ? '' : ready ? 'is-ready' : 'is-locked'}" data-type="${it.type}" data-id="${it.id}" aria-pressed="${on}" aria-label="${esc(`${TYPES[it.type].name} ${itemLabel(it)}, ${rar.name}, Rang ${itemRank(it)}`)}">
+  const label = on ? 'Aktiv' : has ? rar.name : ready ? 'Abholen' : `Ab Lv ${it.lv}`;
+  const small = `${on ? icon('check') : has || ready ? '' : icon('lock')}${label}`;
+  const aria = `${TYPES[it.type].name} ${itemLabel(it)}, ${rar.name}, Rang ${itemRank(it)}. ${on ? 'Angelegt' : has ? 'Antippen zum Anlegen' : ready ? 'Antippen zum Abholen' : `Gibt es ab Level ${it.lv}`}`;
+  return { has, ready, on, rar, small, aria };
+}
+
+function lookOption(it, ctx) {
+  const st = optionState(it, ctx);
+  const nameCls = it.type === 'sign' ? 'jp' : it.type === 'title' ? `tt tt-${st.rar.id}` : '';
+  return `<button class="look-opt lo-${it.type} rar-${st.rar.id} ${st.on ? 'is-on' : ''} ${st.has ? '' : st.ready ? 'is-ready' : 'is-locked'}" data-type="${it.type}" data-id="${it.id}" aria-pressed="${st.on}" aria-label="${esc(st.aria)}">
     ${rankChip(itemRank(it))}
     ${optionPreview(it, ctx.rank)}
     <span class="lo-name ${nameCls}">${esc(it.name)}</span>
     ${it.type === 'sign' ? `<span class="lo-de">${esc(it.de)}</span>` : ''}
-    <small>${has || ready ? '' : icon('lock')}${state}</small>
+    <small>${st.small}</small>
   </button>`;
 }
 
+// Mini-Profil als Vorschau: Banner mit Schild, Profilbild mit Rahmen und Effekt, Name und Titel.
+function lookPreview() {
+  const lv = D().level;
+  const look = equipped(app.state, lv.level);
+  const p = app.state.profile;
+  const fx = effectParts(look.effect.id);
+  return `<div class="lp rank-${esc(lv.rank)}" aria-hidden="true">
+    <div class="lp-bn">${bannerArt(look.banner.id)}<span class="lp-sign sg-${rarityOf(look.sign).id} sign-${[...look.sign.name].length}">${esc(look.sign.name)}</span></div>
+    ${fx.card ? `<div class="lp-cfx">${fx.card}</div>` : ''}
+    <div class="lp-row">
+      <span class="lp-av">${avatar({ frameId: look.frame.id, rankId: lv.rank, img: avatarUrl(), initial: p.name, size: 60, effect: look.effect.id })}</span>
+      <span class="lp-txt"><b class="lp-name">${esc(p.name || 'Dein Name')}</b><span class="title-tag tt-${rarityOf(look.title).id}">${esc(look.title.name)}</span></span>
+    </div>
+  </div>`;
+}
+
 export function lookSheet(focusType = null) {
-  const content = () => {
+  let type = TYPE_ORDER.includes(focusType) ? focusType : TYPE_ORDER[0];
+  const ctxNow = () => {
     const lv = D().level;
-    const ctx = { level: lv.level, rank: lv.rank, look: equipped(app.state, lv.level) };
-    return `
-      <h2>Dein Look</h2>
-      <p class="lead">Neues holst du im Rang-Pfad ab. Banner und Effekt zeigt dein Profil.</p>
-      ${TYPE_ORDER.map((t) => `<div class="look-sec" data-sec="${t}">
-        <h3>${esc(TYPES[t].plural)}</h3>
-        <div class="look-opts look-${t}">${ITEMS.filter((it) => it.type === t).map((it) => lookOption(it, ctx)).join('')}</div>
-      </div>`).join('')}`;
+    return { level: lv.level, rank: lv.rank, look: equipped(app.state, lv.level) };
   };
-  const el = openSheet(content());
-  const refresh = () => {
+  const counts = (t, ctx) => {
+    const list = ITEMS.filter((it) => it.type === t);
+    return `${list.filter((it) => owned(app.state, ctx.level, it)).length}/${list.length}`;
+  };
+  const optsHtml = (ctx) => ITEMS.filter((it) => it.type === type).map((it) => lookOption(it, ctx)).join('');
+  const ctx0 = ctxNow();
+  const el = openSheet(`
+    <h2>Dein Look</h2>
+    <div class="lp-wrap" data-preview>${lookPreview()}</div>
+    <div class="lk-tabs" role="tablist" aria-label="Teil vom Look">
+      ${TYPE_ORDER.map((t) => `<button class="lk-tab ${t === type ? 'is-on' : ''}" role="tab" data-tab="${t}" aria-selected="${t === type}">${esc(TYPES[t].name)}<small data-count="${t}">${counts(t, ctx0)}</small></button>`).join('')}
+    </div>
+    <p class="lead lk-lead" data-lead>${esc(LEAD[type])}</p>
+    <div class="look-opts look-${type}" data-opts role="tabpanel">${optsHtml(ctx0)}</div>
+    <p class="lk-foot">Neues holst du im Rang-Pfad ab.</p>`);
+  const opts = el.querySelector('[data-opts]');
+  const preview = el.querySelector('[data-preview]');
+
+  // Nach Anlegen oder Abholen: Zustände der Optionen, Zähler und Vorschau aktualisieren.
+  const sync = () => {
     if (!el.isConnected) return;
-    const top = el.scrollTop;
-    el.innerHTML = `<div class="sheet-grip" aria-hidden="true"></div>${content()}`;
-    el.scrollTop = top;
+    const ctx = ctxNow();
+    opts.querySelectorAll('.look-opt').forEach((b) => {
+      const it = ITEMS.find((x) => x.type === b.dataset.type && x.id === b.dataset.id);
+      if (!it) return;
+      const st = optionState(it, ctx);
+      b.classList.toggle('is-on', st.on);
+      b.classList.toggle('is-ready', !st.has && st.ready);
+      b.classList.toggle('is-locked', !st.has && !st.ready);
+      b.setAttribute('aria-pressed', String(st.on));
+      b.setAttribute('aria-label', st.aria);
+      const sm = b.querySelector('small');
+      if (sm && sm.innerHTML !== st.small) sm.innerHTML = st.small;
+    });
+    el.querySelectorAll('[data-count]').forEach((c) => { c.textContent = counts(c.dataset.count, ctx); });
+    const html = lookPreview();
+    const h = hashStr(html);
+    if (preview.dataset.h !== h) { preview.innerHTML = html; preview.dataset.h = h; }
   };
-  if (focusType) el.querySelector(`[data-sec="${focusType}"]`)?.scrollIntoView({ block: 'start' });
+  preview.dataset.h = hashStr(lookPreview());
+
   el.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-id]');
+    const tab = e.target.closest('[data-tab]');
+    if (tab) {
+      if (tab.dataset.tab === type) return;
+      type = tab.dataset.tab;
+      el.querySelectorAll('[data-tab]').forEach((b) => {
+        const on = b.dataset.tab === type;
+        b.classList.toggle('is-on', on);
+        b.setAttribute('aria-selected', String(on));
+      });
+      el.querySelector('[data-lead]').textContent = LEAD[type];
+      // Das Fenster wird nicht kürzer, sonst springt es nach oben, wenn ein Reiter weniger Optionen hat.
+      const minH = Math.max(opts.offsetHeight, parseFloat(opts.style.minHeight) || 0);
+      opts.style.minHeight = `${minH}px`;
+      opts.className = `look-opts look-${type}`;
+      opts.innerHTML = optsHtml(ctxNow());
+      return;
+    }
+    const b = e.target.closest('.look-opt');
     if (!b) return;
     const it = ITEMS.find((x) => x.type === b.dataset.type && x.id === b.dataset.id);
     if (!it) return;
     const cur = D().level;
     if (owned(app.state, cur.level, it)) {
-      equipItems([it]);
-      refresh();
+      if (equipped(app.state, cur.level)[it.type].id !== it.id) equipItems([it]);
+      sync();
     } else if (it.lv <= cur.level) {
-      claimOne(it.lv, refresh);
-      refresh();
+      claimOne(it.lv, sync);
+      sync();
     } else {
       toast(`${TYPES[it.type].name} ${itemLabel(it)} gibt es ab Level ${it.lv}.`);
     }

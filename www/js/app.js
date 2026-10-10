@@ -1,5 +1,5 @@
 // Einstieg: Daten laden, Tabbar, Klicks verteilen, Android-Zurück-Taste.
-import { app, D, actions, render, navigate, parseHash, onHashChange, onPopState, closeSheet, sheetOpen, TOP, onAfterRender } from './core.js';
+import { app, D, actions, render, navigate, parseHash, onHashChange, onPopState, closeSheet, sheetOpen, TOP, onAfterRender, noteTap } from './core.js';
 import { applyBackground } from './bg.js';
 import { loadState, persist, flushPersist, loadBg } from './store.js';
 import { migrate, noteXpRule } from './ops.js';
@@ -16,6 +16,7 @@ import './view-settings.js';
 import './view-rank.js';
 import './view-profile.js';
 import { initAvatar } from './me.js';
+import { introOpen, finish as closeIntro } from './intro.js';
 
 const TABS = [
   { id: 'start', label: 'Start', icon: 'home' },
@@ -60,6 +61,9 @@ function updateTabs() {
 
 function onClick(e) {
   const el = e.target.closest('[data-act]');
+  // Merken, was in der Seite angetippt wurde, damit es beim Neuzeichnen an seiner Stelle bleibt.
+  // Klicks in Fenstern ändern die Merkstelle nicht: Nach dem Speichern bleibt der Knopf, der das Fenster geöffnet hat.
+  if (e.target.closest('#view')) noteTap(el || e.target.closest('[data-step], button, [role="button"]'));
   if (!el) return;
   const fn = actions[el.dataset.act];
   if (!fn) return;
@@ -72,10 +76,12 @@ function onKey(e) {
   const el = e.target.closest('[role="button"][data-act]');
   if (!el) return;
   e.preventDefault();
+  if (el.closest('#view')) noteTap(el);
   actions[el.dataset.act]?.(el.dataset, el, e);
 }
 
 function onBack() {
+  if (introOpen()) { closeIntro(); return; }
   const fx = document.querySelector('#fx-root .fx');
   if (fx) { fx.click(); return; }
   if (sheetOpen()) { closeSheet(); return; }
@@ -117,7 +123,7 @@ async function boot() {
   initTimer(() => app.state.settings);
   document.addEventListener('click', onClick);
   document.addEventListener('keydown', onKey);
-  window.addEventListener('hashchange', onHashChange);
+  window.addEventListener('hashchange', () => { if (introOpen()) closeIntro(); onHashChange(); });
   window.addEventListener('popstate', onPopState);
   document.addEventListener('visibilitychange', () => { if (document.hidden) flushPersist(); });
   window.addEventListener('pagehide', flushPersist);
