@@ -1,8 +1,7 @@
 // SVG-Diagramme im Neon-Stil.
-import { esc, parseIso, fmtShort, fmtMon } from './util.js';
+import { esc, parseIso, fmtShort, fmtMon, hashStr } from './util.js';
 import { CAT } from './model.js';
 
-let uid = 0;
 const dayNum = (iso) => Math.round(parseIso(iso).getTime() / 86400000);
 
 function niceTicks(min, max, count = 4) {
@@ -21,7 +20,6 @@ function niceTicks(min, max, count = 4) {
 export const chartRegistry = new Map();
 
 export function lineChart({ points, width = 340, height = 190, color = '#3CF0FF', yFmt = (v) => v, unit = '', avg = null, goal = null, area = true, label = '' }) {
-  const id = 'c' + ++uid;
   if (!points.length) {
     return `<div class="chart chart-empty" style="height:${height}px"><p>Noch keine Daten in diesem Zeitraum.</p></div>`;
   }
@@ -66,7 +64,11 @@ export function lineChart({ points, width = 340, height = 190, color = '#3CF0FF'
     ? `<line x1="${padL}" x2="${width - padR}" y1="${sy(goal).toFixed(1)}" y2="${sy(goal).toFixed(1)}" class="goal"/><text x="${width - padR}" y="${(sy(goal) - 6).toFixed(1)}" class="goal-lab" text-anchor="end">Ziel ${esc(yFmt(goal))}</text>`
     : '';
 
+  // Kennung aus dem Inhalt: Gleiches Diagramm, gleiche Kennung. So bleibt es beim Neuzeichnen unverändert stehen.
+  const id = 'c' + hashStr([line, avgPath, goal, width, height, color, unit, label, area, points.map((p) => p.label || '').join('|')].join('#'));
+  chartRegistry.delete(id);
   chartRegistry.set(id, { points, pts, yFmt, unit, label, padT, H, width, height });
+  if (chartRegistry.size > 40) chartRegistry.delete(chartRegistry.keys().next().value);
 
   return `<div class="chart" data-chart="${id}" style="--c:${color}">
   <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(label)}">
@@ -137,13 +139,18 @@ export function ring(progress, size = 40, stroke = 4) {
 }
 
 // Antippen eines Diagramms zeigt den Wert am nächsten Punkt.
+// Das Diagramm-Element bleibt beim Neuzeichnen oft stehen (core.js): Listener nur einmal anhängen und die
+// Daten erst beim Antippen holen, damit immer die aktuellen gelten.
+const bound = new WeakSet();
 export function bindCharts(root) {
   root.querySelectorAll('.chart[data-chart]').forEach((el) => {
-    const data = chartRegistry.get(el.dataset.chart);
-    if (!data) return;
-    const tip = el.querySelector('.chart-tip');
-    const svg = el.querySelector('svg');
+    if (bound.has(el)) return;
+    bound.add(el);
     const show = (ev) => {
+      const data = chartRegistry.get(el.dataset.chart);
+      const tip = el.querySelector('.chart-tip');
+      const svg = el.querySelector('svg');
+      if (!data || !tip || !svg) return;
       const rect = svg.getBoundingClientRect();
       const x = ((ev.clientX - rect.left) / rect.width) * data.width;
       let best = 0;
@@ -161,7 +168,13 @@ export function bindCharts(root) {
     };
     el.addEventListener('pointerdown', (e) => { show(e); el.setPointerCapture?.(e.pointerId); });
     el.addEventListener('pointermove', (e) => { if (el.classList.contains('tipping')) show(e); });
-    const hide = () => { setTimeout(() => { tip.hidden = true; el.classList.remove('tipping'); }, 1600); };
+    const hide = () => {
+      setTimeout(() => {
+        const tip = el.querySelector('.chart-tip');
+        if (tip) tip.hidden = true;
+        el.classList.remove('tipping');
+      }, 1600);
+    };
     el.addEventListener('pointerup', hide);
     el.addEventListener('pointercancel', hide);
   });

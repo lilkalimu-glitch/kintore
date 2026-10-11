@@ -355,4 +355,142 @@ if (calendarData) {
   });
 }
 
+// ---------- Tempo: Nachtragen statt alles neu rechnen ----------
+const { deriveAppend, deriveBonus, e1rmOf, PR_XP, bodyRef } = await import(W + 'stats.js');
+
+// Die Rechnung von Version 2.8, unverändert übernommen. Die neue muss genau dasselbe ergeben.
+function derive28(state) {
+  const exById = new Map(state.exercises.map((e) => [e.id, e]));
+  const bw = bodyRef(state);
+  const loadOf = (ex, w) => (ex?.bw ? w + bw : w);
+  const sorted = [...state.sets].sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : a.id - b.id));
+  const setsByEx = new Map();
+  const days = new Map();
+  for (const s of sorted) {
+    if (!setsByEx.has(s.ex)) setsByEx.set(s.ex, []);
+    setsByEx.get(s.ex).push(s);
+    if (!days.has(s.d)) days.set(s.d, { d: s.d, sets: [], ex: [], cats: new Map() });
+    const day = days.get(s.d);
+    day.sets.push(s);
+    if (!day.ex.includes(s.ex)) day.ex.push(s.ex);
+    const cat = exById.get(s.ex)?.cat || 'sonstige';
+    if (s.r > 0) day.cats.set(cat, (day.cats.get(cat) || 0) + 1);
+  }
+  const dates = [...days.keys()].sort();
+  const sessionsByEx = new Map();
+  const lastUsed = new Map();
+  for (const [exId, list] of setsByEx) {
+    const ex = exById.get(exId);
+    const sessions = [];
+    let cur = null;
+    for (const s of list) {
+      if (!cur || cur.d !== s.d) { cur = { d: s.d, sets: [], best: 0, top: null, vol: 0 }; sessions.push(cur); }
+      cur.sets.push(s);
+      const load = loadOf(ex, s.w);
+      const e1 = e1rmOf(load, s.r);
+      if (e1 > cur.best) cur.best = e1;
+      if (s.r > 0 && (!cur.top || s.w > cur.top.w || (s.w === cur.top.w && s.r > cur.top.r))) cur.top = s;
+      cur.vol += load * s.r;
+    }
+    sessionsByEx.set(exId, sessions);
+    lastUsed.set(exId, list[list.length - 1].d);
+  }
+  const prIds = new Set();
+  const prEvents = [];
+  const bestE1 = new Map();
+  const firstDate = new Map();
+  for (const s of sorted) {
+    const e1 = e1rmOf(loadOf(exById.get(s.ex), s.w), s.r);
+    if (!firstDate.has(s.ex)) firstDate.set(s.ex, s.d);
+    const prev = bestE1.get(s.ex) || 0;
+    if (e1 > prev + 1e-6) {
+      if (prev > 0 && firstDate.get(s.ex) < s.d) { prIds.add(s.id); prEvents.push({ ...s, e1 }); }
+      bestE1.set(s.ex, e1);
+    }
+  }
+  const scales = new Map(state.exercises.map((e) => [e.id, scaleOf(e)]));
+  let xp = 0, liftTotal = 0, tonnage = 0, setCount = 0;
+  for (const s of sorted) {
+    if (s.r > 0) setCount++;
+    const lift = liftXp(scales.get(s.ex), s.w, s.r);
+    xp += baseXp(s) + lift;
+    liftTotal += lift;
+    tonnage += loadOf(exById.get(s.ex), s.w) * Math.min(s.r, 100);
+  }
+  xp += prIds.size * PR_XP;
+  const bonusByDay = new Map();
+  for (const b of state.bonus || []) { xp += b.xp; bonusByDay.set(b.d, (bonusByDay.get(b.d) || 0) + b.xp); }
+  return { sorted, setsByEx, sessionsByEx, days, dates, lastUsed, prIds, prEvents, bestE1, bonusByDay, level: levelInfo(xp), legacyXp: xp - liftTotal, totals: { sets: setCount, days: dates.length, tonnage } };
+}
+
+// Alles, was die Seiten aus derive lesen, als einfacher Vergleichswert.
+const ids = (list) => list.map((s) => s.id);
+const snap = (d) => ({
+  level: d.level, legacyXp: d.legacyXp, totals: d.totals, sorted: ids(d.sorted), dates: d.dates,
+  prIds: [...d.prIds].sort((a, b) => a - b), prEvents: d.prEvents.map((p) => [p.id, p.e1]),
+  bestE1: [...d.bestE1].sort((a, b) => a[0] - b[0]), lastUsed: [...d.lastUsed].sort((a, b) => a[0] - b[0]),
+  bonusByDay: [...d.bonusByDay].sort(), setsByEx: [...d.setsByEx].map(([k, v]) => [k, ids(v)]).sort((a, b) => a[0] - b[0]),
+  days: [...d.days].map(([k, v]) => [k, ids(v.sets), v.ex, [...v.cats].sort()]).sort(),
+  sessions: [...d.sessionsByEx].map(([k, v]) => [k, v.map((x) => [x.d, ids(x.sets), x.best, x.top?.id ?? null, x.vol])]).sort((a, b) => a[0] - b[0]),
+});
+
+function rnd(seedNo) {
+  let x = seedNo;
+  return () => ((x = (x * 1664525 + 1013904223) >>> 0) / 4294967296);
+}
+// Zufälliger Verlauf über viele Wochen: Körpergewicht-Übungen, Sätze ohne Wiederholungen, Rekorde.
+function randomState(seedNo, days = 120) {
+  const r = rnd(seedNo);
+  const s = { ...structuredClone(seed), sets: [], body: [{ d: addDays(today(), -days), kg: 78 }], bonus: [], rewards: { claimed: [], equip: {} }, settings: {} };
+  const exIds = s.exercises.slice(0, 14).map((e) => e.id);
+  s.exercises.find((e) => e.id === exIds[3]).bw = true;
+  let id = 1;
+  for (let i = days; i >= 1; i--) {
+    if (r() < 0.45) continue;
+    const date = addDays(today(), -i);
+    for (let k = 0; k < 4; k++) {
+      const ex = exIds[Math.floor(r() * exIds.length)];
+      for (let j = 0; j < 3; j++) s.sets.push({ id: id++, ex, d: date, w: Math.round(r() * 120) / 2, r: Math.floor(r() * 14) });
+    }
+    if (r() < 0.2) s.bonus.push({ d: date, k: 'quest', xp: 100, n: 10 });
+  }
+  return s;
+}
+
+t('Neue Rechnung ergibt genau dasselbe wie Version 2.8', () => {
+  for (const no of [1, 2, 3]) {
+    const s = randomState(no);
+    assert.deepEqual(snap(derive(s)), snap(derive28(s)));
+    // Auch wenn die Sätze nicht nach Datum sortiert gespeichert sind (zum Beispiel nach einem Import).
+    const mixed = { ...s, sets: [...s.sets].reverse() };
+    assert.deepEqual(snap(derive(mixed)), snap(derive28(mixed)));
+  }
+});
+
+t('Satz für Satz nachtragen ergibt dasselbe wie alles neu rechnen', () => {
+  for (const no of [4, 5]) {
+    const full = randomState(no);
+    const s = { ...full, sets: full.sets.slice(0, 40), bonus: [] };
+    const d = derive(s);
+    for (const set of full.sets.slice(40)) {
+      s.sets.push(set);
+      assert.equal(deriveAppend(d, set), true);
+    }
+    for (const b of full.bonus) {
+      s.bonus.push(b);
+      deriveBonus(d, [b]);
+    }
+    assert.deepEqual(snap(d), snap(derive(s)));
+    assert.deepEqual(snap(d), snap(derive28(s)));
+  }
+});
+
+t('Nachtragen eines älteren Tages geht nicht, dann wird alles neu gerechnet', () => {
+  const s = randomState(6, 30);
+  const d = derive(s);
+  const old = { id: 99999, ex: s.sets[0].ex, d: addDays(today(), -60), w: 50, r: 8 };
+  assert.equal(deriveAppend(d, old), false);
+  assert.equal(deriveAppend(d, { id: 99998, ex: 123456, d: today(), w: 50, r: 8 }), false, 'unbekannte Übung');
+});
+
 console.log(n, 'Tests bestanden');

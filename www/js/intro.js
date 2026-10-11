@@ -10,7 +10,7 @@ let active = null;
 export const introOpen = () => !!active;
 
 function markSeen(key) {
-  commit((s) => { s.meta.intro = { ...(s.meta.intro || {}), [key]: true }; }, { render: false });
+  commit((s) => { s.meta.intro = { ...(s.meta.intro || {}), [key]: true }; }, { render: false, derive: 'keep' });
 }
 
 // Wird beim Öffnen einer Seite aufgerufen. Startet kurz danach, wenn nichts anderes im Weg ist.

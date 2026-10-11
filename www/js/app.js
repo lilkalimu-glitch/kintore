@@ -1,7 +1,7 @@
 // Einstieg: Daten laden, Tabbar, Klicks verteilen, Android-Zurück-Taste.
 import { app, D, actions, render, navigate, parseHash, onHashChange, onPopState, closeSheet, sheetOpen, TOP, onAfterRender, noteTap } from './core.js';
 import { applyBackground } from './bg.js';
-import { loadState, persist, flushPersist, loadBg } from './store.js';
+import { loadState, persist, flushPersist, loadBg, markStored } from './store.js';
 import { migrate, noteXpRule } from './ops.js';
 import { initTimer } from './timer.js';
 import { initNative, exitApp, isNative } from './native.js';
@@ -17,6 +17,7 @@ import './view-rank.js';
 import './view-profile.js';
 import { initAvatar } from './me.js';
 import { introOpen, finish as closeIntro } from './intro.js';
+import { warmUp } from './fx.js';
 
 const TABS = [
   { id: 'start', label: 'Start', icon: 'home' },
@@ -116,6 +117,7 @@ async function boot() {
     return;
   }
   app.state = migrate(loaded.state);
+  if (loaded.parts) markStored(app.state);
   if (loaded.origin !== 'db') persist(app.state);
   noteXpRule();
 
@@ -143,6 +145,9 @@ async function boot() {
   render({ entering: true });
   updateTabs();
   window.KINTORE = { app };
+  // In Ruhe vorbereiten, was beim ersten Effekt sonst Zeit kostet.
+  const later = (fn) => (typeof requestIdleCallback === 'function' ? requestIdleCallback(fn, { timeout: 2500 }) : setTimeout(fn, 1200));
+  later(warmUp);
 }
 
 onAfterRender(updateTabs);

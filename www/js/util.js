@@ -33,11 +33,18 @@ export const addDays = (iso, n) => {
   return isoOf(d);
 };
 export const daysBetween = (a, b) => Math.round((parseIso(b) - parseIso(a)) / 86400000);
+// Montag der Woche. Gemerkt, weil es für jeden Trainingstag oft gebraucht wird.
+const weekCache = new Map();
 export const weekStart = (iso) => {
+  let w = weekCache.get(iso);
+  if (w) return w;
   const d = parseIso(iso);
   const dow = (d.getDay() + 6) % 7; // Montag = 0
   d.setDate(d.getDate() - dow);
-  return isoOf(d);
+  w = isoOf(d);
+  if (weekCache.size > 20000) weekCache.clear();
+  weekCache.set(iso, w);
+  return w;
 };
 
 const dfDay = new Intl.DateTimeFormat('de-DE', { weekday: 'short', day: 'numeric', month: 'short' });
@@ -131,8 +138,23 @@ export function hashStr(str) {
 }
 
 // Setzt data-persist auf das erste Element eines HTML-Stücks. Der Schlüssel folgt aus dem Inhalt:
-// Ändert sich das HTML, ist es ein neues Element.
-export const persistHtml = (html, prefix = 'p') => html.replace(/^(\s*<[a-zA-Z][\w-]*)/, `$1 data-persist="${prefix}-${hashStr(html)}"`);
+// Ändert sich das HTML, ist es ein neues Element. Kommentare davor und danach markieren das Stück, damit
+// morph() (core.js) unveränderte Stücke beim Neuzeichnen gar nicht erst einlesen muss.
+const persistMemo = new Map();
+export function persistHtml(html, prefix = 'p') {
+  let memo = persistMemo.get(prefix);
+  if (!memo) persistMemo.set(prefix, (memo = new Map()));
+  let out = memo.get(html);
+  if (out == null) {
+    const key = `${prefix}-${hashStr(html)}`;
+    out = `<!--p:${key}-->${html.replace(/^(\s*<[a-zA-Z][\w-]*)/, `$1 data-persist="${key}"`)}<!--/p:${key}-->`;
+    if (memo.size > 400) memo.clear();
+    memo.set(html, out);
+  }
+  return out;
+}
+export const PERSIST_PART = /<!--p:([\w-]+)-->[\s\S]*?<!--\/p:\1-->/g;
+export const PERSIST_MARK = /<!--\/?p:[\w-]+-->/g;
 
 export function debounce(fn, ms) {
   let t = null;

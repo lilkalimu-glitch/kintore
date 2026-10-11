@@ -226,6 +226,20 @@ export function missionComplete({ title, dur, sets, vol, prs, xp }) {
     </div>`, { cls: 'fx-mc', autoClose: 0 }));
 }
 
+// ---------- Vorbereiten ----------
+// Beim ersten Effekt müsste der Browser erst die japanische Schrift und das Zeichen für die Funken suchen. Das
+// kostet beim ersten Abholen spürbar Zeit. Deshalb einmal in Ruhe vorbereiten, unsichtbar und ohne Wirkung.
+const WARM_JP = '新記録レベルアップランクアップノーマルレアエピックレジェンド報酬任務完了達成休息日連続';
+export function warmUp() {
+  const el = document.createElement('div');
+  el.setAttribute('aria-hidden', 'true');
+  el.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;contain:strict';
+  el.innerHTML = `<span class="fx-spark">✦</span><span class="fx-jp">${WARM_JP}</span><span class="fb-jp">${WARM_JP}</span><span class="fx-big">LEVEL UP! NEW PR! RANK UP!</span>`;
+  root().appendChild(el);
+  void el.offsetHeight;
+  setTimeout(() => el.remove(), 4000);
+}
+
 let toastTimer = null;
 export function toast(msg, action = null) {
   const el = document.getElementById('toast-root');

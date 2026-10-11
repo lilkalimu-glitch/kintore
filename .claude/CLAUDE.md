@@ -43,11 +43,30 @@ Projektsprache ist Deutsch: Texte in der App, Code-Kommentare, Commit-Nachrichte
   liegt wie das Hintergrundbild getrennt in IndexedDB (Schlüssel `avatar`, `js/me.js`) und ist nicht im Backup.
   Jeder Teil vom Look ist im Profil antippbar und öffnet `lookSheet(type)` (Fenster mit Vorschau und Reitern).
 - Einführung beim ersten Öffnen (Profil, Rang-Pfad): `js/intro.js`, gesehen in `state.meta.intro`.
-- Neu zeichnen ohne Springen (`js/core.js`): `render()` behält Leisten mit `data-keep`, hält den angetippten Knopf an
-  seiner Stelle (außer `data-anchor="none"`) und übernimmt Deko mit `data-persist`, damit Animationen weiterlaufen.
-  Ändert sich das Aussehen, muss sich der `data-persist`-Schlüssel ändern (`persistHtml` nimmt einen Fingerabdruck).
-  `openSheet` tauscht in einem offenen Fenster nur den Inhalt. Klicks immer an das zurückgegebene `.sheet-body`
-  hängen, nicht an `.sheet`. Lieber Teile gezielt ändern als ein ganzes Fenster neu zu zeichnen.
+- Neu zeichnen (`js/core.js`, seit 2.9): Beim Öffnen einer Seite baut `render()` sie neu, danach gleicht `morph()`
+  nur noch Unterschiede ab. Elemente bleiben dabei stehen: Listener in `after()` nur einmal anhängen
+  (`once(el, key)`) und Daten erst beim Auslösen lesen. Schlüssel: `data-persist` für Deko (gleicher Schlüssel heißt
+  gleiches Aussehen, wird unverändert übernommen; `persistHtml` nimmt einen Fingerabdruck und markiert das Stück,
+  damit es gar nicht erst eingelesen wird) und `data-key` für feste Kennungen (Inhalt wird abgeglichen). Klassen,
+  die Skripte nachträglich setzen und behalten sollen, stehen in `JS_CLASSES`. Leisten mit `data-keep` behalten
+  ihre Position, der angetippte Knopf bleibt an seiner Stelle (außer `data-anchor="none"`). `openSheet` tauscht
+  in einem offenen Fenster nur den Inhalt. Klicks immer an das zurückgegebene `.sheet-body` hängen, nicht an
+  `.sheet`. Lieber Teile gezielt ändern als ein ganzes Fenster neu zu zeichnen.
+- Nachrechnen (seit 2.9): `commit(fn, { derive })`. `'keep'`, wenn Sätze, Übungsdaten fürs Level, Körpergewicht
+  und Bonus-XP gleich bleiben. Eine Funktion trägt nur das Neue nach (`deriveAppend`, `deriveBonus` in
+  `js/stats.js`). Im Zweifel nichts angeben, dann rechnet die App alles neu.
+- Sichern (`js/store.js`, seit 2.9): IndexedDB mit einem Eintrag pro Monat (`sets:JJJJ-MM`) und dem Haupteintrag
+  ohne Sätze (`setMonths`). Geschrieben werden nur geänderte Monate, alles in einer Transaktion. Ein geänderter
+  Satz ist deshalb ein neues Objekt (`updateSet`). Das alte Format (bis 2.8) wird weiter gelesen. Die Datei-Kopie
+  auf Android höchstens alle 30 Sekunden in Ruhe und sofort beim Wechsel in den Hintergrund.
+- Rang-Pfad zeichnen (seit 2.9): Nur Stationen in der Nähe sind voll gezeichnet (`app.ui.roadFilled`), weit
+  entfernte werden wieder leer. Positionen kommen ohne Messen aus `GEO` in `js/view-rank.js`, mit denselben Maßen
+  wie `.road` und `.node` in `app.css`: Ändert sich dort etwas, beides anpassen. Beim schnellen Wischen wird nichts
+  nachgezeichnet, erst wenn es ruhiger wird.
+- Animationen außerhalb des Bildes hält `watchOff` (`js/core.js`) über die Animations-API an und startet sie neu,
+  wenn das Element ins Bild kommt. Keine Animation auf ein Element legen, in dem (oder in dessen `::before` oder
+  `::after`) noch etwas animiert ist: Dann rechnet Chrome jedes Bild im Hauptthread. Lieber auf einen Behälter
+  daneben legen. Prüfen mit `leerlauf.py`.
 - Daten liegen auf dem Handy (IndexedDB plus Datei-Kopie). Neue Felder oder Formatänderungen immer in `migrate()` in
   `js/ops.js` abfangen, damit vorhandene Daten erhalten bleiben.
 - `scripts/patch-android.py` passt das von Capacitor erzeugte Android-Projekt an (Icon, Startbild, dunkle Leisten,
@@ -61,6 +80,8 @@ Projektsprache ist Deutsch: Texte in der App, Code-Kommentare, Commit-Nachrichte
   Bildvergleich vorher/nachher, Logik-Tests für Level, XP, Serie und Belohnungen, Springen und die Regeln für die
   Bedienung (`bedienung.py`: Tippflächen, Namen für TalkBack, Schriftgröße, 130 % System-Schrift) und Tempo
   (`tempo.py`: Reaktionszeit mit gedrosseltem Prozessor wie auf einem Mittelklasse-Handy, Ziele aus dem Plan).
+  Seit 2.9 dazu: `neuzeichnen.py` (morph), `speichern.py` (nichts geht verloren, auch beim Umstieg von 2.8),
+  `ablauf.py` (die wichtigsten Abläufe durchklicken) und `leerlauf.py` (in Ruhe keine Arbeit im Hauptthread).
 - Vor dem Push: keine Konsolenfehler, kein horizontales Scrollen, alle Ansichten aufrufbar, auch mit leeren Daten.
   Seiten, die sich nicht ändern sollen, per Bildvergleich gegen den Stand vorher prüfen.
 
@@ -74,7 +95,7 @@ Wird mit dem Plan in `docs/naechste-version.md` (Schritt 1) umgebaut: neuer ruhi
 ohne Glas, Leuchten und japanische Zeichen, dazu ein helles Design. Der bisherige Look bleibt als Design Neon.
 Bis der Umbau fertig ist, beschreibt der Rest dieses Abschnitts den bisherigen Look, danach nur noch das Design Neon.
 
-Navy-Grund, Glas-Karten, Neon-Glow in Pink, Cyan und Violett. Schriften: Adventor (Titel und Zahlen), Inter (Text).
+Navy-Grund, Glas-Karten (seit 2.9 ohne Unschärfe, fast deckend), Neon-Glow in Pink, Cyan und Violett. Schriften: Adventor (Titel und Zahlen), Inter (Text).
 Japanische Schriftzeichen nur als Deko (Neon-Schild, Wasserzeichen in Seitenköpfen, Banner). Keine bekannten
 Anime-Figuren, auch nicht aus Referenzbildern des Besitzers: nur Stimmung, Farben und Motive übernehmen.
 Knöpfe sind eckig mit abgeschrägten Ecken wie in einem Game-Menü, ruhig, ohne Glanz und ohne Leuchten darunter:

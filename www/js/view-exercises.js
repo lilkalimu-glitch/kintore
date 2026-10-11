@@ -1,5 +1,5 @@
 // Übungen: Liste mit Suche und Muskelgruppen, Detail mit Diagramm, Rekorden und Einstellungen.
-import { app, D, views, actions, navigate, render, openSheet, closeSheet } from './core.js';
+import { app, D, views, actions, navigate, render, openSheet, closeSheet, once, morph } from './core.js';
 import { esc, icon, kg, int, num1, relDay, fmtDay, fmtShort, today, addDays, fmtLoad, fmtSetText } from './util.js';
 import { CATEGORIES, CAT } from './model.js';
 import { sparkline, lineChart } from './charts.js';
@@ -74,9 +74,11 @@ views.uebungen = {
   },
   after(main) {
     const inp = main.querySelector('[data-ex-search]');
-    inp?.addEventListener('input', () => {
+    if (!inp || !once(inp, 'search')) return;
+    inp.addEventListener('input', () => {
       app.ui.exSearch = inp.value;
-      main.querySelector('[data-ex-body]').innerHTML = listBody(D());
+      const body = document.querySelector('#view [data-ex-body]');
+      if (body) morph(body, listBody(D()));
     });
   },
 };
@@ -92,9 +94,9 @@ actions['ex-cat'] = (ds) => {
     b.classList.toggle('is-on', on);
     b.setAttribute('aria-selected', String(on));
   });
-  body.innerHTML = listBody(D());
+  morph(body, listBody(D()));
 };
-actions['toggle-unused'] = () => { app.ui.exShowAll = !app.ui.exShowAll; const b = document.querySelector('[data-ex-body]'); if (b) b.innerHTML = listBody(D()); };
+actions['toggle-unused'] = () => { app.ui.exShowAll = !app.ui.exShowAll; const b = document.querySelector('[data-ex-body]'); if (b) morph(b, listBody(D())); };
 actions['new-ex'] = () => newExerciseSheet({ name: app.ui.exSearch, onCreated: (id) => navigate('uebung', id) });
 
 // ---------- Detail ----------
@@ -220,9 +222,10 @@ views.uebung = {
       </section>` : ''}
     </div>`;
   },
-  after(main, { id }) {
+  after(main) {
     main.querySelectorAll('[data-ex-flag]').forEach((inp) => {
-      inp.addEventListener('change', () => updateExercise(Number(id), { [inp.dataset.exFlag]: inp.checked }));
+      if (!once(inp, 'flag')) return;
+      inp.addEventListener('change', () => { const ex = curEx(); if (ex) updateExercise(ex.id, { [inp.dataset.exFlag]: inp.checked }); });
     });
   },
 };

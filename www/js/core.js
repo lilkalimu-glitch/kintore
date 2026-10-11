@@ -2,7 +2,7 @@
 import { persist } from './store.js';
 import { derive } from './stats.js';
 import { bindCharts } from './charts.js';
-import { today } from './util.js';
+import { today, PERSIST_PART, PERSIST_MARK } from './util.js';
 
 export const app = {
   state: null,
@@ -29,9 +29,14 @@ export const views = {};
 export const actions = {};
 export const TOP = ['start', 'training', 'uebungen', 'verlauf', 'koerper'];
 
-export function commit(fn, { render: doRender = true } = {}) {
+// derive sagt, was mit den abgeleiteten Daten (Level, Rekorde, Verlauf) nach der Änderung passiert:
+//   nichts angegeben  alles neu rechnen (immer richtig, bei Jahren an Verlauf aber spürbar)
+//   'keep'            die Änderung betrifft weder Sätze, Übungen, Körpergewicht noch Bonus-XP
+//   (d) => bool       nur das Geänderte in d nachtragen. false heißt: geht nicht, dann alles neu rechnen
+export function commit(fn, { render: doRender = true, derive: how } = {}) {
   fn(app.state);
-  cache = null;
+  if (typeof how === 'function') { if (cache && !how(cache)) cache = null; }
+  else if (how !== 'keep') cache = null;
   persist(app.state);
   if (doRender) render();
 }
@@ -124,47 +129,191 @@ function holdAnchor(main) {
   anchor.top = el.getBoundingClientRect().top;
 }
 
-// Deko mit data-persist="schlüssel" (Banner, Effekte, Profilbild, Abzeichen) wird beim Neuzeichnen
-// übernommen, solange der Schlüssel gleich bleibt. Der Schlüssel muss sich ändern, sobald sich das
-// Aussehen ändert. Mit moveBefore (neuere Android-Versionen) wandert das alte Element, ohne die Seite zu
-// verlassen, und seine Animationen laufen einfach weiter. Sonst wird es eingesetzt und startet neu.
-function readPersist(root) {
-  const out = new Map();
-  root.querySelectorAll('[data-persist]').forEach((el) => { if (!out.has(el.dataset.persist)) out.set(el.dataset.persist, el); });
-  return out;
+// ---------- Nur ändern, was sich ändert ----------
+// Nach einer Änderung wird die Seite nicht neu gebaut. morph() legt das neue HTML neben das, was schon da ist,
+// und ändert nur, was anders ist: Texte, Attribute, neue und entfernte Elemente. Alles andere bleibt stehen,
+// mit Scroll-Position, Fokus und laufenden Animationen. Der Browser muss so nur das Geänderte neu berechnen.
+//
+// Schlüssel halten Elemente auseinander, wenn Listen sich verschieben:
+// - data-persist="…" (Deko wie Banner, Effekte, Profilbild): Der Schlüssel folgt aus dem Inhalt. Gleicher
+//   Schlüssel heißt gleiches Aussehen, das Element bleibt unberührt. Es darf auch den Platz wechseln.
+// - data-key="…": feste Kennung (zum Beispiel eine Übung im Training), der Inhalt wird abgeglichen.
+// Klassen, die erst nach dem Zeichnen per Skript dazukommen und bleiben sollen, stehen in JS_CLASSES.
+const JS_CLASSES = ['is-wait', 'is-intro', 'is-enter'];
+const canMove = typeof Element !== 'undefined' && typeof Element.prototype.moveBefore === 'function';
+
+// Platzhalter (template data-stub) stehen für ein unverändertes Stück mit data-persist, siehe morph().
+const keyOf = (n) => {
+  if (n.nodeType !== 1) return null;
+  const p = n.getAttribute('data-persist') || n.getAttribute('data-stub');
+  if (p) return 'p:' + p;
+  const k = n.getAttribute('data-key');
+  return k ? 'k:' + k : null;
+};
+const isStub = (n) => n.nodeType === 1 && n.hasAttribute('data-stub');
+
+function collectKeys(root, into) {
+  root.querySelectorAll('[data-persist],[data-key],template[data-stub]').forEach((el) => { const k = keyOf(el); if (!into.has(k)) into.set(k, el); });
+  return into;
 }
 
-function fillView(main, html, old) {
-  if (!old?.size) { main.innerHTML = html; return; }
-  const tpl = document.createElement('template');
-  tpl.innerHTML = html;
-  const fresh = [...tpl.content.children];
-  const before = [...main.childNodes];
-  const atomic = typeof main.moveBefore === 'function';
-  if (atomic) {
-    main.append(tpl.content);
-    // Erst das Neue berechnen lassen, sonst startet Chrome die Animationen beim Verschieben trotzdem neu.
-    void main.offsetHeight;
-  } else main.replaceChildren(tpl.content);
-  for (const top of fresh) {
-    const list = top.matches('[data-persist]') ? [top] : [...top.querySelectorAll('[data-persist]')];
-    for (const el of list) {
-      if (!el.isConnected || !el.parentNode) continue;
-      const prev = old.get(el.dataset.persist);
-      if (!prev) continue;
-      old.delete(el.dataset.persist);
-      if (atomic && prev.isConnected) {
-        try { el.parentNode.moveBefore(prev, el); el.remove(); continue; } catch { /* unten einsetzen */ }
+function syncAttrs(old, nw) {
+  const want = nw.attributes;
+  // Meist ist alles gleich: Dann reicht ein Durchgang, und Attribute zum Entfernen gibt es nicht.
+  let missing = want.length !== old.attributes.length;
+  for (let i = 0; i < want.length; i++) {
+    const { name, value } = want[i];
+    const cur = old.getAttribute(name);
+    if (cur === value) continue;
+    if (cur === null) missing = true;
+    if (name === 'class' && cur !== null) {
+      let v = value;
+      for (const c of JS_CLASSES) if (old.classList.contains(c) && !nw.classList.contains(c)) v += ' ' + c;
+      if (cur !== v) old.setAttribute('class', v);
+    } else old.setAttribute(name, value);
+  }
+  if (!missing) return;
+  const have = old.attributes;
+  for (let i = have.length - 1; i >= 0; i--) {
+    const name = have[i].name;
+    if (!nw.hasAttribute(name)) {
+      if (name === 'class') {
+        const keep = JS_CLASSES.filter((c) => old.classList.contains(c)).join(' ');
+        if (keep) { old.setAttribute('class', keep); continue; }
       }
-      el.replaceWith(prev);
+      old.removeAttribute(name);
     }
   }
-  if (atomic) for (const n of before) n.remove();
 }
 
+// Eingaben: Was der Nutzer gerade tippt, bleibt stehen.
+function syncValue(old, nw) {
+  if (old === document.activeElement) return;
+  if (old.tagName === 'INPUT') {
+    if (old.type === 'checkbox' || old.type === 'radio') old.checked = nw.hasAttribute('checked');
+    else if (old.type !== 'file') {
+      const v = nw.getAttribute('value') ?? '';
+      if (old.value !== v) old.value = v;
+    }
+  } else if (old.tagName === 'TEXTAREA' && old.value !== nw.value) old.value = nw.value;
+}
+
+function morphNode(old, nw, ctx) {
+  if (old.nodeType !== 1) {
+    if (old.nodeValue !== nw.nodeValue) old.nodeValue = nw.nodeValue;
+    return;
+  }
+  syncAttrs(old, nw);
+  if (old.tagName === 'INPUT' || old.tagName === 'TEXTAREA') syncValue(old, nw);
+  morphChildren(old, nw, ctx);
+}
+
+function place(parent, el, before) {
+  if (canMove && el.isConnected) {
+    try { parent.moveBefore(el, before); return; } catch { /* unten einsetzen */ }
+  }
+  parent.insertBefore(el, before);
+}
+
+// prev ist das letzte fertige Kind. Der nächste Kandidat wird jedes Mal neu bestimmt, weil Elemente mit
+// Schlüssel beim Abgleich darunter an eine andere Stelle wandern können.
+function morphChildren(oldParent, newParent, ctx) {
+  let prev = null;
+  let nw = newParent.firstChild;
+  while (nw) {
+    const next = nw.nextSibling;
+    let cur = prev ? prev.nextSibling : oldParent.firstChild;
+    // Alte Elemente mit Schlüssel, die es im neuen HTML nicht mehr gibt, fallen gleich weg.
+    while (cur && cur.nodeType === 1) {
+      const ck = keyOf(cur);
+      if (!ck || ctx.want.has(ck)) break;
+      const after = cur.nextSibling;
+      cur.remove();
+      cur = after;
+    }
+    const k = keyOf(nw);
+    const ck = cur ? keyOf(cur) : null;
+    if (cur && ck === k && (k?.[0] === 'p' || (cur.nodeType === nw.nodeType && cur.nodeName === nw.nodeName))) {
+      if (k) ctx.old.delete(k);
+      if (!k || k[0] !== 'p') morphNode(cur, nw, ctx);
+      prev = cur;
+    } else if (k && ctx.old.has(k) && !ctx.old.get(k).contains(oldParent)) {
+      // Gibt es schon, nur an anderer Stelle: herholen statt neu bauen.
+      const el = ctx.old.get(k);
+      ctx.old.delete(k);
+      place(oldParent, el, cur);
+      if (k[0] !== 'p') morphNode(el, nw, ctx);
+      prev = el;
+    } else {
+      if (isStub(nw)) throw new Error('Platzhalter ohne Element');
+      oldParent.insertBefore(nw, cur);
+      if (nw.nodeType === 1 && ctx.old.size) adoptKeyed(nw, ctx);
+      prev = nw;
+    }
+    nw = next;
+  }
+  let cur = prev ? prev.nextSibling : oldParent.firstChild;
+  while (cur) {
+    const after = cur.nextSibling;
+    cur.remove();
+    cur = after;
+  }
+}
+
+// In einem neu eingesetzten Teil die Elemente mit Schlüssel durch die vorhandenen ersetzen,
+// damit Deko darin weiterläuft und nicht neu startet.
+function adoptKeyed(root, ctx) {
+  for (const el of root.querySelectorAll('[data-persist],[data-key],template[data-stub]')) {
+    if (!root.contains(el)) continue;
+    const k = keyOf(el);
+    const old = ctx.old.get(k);
+    if (!old || old.contains(root)) {
+      if (isStub(el)) throw new Error('Platzhalter ohne Element');
+      continue;
+    }
+    ctx.old.delete(k);
+    place(el.parentNode, old, el);
+    if (k[0] !== 'p') morphNode(old, el, ctx);
+    el.remove();
+  }
+}
+
+export function morph(root, html) {
+  const old = collectKeys(root, new Map());
+  // Stücke mit data-persist, die es schon gibt, werden gar nicht erst eingelesen: Ein Platzhalter merkt sich
+  // die Stelle, das vorhandene Element bleibt. Das spart bei großen Seiten (Rang-Pfad) das meiste.
+  const stubbed = new Set();
+  const src = old.size ? html.replace(PERSIST_PART, (part, key) => {
+    if (!old.has('p:' + key) || stubbed.has(key)) return part;
+    stubbed.add(key);
+    return `<template data-stub="${key}"></template>`;
+  }) : html;
+  const tpl = document.createElement('template');
+  tpl.innerHTML = src.replace(PERSIST_MARK, '');
+  const ctx = { old, want: new Set(collectKeys(tpl.content, new Map()).keys()) };
+  try {
+    morphChildren(root, tpl.content, ctx);
+  } catch (err) {
+    // Sollte nie passieren. Falls doch: die Seite ganz neu aufbauen statt etwas Falsches zu zeigen.
+    console.warn('[morph]', err?.message || err);
+    root.innerHTML = html.replace(PERSIST_MARK, '');
+  }
+}
+
+// Hängt einen Listener nur einmal an, auch wenn das Element beim Neuzeichnen stehen bleibt.
+const bound = new WeakMap();
+export function once(el, key) {
+  let set = bound.get(el);
+  if (!set) bound.set(el, (set = new Set()));
+  if (set.has(key)) return false;
+  set.add(key);
+  return true;
+}
+
+// Leisten und Listen mit data-keep: Wird so ein Element doch einmal ersetzt, bekommt das neue die alte Position.
 function readKeep(root) {
   const out = new Map();
-  root.querySelectorAll('[data-keep]').forEach((el) => out.set(el.dataset.keep, [el.scrollLeft, el.scrollTop]));
+  root.querySelectorAll('[data-keep]').forEach((el) => out.set(el.dataset.keep, { el, x: el.scrollLeft, y: el.scrollTop }));
   return out;
 }
 
@@ -172,23 +321,92 @@ function writeKeep(root, kept) {
   if (!kept?.size) return;
   root.querySelectorAll('[data-keep]').forEach((el) => {
     const pos = kept.get(el.dataset.keep);
-    if (!pos) return;
-    el.scrollLeft = pos[0];
-    el.scrollTop = pos[1];
+    if (!pos || pos.el === el) return;
+    el.scrollLeft = pos.x;
+    el.scrollTop = pos.y;
   });
 }
+
+// ---------- Animationen nur, solange sie zu sehen sind ----------
+// Karten, Deko und Stationen außerhalb des Bildschirms halten ihre Animationen an. Angehalten wird direkt an
+// den Animationen (cancel), nicht über eine Klasse: So muss der Browser nichts neu berechnen, wenn etwas ins Bild
+// kommt oder es verlässt, und für angehaltene Animationen legt er keine Grafik-Ebenen an. Kommt das Element
+// wieder ins Bild, laufen sie von vorn los. Jede Animation gehört dem nächsten beobachteten Element über ihr,
+// so kommen sich Karte und Stationen darin nicht in die Quere.
+const watched = new WeakSet();
+const stopped = new WeakMap();
+
+function holderOf(target, root) {
+  for (let n = target; n && n !== root; n = n.parentElement) if (watched.has(n)) return n;
+  return root;
+}
+
+export function setAnimations(el, on, list = null) {
+  if (on) {
+    const mine = stopped.get(el);
+    if (!mine) return;
+    stopped.delete(el);
+    for (const a of mine) {
+      const t = a.effect?.target;
+      if (a.playState !== 'idle' || !t?.isConnected) continue;
+      // Nur, was das Element laut Stil noch haben soll (es kann sich inzwischen geändert haben).
+      const names = getComputedStyle(t, a.effect.pseudoElement || null).animationName.split(/,\s*/);
+      if (names.includes(a.animationName)) a.play();
+    }
+    return;
+  }
+  if (!list && typeof el.getAnimations !== 'function') return;
+  let mine = stopped.get(el);
+  for (const a of list || el.getAnimations({ subtree: true })) {
+    if (a.playState !== 'running' || typeof a.animationName !== 'string') continue;
+    if (holderOf(a.effect?.target, el) !== el) continue;
+    a.cancel();
+    if (!mine) stopped.set(el, (mine = new Set()));
+    mine.add(a);
+  }
+}
+
+let offWatch = null;
+export function watchOff(list) {
+  if (typeof IntersectionObserver === 'undefined') return;
+  offWatch ||= new IntersectionObserver((entries) => {
+    // Erst alle Animationen holen, dann anhalten: so rechnet der Browser die Stile nur einmal.
+    const work = entries.map((e) => [e.target, e.isIntersecting, e.isIntersecting ? null : e.target.getAnimations?.({ subtree: true })]);
+    for (const [el, on, anims] of work) setAnimations(el, on, anims);
+  }, { rootMargin: '60px' });
+  for (const el of list) {
+    watched.add(el);
+    offWatch.observe(el);
+  }
+}
+
+export function unwatchOff(el) {
+  offWatch?.unobserve(el);
+  watched.delete(el);
+  stopped.delete(el);
+}
+
+const OFF_SEL = ':scope > .card, :scope > .hero, :scope > .stack > .card, :scope > .stack > section';
 
 // entering: Seite wird gerade neu geöffnet (nicht nur nach einer Änderung neu gezeichnet).
 export function render({ entering = false } = {}) {
   const view = views[app.route.name] || views.start;
   const main = document.getElementById('view');
   if (!main || !app.state) return;
-  const kept = entering ? null : readKeep(main);
-  const persisted = entering ? null : readPersist(main);
-  fillView(main, view.render(app.route.params), persisted);
+  const html = view.render(app.route.params);
+  const fresh = entering || main.dataset.route !== app.route.name;
+  let kept = null;
+  if (fresh) {
+    offWatch?.disconnect();
+    main.innerHTML = html.replace(PERSIST_MARK, '');
+  } else {
+    kept = readKeep(main);
+    morph(main, html);
+  }
   main.dataset.route = app.route.name;
   view.after?.(main, app.route.params, { entering });
   bindCharts(main);
+  watchOff(main.querySelectorAll(OFF_SEL));
   for (const fn of afterHooks) fn();
   if (entering) anchor = null;
   else {

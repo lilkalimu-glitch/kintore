@@ -1,5 +1,5 @@
 // Rang-Pfad: alle Ränge von E bis SS, Belohnungen zum Abholen und der eigene Look.
-import { app, D, views, actions, navigate, openSheet } from './core.js';
+import { app, D, views, actions, navigate, openSheet, once, watchOff, unwatchOff, setAnimations, sheetBox } from './core.js';
 import { esc, icon, int, clamp, hashStr, persistHtml } from './util.js';
 import { maybeIntro } from './intro.js';
 import { RANKS, xpAt, PR_XP, QUEST_XP, REST_XP, LIFT_XP, LIFT_CAP, weekXp, SHIELD_EVERY, SHIELD_MAX } from './stats.js';
@@ -67,23 +67,25 @@ function nodeText(st) {
   return `<small>${esc(TYPES[it.type].name)}</small><span class="n-name ${it.type === 'sign' ? 'jp' : ''}">${esc(it.name)}</span>`;
 }
 
-function roadNode(st, lv, claimed, nextLv) {
+// full: Station mit Kugel oder Abzeichen. Sonst nur Text und Knopf, die Kugel kommt beim Scrollen dazu.
+// So muss der Browser beim Öffnen nur die Stationen zeichnen, die man sieht.
+function roadNode(st, lv, claimed, nextLv, full = true) {
   const reached = st.lv <= lv.level;
   let state = 'locked';
   if (st.lv === 1) state = 'done';
   else if (reached) state = claimed.has(st.lv) ? 'done' : 'ready';
   else if (st.lv === nextLv) state = 'next';
   const rar = st.items.length ? topRarity(st.items).id : 'n';
-  const orb = st.rank
+  const orb = !full ? '' : st.rank
     ? `<span class="n-emb">${emblem(st.rank.id, 'hex', 64)}</span>`
     : rewardOrb(st.items[0]);
-  const badge = state === 'done' && st.lv > 1 ? `<span class="n-badge ok">${icon('check')}</span>`
+  const badge = !full ? '' : state === 'done' && st.lv > 1 ? `<span class="n-badge ok">${icon('check')}</span>`
     : state === 'locked' || state === 'next' ? `<span class="n-badge">${icon('lock')}</span>` : '';
   const foot = state === 'ready'
     ? `<button class="btn-claim small" data-act="claim" data-lv="${st.lv}">Abholen</button>`
     : state === 'next' ? `<span class="n-next">Noch ${int(xpAt(st.lv) - lv.xp)} XP</span>` : '';
   const just = app.ui.justClaimed?.includes(st.lv) ? 'just-claimed' : '';
-  return `<div class="node ${st.rank ? `is-rank rank-${esc(st.rank.id)}` : ''} nr-${rar} st-${state} ${just}" data-lv="${st.lv}">
+  return `<div class="node ${st.rank ? `is-rank rank-${esc(st.rank.id)}` : ''} nr-${rar} st-${state} ${just}${full ? '' : ' is-empty'}" data-lv="${st.lv}">
     <div class="n-lv">Lv ${st.lv}</div>
     <div class="n-orb">${orb}${badge}</div>
     <div class="n-text">${nodeText(st)}</div>
@@ -93,21 +95,125 @@ function roadNode(st, lv, claimed, nextLv) {
 
 const rarityLegend = () => `<div class="rar-legend" aria-label="Seltenheit">${RARITIES.map((r) => `<span class="rar-${r.id}"><i></i>${esc(r.name)}</span>`).join('')}</div>`;
 
+// ---------- Lage der Stationen ----------
+// Die Maße stehen in app.css (.road, .node, .node.is-rank). Hier dieselben Werte, damit die Positionen ohne
+// Messen feststehen. Messen würde den Browser zwingen, die ganze Seite vorab zu berechnen.
+const ROAD = { pad: 16, gap: 4, node: 90, rank: 116 };
+const GEO = (() => {
+  let x = ROAD.pad;
+  const list = STATIONS.map((st) => {
+    const w = st.rank ? ROAD.rank : ROAD.node;
+    const g = { lv: st.lv, left: x, w, center: x + w / 2, radius: st.rank ? 36 : 28 };
+    x += w + ROAD.gap;
+    return g;
+  });
+  return { list, width: x - ROAD.gap + ROAD.pad };
+})();
+
+// Breite des sichtbaren Pfads: gemessen, wenn es ihn schon gibt, sonst aus der Fensterbreite
+// (#view höchstens 560 px, 16 px Rand je Seite, 1 px Rahmen der Karte).
+const roadView = () => document.querySelector('[data-road-scroll]')?.clientWidth || Math.min(window.innerWidth || 393, 560) - 34;
+
+// Markierung "Du bist hier": in der Lücke zwischen zwei Stationen, damit sie nichts verdeckt.
+function marker(lv) {
+  const L = GEO.list;
+  let a = 0;
+  for (let i = 0; i < L.length; i++) if (L[i].lv <= lv.level) a = i;
+  const b = a + 1;
+  if (b >= L.length) return { xm: L[a].center, max: true };
+  const f = clamp((lv.xp - xpAt(L[a].lv)) / (xpAt(L[b].lv) - xpAt(L[a].lv)), 0, 1);
+  const from = L[a].center + L[a].radius;
+  const to = L[b].center - L[b].radius;
+  return { xm: to > from ? from + f * (to - from) : (L[a].center + L[b].center) / 2, max: false };
+}
+
+const homeScroll = (lv, w = roadView()) => clamp(marker(lv).xm - w * 0.45, 0, Math.max(0, GEO.width - w));
+// Ohne Messen geschätzt, damit beim Öffnen nichts vorab berechnet werden muss.
+const estView = () => Math.min(window.innerWidth || 393, 560) - 34;
+// Fährt die Kamera beim Öffnen vom Anfang zur eigenen Position? Nur beim ersten Mal und mit Bewegung.
+const willPan = (home) => !app.ui.roadIntro && !reduced() && home >= 40;
+
+// Welche Stationen voll gezeichnet werden: alles im Bereich [von, bis] in Pixeln auf dem Pfad.
+function inRange(from, to) {
+  return GEO.list.filter((g) => g.left + g.w >= from && g.left <= to).map((g) => g.lv);
+}
+
 function roadCard(s, lv, ready) {
   const claimed = new Set(s.rewards.claimed);
   const next = STATIONS.find((st) => st.lv > lv.level) || null;
+  const filled = app.ui.roadFilled;
+  const m = marker(lv);
+  const L = GEO.list;
   return `<section class="card road-card">
     <div class="card-title"><h2>Pfad</h2><span class="hint">${ready.length ? `${plural(ready.length, 'Belohnung', 'Belohnungen')} bereit` : next ? `Nächste bei Level ${next.lv}` : 'Alles freigeschaltet'}</span></div>
-    <div class="road-scroll" data-road-scroll>
-      <div class="road" data-road>
+    <div class="road-scroll" data-road-scroll data-keep="road">
+      <div class="road${m.max ? ' is-max' : ''}" data-road style="--x0:${L[0].center}px;--x1:${L[L.length - 1].center}px;--xm:${m.xm.toFixed(1)}px">
         <div class="road-line" aria-hidden="true"></div>
         <div class="road-lit" aria-hidden="true"><i></i></div>
-        ${STATIONS.map((st) => persistHtml(roadNode(st, lv, claimed, next?.lv), 'nd')).join('')}
+        ${STATIONS.map((st) => persistHtml(roadNode(st, lv, claimed, next?.lv, filled.has(st.lv)), 'nd')).join('')}
         <div class="road-you" aria-hidden="true"><span class="ry-chip">LV ${lv.level}</span><span class="ry-dot"></span></div>
       </div>
     </div>
     ${rarityLegend()}
   </section>`;
+}
+
+// Stationen voll zeichnen, die bisher nur Text hatten. Was nicht im Bild ist, hält seine Animationen gleich an.
+// watchOff (core.js) startet sie, sobald die Station ins Bild kommt.
+function swapNode(scroller, lvl, full) {
+  const el = scroller.querySelector(`.node[data-lv="${lvl}"]`);
+  if (!el) return null;
+  const lv = D().level;
+  const claimed = new Set(app.state.rewards.claimed);
+  const nextLv = STATIONS.find((st) => st.lv > lv.level)?.lv;
+  const tpl = document.createElement('template');
+  tpl.innerHTML = persistHtml(roadNode(stationAt(lvl), lv, claimed, nextLv, full), 'nd');
+  const node = tpl.content.firstElementChild;
+  const g = GEO.list.find((x) => x.lv === lvl);
+  const sl = scroller.scrollLeft;
+  unwatchOff(el);
+  el.replaceWith(node);
+  watchOff([node]);
+  // Außerhalb des Bildes gleich anhalten, nicht erst, wenn der Beobachter sich meldet.
+  if (g.left + g.w < sl - OFF_MARGIN || g.left > sl + scroller.clientWidth + OFF_MARGIN) setAnimations(node, false);
+  return node;
+}
+
+function fillLevels(scroller, levels) {
+  for (const lvl of levels) {
+    if (app.ui.roadFilled.has(lvl)) continue;
+    const node = swapNode(scroller, lvl, true);
+    if (!node) continue;
+    app.ui.roadFilled.add(lvl);
+  }
+}
+
+// Nur die Stationen in der Nähe sind voll gezeichnet. Was weit weg ist, wird wieder zur leeren Station.
+// So bleibt die Seite klein, egal wie weit man scrollt.
+let pinned = null;
+let pinTimer = 0;
+const NEAR = [-0.7, 1.7];
+const FAR = [-2.2, 3.2];
+const OFF_MARGIN = 60;
+const centerOf = (lvl) => GEO.list.find((g) => g.lv === lvl).center;
+
+// Ein Schritt: höchstens max Stationen zeichnen (die nächsten zuerst) und eine weit entfernte leeren.
+// Gibt true zurück, wenn noch etwas zu tun ist.
+function syncRoad(scroller, { max = 1, prune = true } = {}) {
+  const w = scroller.clientWidth;
+  const sl = scroller.scrollLeft;
+  const mid = sl + w / 2;
+  const want = inRange(sl + w * NEAR[0], sl + w * NEAR[1]).filter((lvl) => !app.ui.roadFilled.has(lvl))
+    .sort((a, b) => Math.abs(centerOf(a) - mid) - Math.abs(centerOf(b) - mid));
+  fillLevels(scroller, want.slice(0, max));
+  let far = [];
+  if (prune) {
+    const keep = new Set(inRange(sl + w * FAR[0], sl + w * FAR[1]));
+    far = [...app.ui.roadFilled].filter((lvl) => !keep.has(lvl) && lvl !== pinned);
+    const lvl = far.sort((a, b) => Math.abs(centerOf(b) - mid) - Math.abs(centerOf(a) - mid))[0];
+    if (lvl != null && swapNode(scroller, lvl, false)) app.ui.roadFilled.delete(lvl);
+  }
+  return want.length > max || far.length > 1;
 }
 
 // ---------- Look ----------
@@ -146,6 +252,14 @@ views.rang = {
     const lv = D().level;
     const look = equipped(s, lv.level);
     const ready = readyStations(s, lv.level);
+    // Beim Öffnen nur die Stationen voll zeichnen, die man im ersten Bild sieht: um die eigene Position,
+    // oder den Anfang, wenn die Kamera gleich vom Start aus losfährt. Den Rest zeichnen setupRoad und
+    // syncRoad nach, in ruhigen Momenten und beim Scrollen.
+    if (!app.ui.roadFilled || document.getElementById('view')?.dataset.route !== 'rang') {
+      const w = estView();
+      const home = homeScroll(lv, w);
+      app.ui.roadFilled = new Set(willPan(home) ? inRange(0, w * 1.05) : inRange(home - w * 0.05, home + w * 1.05));
+    }
     return `
     <header class="head has-back">
       <span class="jp-mark" aria-hidden="true">ランク</span>
@@ -175,70 +289,141 @@ views.rang = {
   },
 };
 
-// Position der Knoten messen, Leuchtlinie und Markierung setzen, zur eigenen Position scrollen.
+// Zur eigenen Position scrollen, beim Scrollen Stationen nachzeichnen und weit entfernte leeren.
+// Stationen außerhalb des Bildes halten ihre Animationen an (watchOff in core.js).
 let panFrame = 0;
+let panWait = 0;
+let syncFrame = 0;
+let idleSync = 0;
+let panning = false;
+const PAN_WAIT = 260;
+const PAN_MAX = 700;
+const hasIdle = typeof requestIdleCallback === 'function';
+const idle = (fn) => (hasIdle ? requestIdleCallback(fn, { timeout: 200 }) : setTimeout(fn, 60));
+const unidle = (id) => (hasIdle ? cancelIdleCallback(id) : clearTimeout(id));
+
+// Beim langsamen Scrollen eine Station pro Bild nachzeichnen. Beim schnellen Wischen wird nichts gezeichnet,
+// damit nichts ruckelt: Die Stationen zeigen dann kurz nur Level und Name, die Kugeln kommen dazu, sobald es
+// ruhiger wird. Leeren (weit weg) nur in Ruhe, nie während gescrollt wird.
+const FAST = 0.9; // Pixel pro Millisekunde
+let lastX = 0;
+let lastT = 0;
+let quiet = 0;
+function scheduleSync(scroller) {
+  if (syncFrame) return;
+  syncFrame = requestAnimationFrame(function step() {
+    syncFrame = 0;
+    if (!scroller.isConnected) return;
+    if (syncRoad(scroller, { prune: false })) syncFrame = requestAnimationFrame(step);
+  });
+}
+
+function onRoadScroll(scroller) {
+  const now = performance.now();
+  const x = scroller.scrollLeft;
+  const dt = now - lastT;
+  // Beim ersten Schritt einer Bewegung ist das Tempo noch unbekannt: dann erst einmal nichts zeichnen.
+  const speed = dt > 0 && dt < 120 ? Math.abs(x - lastX) / dt : Infinity;
+  lastX = x;
+  lastT = now;
+  app.ui.roadScroll = x;
+  if (panning) return;
+  if (speed < FAST) scheduleSync(scroller);
+  else { cancelAnimationFrame(syncFrame); syncFrame = 0; }
+  unidle(idleSync);
+  clearTimeout(quiet);
+  quiet = setTimeout(() => settle(scroller), 140);
+}
+
+function settle(scroller) {
+  unidle(idleSync);
+  const run = () => {
+    if (!scroller.isConnected || panning) return;
+    if (syncRoad(scroller, { max: 2 })) idleSync = idle(run);
+  };
+  idleSync = idle(run);
+}
+
 function setupRoad(main, entering) {
   const scroller = main.querySelector('[data-road-scroll]');
   const road = main.querySelector('[data-road]');
   if (!scroller || !road) return;
-  const nodes = [...road.querySelectorAll('.node')];
-  if (!nodes.length) return;
-  const lv = D().level;
-  const centers = nodes.map((n) => n.offsetLeft + n.offsetWidth / 2);
-  const radius = nodes.map((n) => (n.classList.contains('is-rank') ? 36 : 28));
-  const lvls = nodes.map((n) => Number(n.dataset.lv));
-  let a = 0;
-  for (let i = 0; i < lvls.length; i++) if (lvls[i] <= lv.level) a = i;
-  const b = a + 1;
-  const f = b < lvls.length ? clamp((lv.xp - xpAt(lvls[a])) / (xpAt(lvls[b]) - xpAt(lvls[a])), 0, 1) : 0;
-  // Die Markierung bleibt in der Lücke zwischen zwei Stationen, damit sie nichts verdeckt.
-  let xm = centers[a];
-  if (b < lvls.length) {
-    const from = centers[a] + radius[a];
-    const to = centers[b] - radius[b];
-    xm = to > from ? from + f * (to - from) : (centers[a] + centers[b]) / 2;
-  }
-  road.style.setProperty('--x0', centers[0] + 'px');
-  road.style.setProperty('--x1', centers[centers.length - 1] + 'px');
-  road.style.setProperty('--xm', xm + 'px');
-  road.classList.toggle('is-max', b >= lvls.length);
-
-  const target = clamp(xm - scroller.clientWidth * 0.45, 0, scroller.scrollWidth - scroller.clientWidth);
+  watchOff(road.querySelectorAll('.node'));
+  if (once(scroller, 'road')) scroller.addEventListener('scroll', () => onRoadScroll(scroller), { passive: true });
+  if (!entering) return;
+  const w = estView();
+  const target = homeScroll(D().level, w);
   cancelAnimationFrame(panFrame);
-  scroller.addEventListener('scroll', () => { app.ui.roadScroll = scroller.scrollLeft; }, { passive: true });
-  if (!entering) {
-    scroller.scrollLeft = app.ui.roadScroll ?? target;
-    return;
-  }
-  // Beim ersten Öffnen fährt die Kamera am Pfad entlang bis zur eigenen Position.
-  if (app.ui.roadIntro || reduced() || target < 40) {
+  clearTimeout(panWait);
+  panning = false;
+  if (!willPan(target)) {
     scroller.scrollLeft = target;
     app.ui.roadScroll = target;
     road.classList.add('is-enter');
+    settle(scroller);
     return;
   }
+  // Beim ersten Öffnen fährt die Kamera am Pfad entlang bis zur eigenen Position. Vorher werden die
+  // Stationen am Ziel und auf dem Weg dorthin gezeichnet, in kleinen Portionen, damit die App bedienbar bleibt
+  // und die Fahrt flüssig. Die Kamera startet, sobald alles da ist (frühestens nach PAN_WAIT, spätestens nach
+  // PAN_MAX). Bis dahin sind Leuchtlinie und Markierung versteckt (.is-wait), dann laufen ihre Animationen an.
   app.ui.roadIntro = true;
-  road.classList.add('is-intro');
+  panning = true;
+  road.classList.add('is-wait');
   const dur = Math.min(1500, 700 + target * 0.35);
-  road.style.setProperty('--intro', dur + 'ms');
+  const queue = [...new Set([...inRange(target + w * NEAR[0], target + w * NEAR[1]), ...inRange(0, target)])];
   const t0 = performance.now();
+  let started = false;
   const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
-  const stop = () => cancelAnimationFrame(panFrame);
-  scroller.addEventListener('pointerdown', stop, { once: true });
-  const step = (now) => {
-    const t = Math.min(1, (now - t0) / dur);
-    scroller.scrollLeft = target * ease(t);
-    if (t < 1) panFrame = requestAnimationFrame(step);
+  const done = () => { panning = false; settle(scroller); };
+  const go = () => {
+    if (started || !scroller.isConnected) return;
+    started = true;
+    clearTimeout(panWait);
+    road.classList.remove('is-wait');
+    road.style.setProperty('--intro', dur + 'ms');
+    road.classList.add('is-intro');
+    const s0 = performance.now();
+    const step = (now) => {
+      const t = Math.min(1, (now - s0) / dur);
+      scroller.scrollLeft = target * ease(t);
+      if (t < 1) panFrame = requestAnimationFrame(step);
+      else done();
+    };
+    panFrame = requestAnimationFrame(step);
   };
-  panFrame = requestAnimationFrame(step);
+  const work = () => {
+    if (!scroller.isConnected || started) return;
+    fillLevels(scroller, queue.splice(0, 4));
+    if (queue.length) idleSync = idle(work);
+    else panWait = setTimeout(go, Math.max(0, PAN_WAIT - (performance.now() - t0)));
+  };
+  idleSync = idle(work);
+  panWait = setTimeout(go, PAN_MAX);
+  // Antippen hält die Kamera an, der Pfad bleibt, wo er ist.
+  scroller.addEventListener('pointerdown', () => {
+    clearTimeout(panWait);
+    cancelAnimationFrame(panFrame);
+    if (!started) { started = true; road.classList.remove('is-wait'); road.classList.add('is-enter'); }
+    done();
+  }, { once: true });
 }
 
 function scrollRoadTo(lvl) {
   const scroller = document.querySelector('[data-road-scroll]');
-  const node = scroller?.querySelector(`.node[data-lv="${lvl}"]`);
-  if (!node) return;
+  const g = GEO.list.find((x) => x.lv === lvl);
+  if (!scroller || !g) return;
   cancelAnimationFrame(panFrame);
-  const left = clamp(node.offsetLeft + node.offsetWidth / 2 - scroller.clientWidth / 2, 0, scroller.scrollWidth - scroller.clientWidth);
+  // Die Ziel-Station gleich voll zeichnen, damit sie beim Ankommen aufleuchtet. Unterwegs wird sie nicht
+  // geleert, auch wenn sie am Anfang der Fahrt noch weit weg ist.
+  pinned = lvl;
+  clearTimeout(pinTimer);
+  pinTimer = setTimeout(() => { pinned = null; }, 2000);
+  fillLevels(scroller, [lvl]);
+  const node = scroller.querySelector(`.node[data-lv="${lvl}"]`);
+  setAnimations(node, true);
+  const w = scroller.clientWidth;
+  const left = clamp(g.center - w / 2, 0, Math.max(0, GEO.width - w));
   scroller.scrollTo({ left, behavior: reduced() ? 'auto' : 'smooth' });
   node.classList.remove('is-flash');
   void node.offsetWidth;
@@ -305,11 +490,48 @@ const LEAD = {
   effect: 'Der Effekt liegt um dein Profilbild und über deiner Profilkarte.',
 };
 
+// Banner kommen erst dazu, wenn sie im Fenster zu sehen sind (watchBanners). So öffnet das Fenster sofort.
 function optionPreview(it, rankId) {
   if (it.type === 'color' || it.type === 'effect') return rewardOrb(it, { chip: false });
   if (it.type === 'frame') return `<span class="lo-emb">${emblem(rankId, it.id, 46)}</span>`;
-  if (it.type === 'banner') return `<span class="lo-bn">${bannerArt(it.id)}</span>`;
+  if (it.type === 'banner') return `<span class="lo-bn" data-bn="${esc(it.id)}"></span>`;
   return '';
+}
+
+// Banner-Vorschauen im Fenster: zeichnen, sobald sie zu sehen sind (höchstens drei pro Bild),
+// und ihre Animationen anhalten, solange sie aus dem Bild gescrollt sind.
+let bannerWatch = null;
+function watchBanners(box, root) {
+  bannerWatch?.disconnect();
+  const list = box.querySelectorAll('.lo-bn');
+  if (!list.length || typeof IntersectionObserver === 'undefined') {
+    list.forEach((b) => { if (b.dataset.bn) { b.innerHTML = bannerArt(b.dataset.bn); delete b.dataset.bn; } });
+    return;
+  }
+  const queue = new Set();
+  let frame = 0;
+  const pump = () => {
+    frame = 0;
+    let n = 0;
+    for (const b of queue) {
+      queue.delete(b);
+      if (b.isConnected && b.dataset.bn) {
+        b.innerHTML = bannerArt(b.dataset.bn);
+        delete b.dataset.bn;
+        if (++n >= 3) break;
+      }
+    }
+    if (queue.size) frame = requestAnimationFrame(pump);
+  };
+  const watch = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      setAnimations(e.target, e.isIntersecting);
+      if (e.isIntersecting && e.target.dataset.bn) queue.add(e.target);
+    }
+    if (queue.size && !frame) frame = requestAnimationFrame(pump);
+  }, { root, rootMargin: '160px 0px' });
+  list.forEach((b) => watch.observe(b));
+  bannerWatch = watch;
 }
 
 function optionState(it, ctx) {
@@ -374,6 +596,7 @@ export function lookSheet(focusType = null) {
     <p class="lk-foot">Neues holst du im Rang-Pfad ab.</p>`);
   const opts = el.querySelector('[data-opts]');
   const preview = el.querySelector('[data-preview]');
+  watchBanners(opts, sheetBox());
 
   // Nach Anlegen oder Abholen: Zustände der Optionen, Zähler und Vorschau aktualisieren.
   const sync = () => {
@@ -414,6 +637,7 @@ export function lookSheet(focusType = null) {
       opts.style.minHeight = `${minH}px`;
       opts.className = `look-opts look-${type}`;
       opts.innerHTML = optsHtml(ctxNow());
+      watchBanners(opts, sheetBox());
       return;
     }
     const b = e.target.closest('.look-opt');

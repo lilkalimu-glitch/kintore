@@ -10,7 +10,7 @@ import { myAvatar } from './me.js';
 function rankBadge(lv, look, ready) {
   return `<div class="rank-badge">
     ${emblem(lv.rank, look.frame.id, 58, '', { fx: true })}
-    ${ready ? `<span class="badge-dot" aria-label="${ready} ${ready === 1 ? 'Belohnung' : 'Belohnungen'} bereit">${ready}</span>` : ''}
+    ${ready ? `<span class="badge-dot" aria-label="${ready} ${ready === 1 ? 'Belohnung' : 'Belohnungen'} bereit"><b>${ready}</b></span>` : ''}
     <small>Rang</small>
   </div>`;
 }
@@ -206,7 +206,7 @@ function noticeCard(s) {
   return '';
 }
 
-actions['notice-ok'] = (ds) => commit((s) => { s.meta[ds.k] = ds.k === 'backupSnooze' ? today() : true; });
+actions['notice-ok'] = (ds) => commit((s) => { s.meta[ds.k] = ds.k === 'backupSnooze' ? today() : true; }, { derive: 'keep' });
 
 views.start = {
   render() {

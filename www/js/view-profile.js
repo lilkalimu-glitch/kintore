@@ -119,7 +119,19 @@ export function calendarData(d, weeks = CAL_WEEKS, end = today()) {
   return { first, cells, trained };
 }
 
-function calendarCard(d) {
+// Eine Spalte pro Woche. Die Spalte trägt die Nummer für das Nacheinander beim Erscheinen, die Zellen selbst
+// haben keinen eigenen Stil. So kann der Browser ihre Stile teilen und muss nicht 112 Zellen einzeln rechnen.
+function calendarGrid(cells) {
+  let grid = '';
+  for (let w = 0; w < CAL_WEEKS; w++) {
+    grid += `<span class="c16-col" style="--w:${w}">${cells.slice(w * 7, w * 7 + 7).map((c) => `<i class="c16 l${c.lvl}${c.today ? ' is-today' : ''}${c.future ? ' is-future' : ''}"></i>`).join('')}</span>`;
+  }
+  return grid;
+}
+
+// later: Beim Öffnen der Seite kommen die Zellen erst im nächsten Bild dazu (after). Der Platz dafür ist schon
+// reserviert (app.css), es springt also nichts. So steht das Profil schneller da.
+function calendarCard(d, later = false) {
   const { first, cells, trained } = calendarData(d);
   // Monatsname über der ersten Woche eines Monats. Stehen zwei zu dicht, bleibt der spätere.
   const marks = [];
@@ -137,14 +149,13 @@ function calendarCard(d) {
     kept.unshift(m);
   }
   const months = kept.map((m) => `<span style="grid-column:${m.w + 1} / span 3">${esc(m.label)}</span>`).join('');
-  const grid = cells.map((c, i) => `<i class="c16 l${c.lvl}${c.today ? ' is-today' : ''}${c.future ? ' is-future' : ''}" style="--i:${i}"></i>`).join('');
   return `<section class="card pad pf-sec pf-cal">
     <div class="card-title"><h2>Trainingstage</h2><span class="hint">Letzte ${CAL_WEEKS} Wochen</span></div>
     <div class="c16-wrap" role="img" aria-label="${trained} Trainingstage in den letzten ${CAL_WEEKS} Wochen">
       <div class="c16-days" aria-hidden="true"><span>Mo</span><span></span><span>Mi</span><span></span><span>Fr</span><span></span><span>So</span></div>
       <div class="c16-main" aria-hidden="true">
         <div class="c16-months">${months}</div>
-        <div class="c16-grid">${grid}</div>
+        <div class="c16-grid"${later ? ' data-later' : ''}>${later ? '' : calendarGrid(cells)}</div>
       </div>
     </div>
     <div class="c16-foot">
@@ -210,6 +221,7 @@ views.profil = {
     const look = equipped(s, lv.level);
     const ws = weekStreak(d);
     const show = s.profile.show;
+    const fresh = document.getElementById('view')?.dataset.route !== 'profil';
     return `
     <header class="head has-back pf-headbar">
       <span class="jp-mark" aria-hidden="true">プロフィール</span>
@@ -217,7 +229,7 @@ views.profil = {
     </header>
     <div class="stack">
       ${headCard(s, d, lv, look, ws)}
-      ${show.calendar ? calendarCard(d) : ''}
+      ${show.calendar ? calendarCard(d, fresh) : ''}
       ${show.level ? levelCard(lv, look) : ''}
       ${show.lifts ? liftsCard(s, d) : ''}
       ${show.stats ? statsCard(d, ws) : ''}
@@ -225,11 +237,19 @@ views.profil = {
     </div>`;
   },
   after(main, params, { entering = false } = {}) {
-    if (!entering) return;
-    if (!reduced()) {
-      main.querySelector('.pf-card')?.classList.add('enter');
-      main.querySelector('.pf-cal')?.classList.add('enter');
+    // Kalender-Zellen im zweiten Bild einsetzen, wenn das erste schon zu sehen ist (siehe calendarCard).
+    // Mit Bewegung erscheinen sie nacheinander.
+    const later = main.querySelector('.c16-grid[data-later]');
+    if (later) {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (!later.isConnected || !later.hasAttribute('data-later')) return;
+        later.innerHTML = calendarGrid(calendarData(D()).cells);
+        later.removeAttribute('data-later');
+        if (!reduced()) later.closest('.pf-cal')?.classList.add('enter');
+      }));
     }
+    if (!entering) return;
+    if (!reduced()) main.querySelector('.pf-card')?.classList.add('enter');
     maybeIntro('profil', [
       { sel: '.pf-pen', text: 'Mit dem Stift änderst du dein Profilbild und deinen Namen.' },
       { sel: '.pf-banner', text: 'Tipp direkt auf den Banner, um ihn zu wechseln. Ein Tipp aufs Profilbild wechselt den Rahmen.' },

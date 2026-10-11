@@ -35,10 +35,22 @@ Ohne `intro` gelten die Einführungen für Profil und Rang-Pfad als gesehen, dam
    `docs/bedienung.md` auf allen Seiten und in den wichtigsten Fenstern: Tippflächen, Namen für Knöpfe,
    Schriftgröße und ob mit 130 % System-Schrift etwas abgeschnitten wird.
 10. Tempo prüfen: `python3 .claude/tests/tempo.py /tmp/kt/beispiel.json` und dasselbe mit `gross.json` misst mit
-    4-fach gedrosseltem Prozessor (etwa ein Mittelklasse-Handy), wie lange Antippen, Seitenwechsel, Fenster und
-    Satz speichern bis zum nächsten Bild brauchen, und ob die App danach stockt. Ziele: jede Reaktion bis 100 ms,
-    Rang-Pfad bis 300 ms, kein Stocken über 50 ms. Die Grafikkarte misst der Test nicht. Ausgangswerte vom
-    10. Oktober 2026 stehen in `docs/naechste-version.md`.
+    4-fach gedrosseltem Prozessor (etwa ein Mittelklasse-Handy), wie lange Antippen, Seitenwechsel, Fenster,
+    Abholen und Satz speichern bis zum nächsten Bild brauchen, ob die App danach stockt und wie flüssig der
+    Rang-Pfad beim schnellen Wischen bleibt. Jede Messung läuft 3 Runden in frischen Browsern, gezeigt wird der
+    Median. Ziele: jede Reaktion bis 100 ms, Rang-Pfad bis 300 ms, kein Stocken und kein Bild beim Wischen über
+    50 ms. Die Grafikkarte misst der Test nicht. Werte vorher und nachher stehen in `docs/naechste-version.md`.
+11. Neuzeichnen prüfen: `python3 .claude/tests/neuzeichnen.py /tmp/kt/beispiel.json` baut 400 zufällige Seiten
+    ineinander um (morph in `www/js/core.js`) und zählt bei echten Aktionen, wie viel neu gebaut wird.
+12. Speichern prüfen: `python3 .claude/tests/speichern.py /tmp/kt/beispiel.json` startet mit dem alten Format
+    (bis 2.8), ändert Daten auf viele Arten, lädt neu und vergleicht. Prüft auch die Datei-Kopie.
+13. Abläufe prüfen: `python3 .claude/tests/ablauf.py /tmp/kt/beispiel.json` klickt Training, Verlauf, Körper,
+    Einstellungen, Rang-Pfad, Look und Profil durch und prüft jedes Ergebnis auf der Seite.
+
+Animationen, die jedes Bild Arbeit im Hauptthread machen, sieht man so: Seite öffnen, ein paar Sekunden warten und
+mit Chrome-Tracing zählen, wie oft `UpdateLayoutTree` läuft. Auf Start, Rang-Pfad und Profil sollte es in Ruhe 0 sein.
+Achtung: Hat ein Element selbst eine Animation und darin (oder in seinem `::before`/`::after`) läuft noch eine,
+rechnet Chrome jedes Bild neu. Die äußere Bewegung gehört dann auf einen Behälter daneben.
 
 Seltenheiten im Pfad prüfen: mit `max.json` die Seite `rang` öffnen und Stationen einzeln abholen (Level 3 Normal,
 24 Selten, 41 Episch, 52 Legendär). Das Profil liegt unter `profil`.

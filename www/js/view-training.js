@@ -1,5 +1,5 @@
 // Training: Vorlage wählen, Sätze eintragen, Pausen-Timer, Steigerungs-Tipps.
-import { app, D, views, actions, navigate } from './core.js';
+import { app, D, views, actions, navigate, once } from './core.js';
 import { esc, icon, kg, parseNum, round2, today, fmtDay, relDay, fmtDuration, fmtLoad, fmtSetText } from './util.js';
 import { progressionTip, plateLoad, dayTemplate, nextQuest, catColor, questGoal } from './stats.js';
 import { addSet, startSession, finishSession } from './ops.js';
@@ -61,7 +61,7 @@ function exBlock(id) {
       </button></li>`;
     })
     .join('');
-  return `<article class="card exb" style="--c:${catColor(ex.cat)}" data-ex="${id}">
+  return `<article class="card exb" style="--c:${catColor(ex.cat)}" data-ex="${id}" data-key="exb-${id}">
     <div class="exb-head">
       <h2 class="exb-name"><button data-act="go" data-to="uebung" data-id="${id}">${esc(ex.name)}</button></h2>
       <button class="icon-btn" data-act="ex-menu" data-id="${id}" aria-label="Optionen für ${esc(ex.name)}">${icon('more')}</button>
@@ -193,37 +193,42 @@ function syncInputs(id) {
   if (chip && ex) chip.outerHTML = platesHtml(ex, dr.w);
 }
 
+// Die Knöpfe und Felder bleiben beim Neuzeichnen stehen (core.js): Listener nur einmal anhängen und
+// Übung und Feld erst beim Antippen aus dem Element lesen.
+let hold = null;
+let repeated = false;
+const stopHold = () => { clearTimeout(hold?.t); clearInterval(hold?.i); hold = null; };
+
 function bindEntry(main) {
-  let hold = null;
-  let repeated = false;
-  const stop = () => { clearTimeout(hold?.t); clearInterval(hold?.i); hold = null; };
   main.querySelectorAll('[data-step]').forEach((b) => {
+    if (!once(b, 'step')) return;
     const go = () => applyStep(Number(b.dataset.step), b.dataset.f, Number(b.dataset.dir));
     b.addEventListener('pointerdown', () => {
       repeated = false;
-      stop();
+      stopHold();
       hold = { t: setTimeout(() => { repeated = true; hold.i = setInterval(go, 85); }, 420) };
     });
-    ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => b.addEventListener(ev, stop));
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => b.addEventListener(ev, stopHold));
     b.addEventListener('click', (e) => { e.preventDefault(); if (!repeated) go(); repeated = false; });
     b.addEventListener('contextmenu', (e) => e.preventDefault());
   });
   main.querySelectorAll('input[data-in]').forEach((inp) => {
-    const id = Number(inp.dataset.in);
+    if (!once(inp, 'entry')) return;
+    const id = () => Number(inp.dataset.in);
     inp.addEventListener('focus', () => setTimeout(() => inp.select(), 0));
     inp.addEventListener('input', () => {
       const v = parseNum(inp.value);
       if (!Number.isFinite(v)) return;
-      const dr = draftFor(id);
-      if (inp.dataset.f === 'w') { dr.w = Math.max(0, v); syncInputs(id); }
+      const dr = draftFor(id());
+      if (inp.dataset.f === 'w') { dr.w = Math.max(0, v); syncInputs(id()); }
       else dr.r = Math.max(0, Math.round(v));
     });
-    inp.addEventListener('blur', () => syncInputs(id));
+    inp.addEventListener('blur', () => syncInputs(id()));
     inp.addEventListener('keydown', (e) => {
       if (e.key !== 'Enter') return;
       e.preventDefault();
-      if (inp.dataset.f === 'w') main.querySelector(`input[data-in="${id}"][data-f="r"]`)?.focus();
-      else { inp.blur(); saveSet(id); }
+      if (inp.dataset.f === 'w') document.querySelector(`#view input[data-in="${id()}"][data-f="r"]`)?.focus();
+      else { inp.blur(); saveSet(id()); }
     });
   });
 }

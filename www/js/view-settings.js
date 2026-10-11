@@ -1,5 +1,5 @@
 // Einstellungen: Pausen-Timer, Training, Hintergrund, Backup und Import.
-import { app, D, views, actions, render, commit, openSheet, closeSheet, replaceState } from './core.js';
+import { app, D, views, actions, render, commit, openSheet, closeSheet, replaceState, once } from './core.js';
 import { esc, icon, kg, int, parseNum, today, fmtDate, fmtClock } from './util.js';
 import { exportJson, importBackupText, importFitNotes, migrate } from './ops.js';
 import { readFitNotes } from './fitnotes.js';
@@ -75,11 +75,13 @@ views.einstellungen = {
       Version ${esc(VERSION)}
     </div>`;
   },
+  // Felder bleiben beim Neuzeichnen stehen (core.js), deshalb hängen die Listener nur einmal daran.
   async after(main) {
     main.querySelectorAll('[data-setting]').forEach((inp) => {
+      if (!once(inp, 'setting')) return;
       inp.addEventListener('change', async () => {
         const key = inp.dataset.setting;
-        commit((s) => { s.settings[key] = inp.checked; }, { render: false });
+        commit((s) => { s.settings[key] = inp.checked; }, { render: false, derive: 'keep' });
         if (key === 'restNotify' && inp.checked && isNative()) {
           const ok = await notificationsAllowed(true);
           if (!ok) toast('Erlaube Mitteilungen für KINTORE in den Android-Einstellungen.');
@@ -87,15 +89,18 @@ views.einstellungen = {
       });
     });
     main.querySelectorAll('[data-range]').forEach((inp) => {
+      if (!once(inp, 'range')) return;
       inp.addEventListener('input', () => {
-        commit((s) => { s.settings[inp.dataset.range] = Number(inp.value); }, { render: false });
+        commit((s) => { s.settings[inp.dataset.range] = Number(inp.value); }, { render: false, derive: 'keep' });
         applyBackground();
       });
     });
     const file = main.querySelector('[data-bg-file]');
-    file?.addEventListener('change', () => pickBackground(file.files?.[0]));
-    main.querySelector('[data-backup-file]')?.addEventListener('change', (e) => loadBackup(e.target.files?.[0], e.target));
-    main.querySelector('[data-fitnotes-file]')?.addEventListener('change', (e) => loadFitNotes(e.target.files?.[0], e.target));
+    if (file && once(file, 'file')) file.addEventListener('change', () => pickBackground(file.files?.[0]));
+    const backup = main.querySelector('[data-backup-file]');
+    if (backup && once(backup, 'file')) backup.addEventListener('change', (e) => loadBackup(e.target.files?.[0], e.target));
+    const fit = main.querySelector('[data-fitnotes-file]');
+    if (fit && once(fit, 'file')) fit.addEventListener('change', (e) => loadFitNotes(e.target.files?.[0], e.target));
     if (bgCache === null) bgCache = (await loadBg()) || '';
     paintBgPreview(main);
   },
@@ -212,8 +217,8 @@ async function loadFitNotes(f, input) {
   }
 }
 
-actions['set-rest'] = (ds) => commit((s) => { s.settings.restDefault = Math.max(15, Math.min(600, s.settings.restDefault + Number(ds.dir) * 15)); });
-actions['set-bar'] = (ds) => commit((s) => { s.settings.barWeight = Math.max(5, Math.min(30, s.settings.barWeight + Number(ds.dir) * 2.5)); });
+actions['set-rest'] = (ds) => commit((s) => { s.settings.restDefault = Math.max(15, Math.min(600, s.settings.restDefault + Number(ds.dir) * 15)); }, { derive: 'keep' });
+actions['set-bar'] = (ds) => commit((s) => { s.settings.barWeight = Math.max(5, Math.min(30, s.settings.barWeight + Number(ds.dir) * 2.5)); }, { derive: 'keep' });
 
 function numberSheet({ title, lead, value, placeholder, onSave, allowEmpty }) {
   const el = openSheet(`<h2>${esc(title)}</h2>${lead ? `<p class="lead">${esc(lead)}</p>` : ''}
@@ -247,7 +252,7 @@ actions['set-goal'] = () => numberSheet({
   value: app.state.settings.goalWeight,
   placeholder: 'z. B. 80',
   allowEmpty: 'Kein Ziel',
-  onSave: (v) => { commit((s) => { s.settings.goalWeight = v; }); toast(v ? `Zielgewicht ${kg(v)} kg gespeichert` : 'Kein Zielgewicht mehr'); },
+  onSave: (v) => { commit((s) => { s.settings.goalWeight = v; }, { derive: 'keep' }); toast(v ? `Zielgewicht ${kg(v)} kg gespeichert` : 'Kein Zielgewicht mehr'); },
 });
 
 actions['bg-remove'] = async () => {
@@ -261,7 +266,7 @@ actions['bg-remove'] = async () => {
 actions['backup-save'] = async () => {
   const res = await saveTextFile(`kintore-backup-${today()}.json`, exportJson());
   if (res.ok) {
-    commit((s) => { s.meta.lastBackup = today(); });
+    commit((s) => { s.meta.lastBackup = today(); }, { derive: 'keep' });
     toast(res.how === 'documents' ? 'Backup in Dokumente gespeichert' : 'Backup erstellt');
   } else toast('Backup konnte nicht gespeichert werden.');
 };

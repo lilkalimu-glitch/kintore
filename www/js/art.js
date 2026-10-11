@@ -144,9 +144,16 @@ const BANNERS = {
   ...DARK_BANNERS,
 };
 
+// Ein Banner sieht immer gleich aus (fester Zufall). Deshalb wird jeder nur einmal berechnet.
+const bannerCache = new Map();
 export function bannerArt(id) {
-  const fn = BANNERS[id] || BANNERS.nacht;
-  return `<div class="bn bn-${BANNERS[id] ? id : 'nacht'}" aria-hidden="true">${fn()}</div>`;
+  let html = bannerCache.get(id);
+  if (html == null) {
+    const fn = BANNERS[id] || BANNERS.nacht;
+    html = `<div class="bn bn-${BANNERS[id] ? id : 'nacht'}" aria-hidden="true">${fn()}</div>`;
+    bannerCache.set(id, html);
+  }
+  return html;
 }
 
 // ---------- Effekte ums Profilbild ----------
@@ -231,9 +238,16 @@ const EFFECTS = {
 };
 
 // Teile eines Effekts: back (hinter dem Bild), front (davor), card (über der ganzen Profilkarte).
+// Wie die Banner nur einmal berechnet.
+const effectCache = new Map();
 export function effectParts(id) {
-  const fn = EFFECTS[id] || EFFECTS.none;
-  const p = fn();
-  const wrap = (html, cls) => (html ? `<span class="efx ef-${id} ${cls}">${html}</span>` : '');
-  return { back: wrap(p.back, 'is-back'), front: wrap(p.front, 'is-front'), card: wrap(p.card, 'is-card') };
+  let parts = effectCache.get(id);
+  if (!parts) {
+    const fn = EFFECTS[id] || EFFECTS.none;
+    const p = fn();
+    const wrap = (html, cls) => (html ? `<span class="efx ef-${id} ${cls}">${html}</span>` : '');
+    parts = Object.freeze({ back: wrap(p.back, 'is-back'), front: wrap(p.front, 'is-front'), card: wrap(p.card, 'is-card') });
+    effectCache.set(id, parts);
+  }
+  return parts;
 }

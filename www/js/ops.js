@@ -1,7 +1,7 @@
 // Alle Änderungen an den Daten laufen über diese Funktionen.
 import { app, D, commit, render, replaceState } from './core.js';
 import { today, round2, kg } from './util.js';
-import { e1rmOf, daySummary, nextQuest, questGoal, weekStreak, weekXp, levelInfo, QUEST_XP, REST_XP } from './stats.js';
+import { e1rmOf, daySummary, nextQuest, questGoal, weekStreak, weekXp, levelInfo, QUEST_XP, REST_XP, deriveAppend, deriveBonus, bodyRef } from './stats.js';
 import { completeExercise } from './model.js';
 import { fixName } from './fitnotes.js';
 import { prBurst, levelUp, rankUp, missionComplete, toast, banner } from './fx.js';
@@ -91,7 +91,7 @@ export function noteXpRule() {
   commit((st) => {
     st.meta.xpRule = 2;
     if (st.sets.length && to > from) st.meta.xpNote = { from, to };
-  }, { render: false });
+  }, { render: false, derive: 'keep' });
 }
 
 // ---------- Profil ----------
@@ -99,7 +99,7 @@ export function saveProfile(patch) {
   commit((s) => {
     const next = { ...s.profile, ...patch, show: { ...s.profile.show, ...(patch.show || {}) } };
     s.profile = cleanProfile(next, new Set(s.exercises.map((e) => e.id)));
-  });
+  }, { derive: 'keep' });
 }
 
 const nextId = (list) => list.reduce((m, x) => Math.max(m, x.id || 0), 0) + 1;
@@ -118,7 +118,7 @@ function grantBonuses({ rest = false, week = true } = {}) {
   if (ws && ws.thisWeek >= 3 && !s.bonus.some((b) => b.k === 'week' && b.w === ws.week)) {
     add.push({ d: t, k: 'week', w: ws.week, xp: weekXp(ws.streak), n: ws.streak });
   }
-  if (add.length) commit((st) => { st.bonus.push(...add); }, { render: false });
+  if (add.length) commit((st) => { st.bonus.push(...add); }, { render: false, derive: (dd) => deriveBonus(dd, add) });
   return add;
 }
 
@@ -150,11 +150,11 @@ export function claimStations(levels) {
     const set = new Set(s.rewards.claimed);
     for (const lv of levels) set.add(lv);
     s.rewards.claimed = [...set].sort((a, b) => a - b);
-  });
+  }, { derive: 'keep' });
 }
 
 export function equipItems(items) {
-  commit((s) => { for (const it of items) s.rewards.equip[it.type] = it.id; });
+  commit((s) => { for (const it of items) s.rewards.equip[it.type] = it.id; }, { derive: 'keep' });
 }
 
 // ---------- Training ----------
@@ -172,18 +172,18 @@ export function startSession(tplId = null, date = today()) {
     } else if (tpl) {
       s.sessions[date] = { ...(s.sessions[date] || {}), tpl: tpl.id };
     }
-  });
+  }, { derive: 'keep' });
 }
 
 export function addToSession(exId) {
   commit((s) => {
     if (!s.active) s.active = { d: today(), tpl: null, ex: [], backfill: false };
     if (!s.active.ex.includes(exId)) s.active.ex.push(exId);
-  });
+  }, { derive: 'keep' });
 }
 
 export function removeFromSession(exId) {
-  commit((s) => { if (s.active) s.active.ex = s.active.ex.filter((id) => id !== exId); });
+  commit((s) => { if (s.active) s.active.ex = s.active.ex.filter((id) => id !== exId); }, { derive: 'keep' });
 }
 
 export function moveInSession(exId, dir) {
@@ -194,7 +194,7 @@ export function moveInSession(exId, dir) {
     const j = i + dir;
     if (i < 0 || j < 0 || j >= list.length) return;
     [list[i], list[j]] = [list[j], list[i]];
-  });
+  }, { derive: 'keep' });
 }
 
 export function swapInSession(oldId, newId) {
@@ -205,7 +205,7 @@ export function swapInSession(oldId, newId) {
     if (i < 0) return;
     if (list.includes(newId)) list.splice(i, 1);
     else list[i] = newId;
-  });
+  }, { derive: 'keep' });
 }
 
 export function addSet(exId, w, r) {
@@ -220,16 +220,18 @@ export function addSet(exId, w, r) {
   const isPR = r > 0 && hadHistory && !laterExists && prevBest > 0 && e1 > prevBest + 1e-6;
   const before = d0.level;
   let id = 0;
+  let added = null;
   commit((s) => {
     id = nextId(s.sets);
-    s.sets.push({ id, ex: exId, d: date, w: round2(w), r, t: Date.now() });
+    added = { id, ex: exId, d: date, w: round2(w), r, t: Date.now() };
+    s.sets.push(added);
     if (!s.active) s.active = { d: date, tpl: null, ex: [], backfill: date !== today() };
     if (!s.active.ex.includes(exId)) s.active.ex.push(exId);
     if (date === today()) {
       s.sessions[date] = s.sessions[date] || { tpl: s.active.tpl };
       s.sessions[date].start ||= Date.now();
     }
-  }, { render: false });
+  }, { render: false, derive: (dd) => deriveAppend(dd, added) });
   const bonuses = r > 0 ? grantBonuses() : [];
   app.ui.newSetId = id;
   render();
@@ -247,16 +249,19 @@ export function addSet(exId, w, r) {
   }
 }
 
+// Ein geänderter Satz ist ein neues Objekt. So erkennt das Sichern (store.js), welcher Monat neu ist.
 export function updateSet(id, patch) {
   commit((s) => {
-    const set = s.sets.find((x) => x.id === id);
-    if (!set) return;
+    const i = s.sets.findIndex((x) => x.id === id);
+    if (i < 0) return;
+    const set = { ...s.sets[i] };
     if (patch.w != null) set.w = round2(patch.w);
     if (patch.r != null) set.r = patch.r;
     if (patch.note !== undefined) {
       if (patch.note) set.note = patch.note;
       else delete set.note;
     }
+    s.sets[i] = set;
   });
 }
 
@@ -278,7 +283,7 @@ export function finishSession() {
   commit((s) => {
     if (a.d === today() && s.sessions[a.d]) s.sessions[a.d].end = Date.now();
     s.active = null;
-  });
+  }, { derive: 'keep' });
   const sum = daySummary(app.state, D(), a.d);
   const tpl = app.state.templates.find((t) => t.id === a.tpl);
   if (sum.sets > 0) missionComplete({ title: tpl ? tpl.name : 'Freies Training', ...sum });
@@ -290,7 +295,7 @@ export function createExercise({ name, cat, bw, bar }) {
   if (!clean) return null;
   const existing = app.state.exercises.find((e) => e.name.toLowerCase() === clean.toLowerCase());
   if (existing) {
-    if (existing.hidden) commit((s) => { s.exercises.find((e) => e.id === existing.id).hidden = false; });
+    if (existing.hidden) commit((s) => { s.exercises.find((e) => e.id === existing.id).hidden = false; }, { derive: 'keep' });
     return existing.id;
   }
   let id = 0;
@@ -301,11 +306,14 @@ export function createExercise({ name, cat, bw, bar }) {
   return id;
 }
 
+// Diese Angaben einer Übung ändern nichts an Level, Rekorden und Verlauf.
+const PLAIN_EX = new Set(['repMin', 'repMax', 'inc', 'rest', 'notes', 'hidden', 'bar']);
+
 export function updateExercise(id, patch) {
   commit((s) => {
     const ex = s.exercises.find((e) => e.id === id);
     if (ex) Object.assign(ex, patch);
-  });
+  }, Object.keys(patch).every((k) => PLAIN_EX.has(k)) ? { derive: 'keep' } : {});
 }
 
 export function deleteExercise(id) {
@@ -323,24 +331,28 @@ export function saveTemplate(tpl) {
     const i = s.templates.findIndex((t) => t.id === tpl.id);
     if (i >= 0) s.templates[i] = tpl;
     else s.templates.push(tpl);
-  });
+  }, { derive: 'keep' });
 }
 
 export function deleteTemplate(id) {
   commit((s) => {
     s.templates = s.templates.filter((t) => t.id !== id);
     s.rotation = s.rotation.filter((r) => r !== id);
-  });
+  }, { derive: 'keep' });
 }
 
 // ---------- Körpergewicht ----------
+// Das Körpergewicht zählt nur über den Wert für Klimmzüge und Dips (letzter Eintrag oder fester Wert).
+// Bleibt der gleich, stimmt alles Berechnete weiter.
+const sameBody = (dd) => dd.bw === bodyRef(app.state);
+
 export function setBody(d, value) {
   const before = D().level;
   commit((s) => {
     s.body = s.body.filter((b) => b.d !== d);
     s.body.push({ d, kg: round2(value) });
     s.body.sort((a, b) => a.d.localeCompare(b.d));
-  }, { render: false });
+  }, { render: false, derive: sameBody });
   const bonuses = d === today() ? grantBonuses({ rest: true, week: false }) : [];
   render();
   bonusBanners(bonuses);
@@ -349,7 +361,7 @@ export function setBody(d, value) {
 
 export function deleteBody(d) {
   const old = app.state.body.find((b) => b.d === d);
-  commit((s) => { s.body = s.body.filter((b) => b.d !== d); });
+  commit((s) => { s.body = s.body.filter((b) => b.d !== d); }, { derive: sameBody });
   if (old) toast('Eintrag gelöscht', { label: 'Rückgängig', run: () => setBody(old.d, old.kg) });
 }
 
