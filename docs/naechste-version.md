@@ -17,11 +17,10 @@ Vergleich zu Store-Apps fehlt. Das Ergebnis steht für später in `fahrplan.md` 
 
 ## Noch offen
 
-- [ ] Entwürfe: Nach der Tempo-APK 2 bis 3 Seiten im neuen Standard-Design als Entwurf zeigen, zum Beispiel Start,
+- [x] Entwürfe: Nach der Tempo-APK 2 bis 3 Seiten im neuen Standard-Design als Entwurf zeigen, zum Beispiel Start,
       Training und Profil. Der Besitzer bestätigt Akzentfarbe, Schrift und Knöpfe. Erst danach die ganze App umbauen.
-      Stand 11. Oktober 2026: Entwürfe gezeigt (Canvas "KINTORE Design-Entwurf" in Claude: Start, Training und Profil
-      in Dunkel und Hell, dazu Varianten für Akzentfarbe, Schrift und Knöpfe). Vorschlag von Claude, noch nicht
-      bestätigt: Pink, Barlow für Titel und Zahlen mit Inter für Text, Knöpfe abgerundet. Antwort steht aus.
+      Am 11. Oktober 2026 gezeigt (Canvas "KINTORE Design-Entwurf" in Claude: Start, Training und Profil in Dunkel und
+      Hell, dazu Varianten für Akzentfarbe, Schrift und Knöpfe) und bestätigt, siehe "Geklärt".
 
 ## Schritt 1: Schnell und erwachsen
 
@@ -102,6 +101,10 @@ Vergleich zu Store-Apps fehlt. Das Ergebnis steht für später in `fahrplan.md` 
 - Realistische Werte heißt: Eingaben prüfen, passende Startwerte und Körperdaten fürs Profil.
 - Sprachen: Deutsch, Englisch und Türkisch.
 - Japanische Zeichen: im Standard keine, im Design Neon wieder einschaltbar.
+- Am 11. Oktober 2026 nach den Entwürfen bestätigt: Akzentfarbe Pink (im neuen Design ruhiger), Barlow für Titel und
+  Zahlen mit Inter für Text, Knöpfe abgerundet. Der Entwurf passt so, die ganze App wird danach umgebaut. Dazu gehören
+  wie im Entwurf: Initialen im Profilbild, Start mit dem Knopf zum Starten ohne Scrollen und "Diese Woche" mit Balken
+  statt Netz.
 
 ## Hinweise für den Bau
 
