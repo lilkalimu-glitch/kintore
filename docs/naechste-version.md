@@ -1,8 +1,8 @@
 # Nächste Version von KINTORE
 
-Stand: 10. Oktober 2026. Aktuelle Version: 2.8 (Release v2.8). Darin steckt der ganze Plan 2.7: einfache Bedienung,
-eigene Knöpfe, volleres Profil und 9 neue Banner nach Vorlagen des Besitzers. Die Nummer der APK zählt jeden Build mit,
-deshalb heißt sie 2.8.
+Stand: 11. Oktober 2026. Aktuelle Version: 2.9 (Release v2.9). Darin steckt der Tempo-Teil aus Schritt 1, noch im
+alten Look. Davor kam 2.8 mit dem ganzen Plan 2.7: einfache Bedienung, eigene Knöpfe, volleres Profil und 9 neue Banner
+nach Vorlagen des Besitzers. Die Nummer der APK zählt jeden Build mit.
 
 Der Plan unten ist am 10. Oktober 2026 mit dem Besitzer abgestimmt. Er kommt in drei Schritten, jeder Schritt endet
 mit einer eigenen APK zum Testen: erst Schritt 1, dann 2, dann 3. Erledigtes abhaken, nicht löschen.
@@ -24,14 +24,14 @@ Vergleich zu Store-Apps fehlt. Das Ergebnis steht für später in `fahrplan.md` 
 
 ### Tempo (zuerst, als eigene APK noch im alten Look)
 
-- [ ] Jede Reaktion auf Antippen braucht unter 0,1 Sekunden, der Rang-Pfad öffnet in unter 0,3 Sekunden, Scrollen
+- [x] Jede Reaktion auf Antippen braucht unter 0,1 Sekunden, der Rang-Pfad öffnet in unter 0,3 Sekunden, Scrollen
       läuft flüssig. Gemessen mit `.claude/tests/tempo.py`, Ausgangswerte unter "Hinweise für den Bau".
-- [ ] Nach einer Änderung wird nur neu gezeichnet, was sich wirklich ändert, nicht die ganze Seite.
-- [ ] Rang-Pfad: Nur die Stationen zeichnen, die man sieht oder gleich sieht. Animationen laufen nur, solange sie
+- [x] Nach einer Änderung wird nur neu gezeichnet, was sich wirklich ändert, nicht die ganze Seite.
+- [x] Rang-Pfad: Nur die Stationen zeichnen, die man sieht oder gleich sieht. Animationen laufen nur, solange sie
       zu sehen sind.
-- [ ] Look-Fenster: Vorschau und Auswahl nur für den offenen Reiter bauen.
-- [ ] Satz speichern bleibt auch mit Jahren an Verlauf schnell: nur nachrechnen, was sich geändert hat.
-- [ ] Sichern läuft im Hintergrund, die App stockt dabei nie, auch nicht auf dem Handy mit der Datei-Kopie.
+- [x] Look-Fenster: Vorschau und Auswahl nur für den offenen Reiter bauen.
+- [x] Satz speichern bleibt auch mit Jahren an Verlauf schnell: nur nachrechnen, was sich geändert hat.
+- [x] Sichern läuft im Hintergrund, die App stockt dabei nie, auch nicht auf dem Handy mit der Datei-Kopie.
 
 ### Neues Standard-Design wie eine Store-App
 
@@ -127,6 +127,28 @@ Mittelklasse-Handy, mehrere Läufe. Daten aus `beispieldaten.py 85` und `beispie
 - Sichern: Im Browser blieb nach dem Speichern jede Blockade unter 50 ms. Auf dem Handy kommt die Datei-Kopie über
   Capacitor dazu (`mirrorWrite` in `www/js/store.js`, der ganze Stand als Text, bei 3 Jahren etwa 620 KB). Das auf
   dem Gerät prüfen.
+
+Nach dem Tempo-Umbau in 2.9, gemessen am 11. Oktober 2026 wie oben (Median aus 3 Runden):
+
+| Aktion | 816 Sätze | 10.608 Sätze (3 Jahre) |
+|---|---|---|
+| Start bis die Seite steht | 0,38 s | 0,44 s |
+| Rang-Pfad öffnen | 0,14 s | 0,16 s |
+| Look-Fenster öffnen | 0,06 s | 0,04 s |
+| Training starten | 0,08 s | 0,06 s |
+| Satz speichern | 0,08 s, danach kein Stocken | 0,07 s, danach kein Stocken |
+| Profil öffnen | 0,1 s | 0,06 s |
+| Tab Körper | 0,07 s | 0,08 s |
+| Rang-Pfad wischen, längstes Bild | 0,05 s | 0,05 s |
+| Andere Tabs, Plus und Minus, Muskelgruppe | unter 0,06 s | unter 0,06 s |
+
+- Rang-Pfad: 1.350-1.530 statt knapp 3.000 Elemente, 11-14 statt 255-297 laufende Animationen, 34 statt 445 Ebenen
+  für die Grafikkarte. Keine Unschärfe (`backdrop-filter`) mehr, die Glas-Karten sind fast deckend.
+- In Ruhe rechnet keine Seite mehr jedes Bild neu (`leerlauf.py`). Vorher taten das Start und Rang-Pfad.
+- Datei-Kopie auf Android: höchstens alle 30 Sekunden in einem ruhigen Moment, sofort beim Wechsel in den
+  Hintergrund, unveränderte Monate werden nicht neu in Text umgewandelt. Auf dem Gerät noch nicht gemessen.
+- Für den Design-Umbau: Epische und legendäre Teile vom Look (Glanz auf Rahmen, schimmernde Titel, Funken am
+  Neon-Schild) lassen den Hauptthread jedes Bild mitrechnen. Das betrifft das Design Neon, beim Umbau ruhiger bauen.
 - Designs über CSS-Variablen und `:root[data-theme]`, die Akzentfarbe bleibt in `--acc*`. Neue Einstellungen
   (Design, japanische Zeichen) in `state.settings` und in `migrate()` abfangen.
 - Nach dem Umbau den Abschnitt Design in `.claude/CLAUDE.md` neu schreiben: Der neue Look ist der Standard, Neon ist
