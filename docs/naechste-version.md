@@ -1,7 +1,8 @@
 # Nächste Version von KINTORE
 
 Stand: 11. Oktober 2026. Aktuelle Version: 2.10 (Release v2.10). Damit ist Schritt 1 fertig: das Tempo aus 2.9 und
-das neue Design mit Dunkel als Standard, dazu Hell und Neon (der alte Look) zum Wählen. Als Nächstes kommt Schritt 2.
+das neue Design mit Dunkel als Standard, dazu Hell und Neon (der alte Look) zum Wählen. Als Nächstes: erst 2.10
+prüfen und Ideen abwägen (siehe "Noch offen"), dann Schritt 2.
 Davor kam 2.8 mit dem ganzen Plan 2.7: einfache Bedienung, eigene Knöpfe, volleres Profil und 9 neue Banner nach
 Vorlagen des Besitzers. Die Nummer der APK zählt jeden Build mit.
 
@@ -18,6 +19,34 @@ Vergleich zu Store-Apps fehlt. Das Ergebnis steht für später in `fahrplan.md` 
 
 ## Noch offen
 
+- [ ] Zuerst: 2.10 prüfen und Ideen abwägen. Wunsch des Besitzers vom 11. Oktober 2026, so bestätigt. Nur prüfen,
+      nachdenken und recherchieren, nichts bauen. Danach dem Besitzer kurz mit Bildern zeigen, was nicht passt und
+      welche Ideen sich lohnen. Gebaut wird nur, was er bestätigt. Er entscheidet auch, ob das vor Schritt 2 kommt.
+      Prüfen, in allen drei Designs (Dunkel, Hell, Neon):
+      - Design wechseln: Sind Effekte, Banner, Rahmen und Profil überall da und sehen gut aus? Auch beim Wechsel
+        mitten im Training und bei offenem Fenster.
+      - Knöpfe: Wirkt noch einer nach KI? Jeden Knopf einzeln mit Bild ansehen und mit bekannten Gym-Apps vergleichen.
+      - Tempo: Ist die App spürbar schneller als 2.8? Mit `tempo.py` messen, auch mit 3 Jahren Daten (`gross.json`).
+      - Hell genau ansehen: dunkle Banner, legendäre Effekte und Diagramme auf hellem Grund.
+      - Neon ohne japanische Zeichen: Fehlt irgendwo etwas oder bleibt eine Lücke?
+      - Noch nie auf dem Handy geprüft: Farbe der Leisten oben und unten, App-Symbol, Startbild, Datei-Kopie. Den
+        Besitzer gezielt bitten, das auf seinem Handy anzusehen.
+      - Was im Vergleich zu Store-Apps am meisten fehlt (Liste in `fahrplan.md`).
+      Ideen von Claude, noch nicht bestätigt. Zu jeder mit sich selbst streiten: Was spricht dafür, was dagegen, wie
+      machen es gute Store-Apps? Dazu kreativ recherchieren. Dann eine klare Empfehlung:
+      1. Design "Automatisch", das Hell oder Dunkel vom Handy übernimmt.
+      2. Startbild passend zum Design, damit Hell beim Öffnen nicht kurz dunkel aufblitzt (das Android-Startbild ist
+         immer dunkel, `BG` in `scripts/patch-android.py`).
+      3. Schlichtere Knöpfe: weniger Symbole darin, überall dieselbe Form, klare Wörter.
+      4. Eigene ruhige Effekte für Dunkel und Hell statt der halb durchsichtigen Neon-Effekte (`.pf-cfx` in
+         `ruhig.css`).
+      5. Gleich breite Ziffern, damit Zahlen bei Plus und Minus und im Timer nicht wackeln.
+      6. Dieselbe kleine Rückmeldung bei jedem Antippen: leicht eindrücken, kurz vibrieren.
+      7. Versteckte Tempo-Messung in den Einstellungen, damit echte Werte vom Handy des Besitzers kommen.
+      8. Schnellerer Start: Startseite sofort zeigen, Rang-Pfad und Banner erst laden, wenn man sie öffnet.
+      9. Leichteres Profil: Trainingskalender als ein Bild statt vieler einzelner Kästchen (Profil öffnen liegt bei
+         etwa 0,1 s, genau an der Grenze).
+      10. Banner im hellen Design mit Rand, damit dunkle Bilder nicht zu schwer wirken.
 - [x] Entwürfe: Nach der Tempo-APK 2 bis 3 Seiten im neuen Standard-Design als Entwurf zeigen, zum Beispiel Start,
       Training und Profil. Der Besitzer bestätigt Akzentfarbe, Schrift und Knöpfe. Erst danach die ganze App umbauen.
       Am 11. Oktober 2026 gezeigt (Canvas "KINTORE Design-Entwurf" in Claude: Start, Training und Profil in Dunkel und
