@@ -4,25 +4,33 @@
 import { esc, icon, hashStr } from './util.js';
 import { RANKS, rankById, rankOf } from './stats.js';
 import { bannerArt, effectParts } from './art.js';
+import { isCalm, jpOn, initialsOf, themeId, calmAccent } from './theme.js';
 
+// Im Design Neon heißen Farbe und Schild mit Neon davor, in Dunkel und Hell nicht.
+const neonName = (calm, neon) => ({ get name() { return isCalm() ? calm[0] : neon[0]; }, get plural() { return isCalm() ? calm[1] : neon[1]; } });
 export const TYPES = {
-  color: { name: 'Neon-Farbe', plural: 'Neon-Farben' },
+  color: neonName(['Farbe', 'Farben'], ['Neon-Farbe', 'Neon-Farben']),
   title: { name: 'Titel', plural: 'Titel' },
   frame: { name: 'Rahmen', plural: 'Rahmen' },
-  sign: { name: 'Neon-Schild', plural: 'Neon-Schilder' },
+  sign: neonName(['Schild', 'Schilder'], ['Neon-Schild', 'Neon-Schilder']),
   banner: { name: 'Banner', plural: 'Banner' },
   effect: { name: 'Effekt', plural: 'Effekte' },
 };
+
+// Japanische Schrift nur für Namen, die wirklich japanische Zeichen enthalten.
+export const isJp = (text) => /[\u3000-\u9fff]/.test(String(text || ''));
 export const TYPE_ORDER = ['color', 'title', 'frame', 'sign', 'banner', 'effect'];
 // Diese Typen färben die ganze App, Banner und Effekt gehören nur zum Profil.
 export const APP_TYPES = ['color', 'title', 'frame', 'sign'];
 
 // lv 1 = von Anfang an da. Ränge schalten immer einen neuen Rahmen frei.
 export const ITEMS = [
-  { type: 'color', id: 'pink', name: 'Neon Pink', hex: '#FF4FA3', lv: 1 },
+  { type: 'color', id: 'pink', get name() { return isCalm() ? 'Pink' : 'Neon Pink'; }, hex: '#FF4FA3', lv: 1 },
   { type: 'title', id: 'rookie', name: 'Rookie', lv: 1 },
   { type: 'frame', id: 'hex', name: 'Hexagon', lv: 1 },
   { type: 'sign', id: 'kintore', name: '筋トレ', de: 'Krafttraining', lv: 1 },
+  // Neon-Schilder mit einem Wort statt Schriftzeichen (seit 2.10), jeweils neben dem japanischen Schild.
+  { type: 'sign', id: 'kraft', name: 'KRAFT', lv: 1 },
   { type: 'banner', id: 'nacht', name: 'Nachtlicht', lv: 1 },
   { type: 'effect', id: 'none', name: 'Kein Effekt', lv: 1 },
   { type: 'title', id: 'stammgast', name: 'Stammgast', lv: 2 },
@@ -33,6 +41,7 @@ export const ITEMS = [
   { type: 'title', id: 'grinder', name: 'Grinder', lv: 8 },
   { type: 'banner', id: 'skyline', name: 'Skyline', lv: 9 },
   { type: 'sign', id: 'konjo', name: '根性', de: 'Biss', lv: 10 },
+  { type: 'sign', id: 'biss', name: 'BISS', lv: 11 },
   { type: 'frame', id: 'star', name: 'Stern', lv: 12 },
   { type: 'effect', id: 'ring', name: 'Neon-Ring', lv: 13 },
   { type: 'color', id: 'toxic', name: 'Toxic', hex: '#3DFF8F', lv: 14 },
@@ -47,6 +56,7 @@ export const ITEMS = [
   { type: 'title', id: 'prjaeger', name: 'PR-Jäger', lv: 23 },
   { type: 'banner', id: 'synthwave', name: 'Synthwave', lv: 24 },
   { type: 'sign', id: 'tanren', name: '鍛錬', de: 'Disziplin', lv: 26 },
+  { type: 'sign', id: 'disziplin', name: 'DISZIPLIN', lv: 27 },
   { type: 'banner', id: 'himmelslicht', name: 'Himmelslicht', lv: 28 },
   { type: 'color', id: 'sunset', name: 'Sunset', hex: '#FF7A45', lv: 29 },
   { type: 'title', id: 'stahlwille', name: 'Stahlwille', lv: 32 },
@@ -57,6 +67,7 @@ export const ITEMS = [
   { type: 'banner', id: 'auge', name: 'Das Auge', lv: 40 },
   { type: 'effect', id: 'funken', name: 'Funken', lv: 41 },
   { type: 'sign', id: 'fukutsu', name: '不屈', de: 'Unbeugsam', lv: 43 },
+  { type: 'sign', id: 'unbeugsam', name: 'UNBEUGSAM', lv: 44 },
   { type: 'banner', id: 'aurora', name: 'Polarlicht', lv: 45 },
   { type: 'color', id: 'crimson', name: 'Crimson', hex: '#FF3358', lv: 47 },
   { type: 'banner', id: 'unterwelt', name: 'Unterwelt', lv: 48 },
@@ -66,18 +77,20 @@ export const ITEMS = [
   { type: 'title', id: 'sensei', name: 'Sensei', lv: 54 },
   { type: 'banner', id: 'inferno', name: 'Inferno', lv: 56 },
   { type: 'sign', id: 'kakusei', name: '覚醒', de: 'Erwachen', lv: 58 },
+  { type: 'sign', id: 'erwachen', name: 'ERWACHEN', lv: 59 },
   { type: 'banner', id: 'horizont', name: 'Schwarzes Loch', lv: 60 },
   { type: 'title', id: 'titan', name: 'Titan', lv: 62 },
   { type: 'effect', id: 'sterne', name: 'Sternenregen', lv: 64 },
   { type: 'banner', id: 'feuersturm', name: 'Feuersturm', lv: 65 },
   { type: 'color', id: 'gold', name: 'Gold', hex: '#FFC93D', lv: 66 },
   { type: 'banner', id: 'kosmos', name: 'Kosmos', lv: 68 },
+  { type: 'sign', id: 'grenzenlos', name: 'GRENZENLOS', lv: 69 },
   { type: 'frame', id: 'crown', name: 'Krone', lv: 70 },
   { type: 'title', id: 'endgegner', name: 'Endgegner', lv: 70 },
   { type: 'sign', id: 'genkai', name: '限界突破', de: 'Grenzen sprengen', lv: 70 },
 ];
 
-export const DEFAULT_LOOK = { color: 'pink', title: 'rookie', frame: 'hex', sign: 'kintore', banner: 'nacht', effect: 'none' };
+export const DEFAULT_LOOK = { color: 'pink', title: 'rookie', frame: 'hex', sign: 'kraft', banner: 'nacht', effect: 'none' };
 export const itemOf = (type, id) => ITEMS.find((x) => x.type === type && x.id === id) || null;
 
 // ---------- Seltenheit ----------
@@ -226,6 +239,8 @@ function frameSparks(frameId) {
 // fx: Glanz und Funkeln bei epischen und legendären Rahmen (für große Abzeichen).
 // Abzeichen mit Glanz bleiben beim Neuzeichnen stehen (data-persist), damit der Glanz nicht neu startet.
 export function emblem(rankId, frameId = 'hex', size = 60, cls = '', { fx = false } = {}) {
+  // Dunkel und Hell: flaches Abzeichen ohne Glanz und Funkeln.
+  if (isCalm()) fx = false;
   const f = frameOf(frameId);
   const r = rankById(rankId);
   const keep = fx ? ` data-persist="emb-${hashStr([r.id, frameId, size, cls].join('|'))}"` : '';
@@ -244,6 +259,7 @@ export const frameIcon = (frameId, size = 26) => {
 // effect: Effekt aus dem Rang-Pfad, der hinter und vor dem Bild liegt.
 let clipN = 0;
 export function avatar({ frameId = 'hex', rankId = 'E', img = '', initial = '', size = 96, deco = true, cls = '', effect = 'none' } = {}) {
+  if (isCalm()) return calmAvatar({ frameId, rankId, img, initial, size, deco, cls, effect });
   const f = frameOf(frameId);
   const [bx, by, bw, bh] = f.main.box;
   const s = size / bh;
@@ -253,11 +269,12 @@ export function avatar({ frameId = 'hex', rankId = 'E', img = '', initial = '', 
   const left = size / 2 - cx * s;
   const top = size / 2 - cy * s;
   const id = `avc${++clipN}`;
-  const ini = [...String(initial || '').trim()][0] || '筋';
-  const jp = /[\u3000-\u9fff]/.test(ini);
+  // Ohne Foto: mit japanischen Zeichen der erste Buchstabe oder 筋, sonst die Initialen.
+  const ini = jpOn() ? [...String(initial || '').trim()][0] || '筋' : initialsOf(initial);
+  const jp = isJp(ini);
   const fx = effectParts(effect);
   const frameIt = itemOf('frame', frameId);
-  const keep = hashStr([frameId, rankId, img, ini, size, deco ? 1 : 0, cls, effect].join('|'));
+  const keep = hashStr([frameId, rankId, img, ini, size, deco ? 1 : 0, cls, effect, themeId()].join('|'));
   return `<span class="av rank-${esc(rankId)} fr-${frameIt ? rarityOf(frameIt).id : 'n'} ${cls}" style="--av:${size}px" aria-hidden="true" data-persist="av-${keep}">${fx.back}
     <svg class="av-svg" viewBox="0 0 100 100" style="width:${w.toFixed(1)}px;height:${w.toFixed(1)}px;left:${left.toFixed(1)}px;top:${top.toFixed(1)}px">
       <defs><clipPath id="${id}">${mainShape(f.main, '')}</clipPath></defs>
@@ -268,10 +285,40 @@ export function avatar({ frameId = 'hex', rankId = 'E', img = '', initial = '', 
         ${img ? `<image href="${esc(img)}" x="${bx}" y="${by}" width="${bw}" height="${bh}" preserveAspectRatio="xMidYMid slice"/>` : ''}
       </g>
       ${mainShape(f.main, 'f-edge')}${f.over ? f.over() : ''}${deco ? frameSheen(f, frameId, id) : ''}
-    </svg>${img ? '' : `<b class="av-ini ${jp ? 'jp' : ''}">${esc(ini)}</b>`}${deco ? frameSparks(frameId) : ''}${fx.front}</span>`;
+    </svg>${img ? '' : ini ? `<b class="av-ini ${jp ? 'jp' : ''} ${ini.length > 1 ? 'av-two' : ''}">${esc(ini)}</b>` : `<b class="av-ini av-none">${icon('user')}</b>`}${deco ? frameSparks(frameId) : ''}${fx.front}</span>`;
 }
 
-const accentStyle = (item) => (item.hex ? `--sw:${item.hex}` : '');
+// Profilbild in Dunkel und Hell: rund, mit einem Ring in der Akzentfarbe. Verzierungen des Rahmens (Flügel, Krone,
+// Stern) liegen flach dahinter, ohne Leuchten. Effekte bleiben, sie sind Belohnungen.
+function calmAvatar({ frameId, rankId, img, initial, size, deco, cls, effect }) {
+  const f = frameOf(frameId);
+  const id = `avc${++clipN}`;
+  const ini = initialsOf(initial);
+  const fx = effectParts(effect);
+  const frameIt = itemOf('frame', frameId);
+  const [bx, by, bw, bh] = f.main.box;
+  const cx = bx + bw / 2;
+  const cy = by + bh / 2;
+  const r = bh / 2;
+  const s = size / bh;
+  const w = 100 * s;
+  const left = size / 2 - cx * s;
+  const top = size / 2 - cy * s;
+  const keep = hashStr([frameId, rankId, img, ini, size, deco ? 1 : 0, cls, effect, themeId()].join('|'));
+  // Ring mit etwas Abstand zum Bild, in Pixeln gerechnet (das Bild ist size groß).
+  const gap = Math.max(2, size * 0.035) / s;
+  return `<span class="av av-calm rank-${esc(rankId)} fr-${frameIt ? rarityOf(frameIt).id : 'n'} ${cls}" style="--av:${size}px" aria-hidden="true" data-persist="av-${keep}">${fx.back}
+    <svg class="av-svg" viewBox="0 0 100 100" style="width:${w.toFixed(1)}px;height:${w.toFixed(1)}px;left:${left.toFixed(1)}px;top:${top.toFixed(1)}px">
+      <defs><clipPath id="${id}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath></defs>
+      ${deco && f.deco && frameId !== 'double' ? f.deco() : ''}
+      <circle class="av-base" cx="${cx}" cy="${cy}" r="${r}"/>
+      ${img ? `<g clip-path="url(#${id})"><image href="${esc(img)}" x="${bx}" y="${by}" width="${bw}" height="${bh}" preserveAspectRatio="xMidYMid slice"/></g>` : ''}
+      ${deco ? `<circle class="av-ring" cx="${cx}" cy="${cy}" r="${(r + gap).toFixed(2)}"/>` : ''}
+      ${deco && frameId === 'double' ? `<circle class="av-ring2" cx="${cx}" cy="${cy}" r="${(r + gap * 2.6).toFixed(2)}"/>` : ''}
+    </svg>${img ? '' : ini ? `<b class="av-ini ${ini.length > 1 ? 'av-two' : ''}">${esc(ini)}</b>` : `<b class="av-ini av-none">${icon('user')}</b>`}${fx.front}</span>`;
+}
+
+const accentStyle = (item) => (item.hex ? `--sw:${isCalm() ? calmAccent(item.id) : item.hex}` : '');
 
 const EFFECT_ICONS = { none: 'x', glitzer: 'sparkle', ring: 'target', manga: 'bolt', funken: 'sparkle', blitze: 'bolt', flammen: 'flame', sterne: 'star' };
 
@@ -281,8 +328,8 @@ export function itemOrb(item) {
   if (item.type === 'title') return icon('tag', 'orb-ic');
   if (item.type === 'frame') return frameIcon(item.id, 30);
   if (item.type === 'banner') return `<span class="orb-bn">${bannerArt(item.id)}</span>`;
-  if (item.type === 'effect') return icon(EFFECT_ICONS[item.id] || 'sparkle', 'orb-ic');
-  return `<span class="orb-jp">${esc(item.name.slice(0, 1))}</span>`;
+  if (item.type === 'effect') return icon(isCalm() && item.id === 'none' ? 'none' : EFFECT_ICONS[item.id] || 'sparkle', 'orb-ic');
+  return isJp(item.name) ? `<span class="orb-jp">${esc(item.name.slice(0, 1))}</span>` : `<span class="orb-word">${esc(item.name.slice(0, 1))}</span>`;
 }
 
 // Verzierung je nach Seltenheit: Ring (selten), drehender Ring (episch), Flammen und Funken (legendär).
@@ -312,11 +359,11 @@ export function itemShowcase(item, rankId, me = {}) {
     const card = effectParts(item.id).card;
     return wrap('show-effect', `${card}${avatar({ frameId: me.frameId || 'hex', rankId, img: me.img || '', initial: me.initial || '', size: 70, effect: item.id })}`);
   }
-  return wrap('show-sign', `<span class="sg sg-${r}">${esc(item.name)}</span>`);
+  return wrap('show-sign', `<span class="sg sg-${r} ${isJp(item.name) ? '' : 'sg-word'}">${esc(item.name)}</span>`);
 }
 
 // Legendäre Neon-Schilder sprühen Funken.
-export const signSparks = (item) => (rarityOf(item).id === 'l' ? '<i class="sg-sparks" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b></i>' : '');
+export const signSparks = (item) => (rarityOf(item).id === 'l' && !isCalm() ? '<i class="sg-sparks" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b></i>' : '');
 
-export const itemLabel = (item) => (item.type === 'sign' ? `${item.name} (${item.de})` : item.name);
+export const itemLabel = (item) => (item.type === 'sign' && item.de ? `${item.name} (${item.de})` : item.name);
 export const rankColor = (id) => rankById(id).color;

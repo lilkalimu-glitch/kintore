@@ -1,16 +1,24 @@
 // Grundbegriffe der App: Muskelgruppen, Übungs-Eigenschaften, Standardwerte.
+import { isCalm, isLight } from './theme.js';
+
+// Farben der Muskelgruppen: Neon im Design Neon, ruhiger in Dunkel, kräftiger in Hell (Kontrast auf Weiß).
+const CALM_DARK = { brust: '#F571A6', ruecken: '#4FB3E6', schultern: '#A98BF5', bizeps: '#F09A6E', trizeps: '#EE6E6E', beine: '#3FC48A', bauch: '#D9BC45', cardio: '#7A93F5', sonstige: '#9AA2B2' };
+const CALM_LIGHT = { brust: '#C42673', ruecken: '#0A73A1', schultern: '#6C4AB3', bizeps: '#AD4B1F', trizeps: '#BC3335', beine: '#0B7A49', bauch: '#7A5E00', cardio: '#3553C7', sonstige: '#5E6676' };
 
 export const CATEGORIES = [
-  { id: 'brust', name: 'Brust', jp: '胸', color: '#FF4FA3' },
-  { id: 'ruecken', name: 'Rücken', jp: '背中', color: '#3CF0FF' },
-  { id: 'schultern', name: 'Schultern', jp: '肩', color: '#9B6BFF' },
-  { id: 'bizeps', name: 'Bizeps', jp: '二頭', color: '#FFA586' },
-  { id: 'trizeps', name: 'Trizeps', jp: '三頭', color: '#FF5E62' },
-  { id: 'beine', name: 'Beine', jp: '脚', color: '#5BFFB0' },
-  { id: 'bauch', name: 'Bauch', jp: '腹', color: '#FFE45C' },
-  { id: 'cardio', name: 'Cardio', jp: '有酸素', color: '#6E8BFF' },
-  { id: 'sonstige', name: 'Sonstiges', jp: '他', color: '#B8C2DC' },
-];
+  { id: 'brust', name: 'Brust', jp: '胸', neon: '#FF4FA3' },
+  { id: 'ruecken', name: 'Rücken', jp: '背中', neon: '#3CF0FF' },
+  { id: 'schultern', name: 'Schultern', jp: '肩', neon: '#9B6BFF' },
+  { id: 'bizeps', name: 'Bizeps', jp: '二頭', neon: '#FFA586' },
+  { id: 'trizeps', name: 'Trizeps', jp: '三頭', neon: '#FF5E62' },
+  { id: 'beine', name: 'Beine', jp: '脚', neon: '#5BFFB0' },
+  { id: 'bauch', name: 'Bauch', jp: '腹', neon: '#FFE45C' },
+  { id: 'cardio', name: 'Cardio', jp: '有酸素', neon: '#6E8BFF' },
+  { id: 'sonstige', name: 'Sonstiges', jp: '他', neon: '#B8C2DC' },
+].map((c) => Object.defineProperty(c, 'color', {
+  enumerable: true,
+  get() { return isCalm() ? (isLight() ? CALM_LIGHT : CALM_DARK)[c.id] : c.neon; },
+}));
 
 export const CAT = Object.fromEntries(CATEGORIES.map((c) => [c.id, c]));
 

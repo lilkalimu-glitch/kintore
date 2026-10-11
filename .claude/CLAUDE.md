@@ -1,6 +1,7 @@
-# KINTORE 筋トレ: Hinweise für Claude
+# KINTORE: Hinweise für Claude
 
-Öffentliches Repository einer Android-App: Gym-Tracker im Neon-Anime-Stil.
+Öffentliches Repository einer Android-App: Gym-Tracker mit ruhigem Standard-Design (Dunkel, Hell) und dem
+früheren Neon-Anime-Look als Design Neon.
 Projektsprache ist Deutsch: Texte in der App, Code-Kommentare, Commit-Nachrichten und Doku.
 
 ## Pläne
@@ -32,8 +33,9 @@ Projektsprache ist Deutsch: Texte in der App, Code-Kommentare, Commit-Nachrichte
 - Alle Datenänderungen laufen über `js/ops.js`, Berechnungen (Rekorde, Level, Quest, Tipps) in `js/stats.js`.
 - Rang-Pfad: Belohnungen, Stationen, Seltenheit und Rang-Abzeichen in `js/look.js`, die Seite in `js/view-rank.js`.
   Abgeholte Stationen und der angelegte Look liegen in `state.rewards`, Bonus-XP (Tages-Quest, Ruhetag-Quest,
-  Wochen-Serie) als Einträge in `state.bonus`. Die Neon-Farbe läuft über die CSS-Variablen `--acc*` und
-  `:root[data-accent]`; Pink bleibt der Standard. Die Seltenheit folgt aus dem Rang der Station (`rarityOf`).
+  Wochen-Serie) als Einträge in `state.bonus`. Die Farbe aus dem Rang-Pfad ist die Akzentfarbe und läuft
+  über die CSS-Variablen `--acc*` und `:root[data-accent]` (in `ruhig.css` je ein Wert für Dunkel und Hell); Pink
+  bleibt der Standard. Die Seltenheit folgt aus dem Rang der Station (`rarityOf`).
 - Banner und Effekte fürs Profil zeichnet `js/art.js` nur mit SVG und CSS (keine Bilddateien). Die dunklen Banner
   nach den Vorlagen des Besitzers stehen in `js/banners.js`. Effekte haben die Teile `back`, `front` (ums Profilbild)
   und `card` (über die ganze Profilkarte).
@@ -69,10 +71,10 @@ Projektsprache ist Deutsch: Texte in der App, Code-Kommentare, Commit-Nachrichte
   daneben legen. Prüfen mit `leerlauf.py`.
 - Daten liegen auf dem Handy (IndexedDB plus Datei-Kopie). Neue Felder oder Formatänderungen immer in `migrate()` in
   `js/ops.js` abfangen, damit vorhandene Daten erhalten bleiben.
-- `scripts/patch-android.py` passt das von Capacitor erzeugte Android-Projekt an (Icon, Startbild, dunkle Leisten,
-  Rechte, Version).
-- Japanische Zeichen kommen aus Teil-Schriften in `www/fonts`. Nach neuen Zeichen in Texten `python3 scripts/build-fonts.py`
-  ausführen (braucht fontTools sowie Noto Sans CJK, Inter und TeX Gyre Adventor auf dem System).
+- `scripts/patch-android.py` passt das von Capacitor erzeugte Android-Projekt an (Icon, Startbild, Leisten in der
+  Farbe des Designs über das eigene Plugin `KintoreBars`, Rechte, Version).
+- Schriften kommen als Teil-Schriften aus `www/fonts`. Nach neuen Zeichen in Texten `python3 scripts/build-fonts.py`
+  ausführen (braucht fontTools sowie Noto Sans CJK, Inter, TeX Gyre Adventor und Barlow SemiBold auf dem System).
 
 ## Testen
 - `python3 -m http.server 8080 --directory www` und im Handy-Format (393 × 852) mit Playwright oder Browser prüfen.
@@ -82,8 +84,11 @@ Projektsprache ist Deutsch: Texte in der App, Code-Kommentare, Commit-Nachrichte
   (`tempo.py`: Reaktionszeit mit gedrosseltem Prozessor wie auf einem Mittelklasse-Handy, Ziele aus dem Plan).
   Seit 2.9 dazu: `neuzeichnen.py` (morph), `speichern.py` (nichts geht verloren, auch beim Umstieg von 2.8),
   `ablauf.py` (die wichtigsten Abläufe durchklicken) und `leerlauf.py` (in Ruhe keine Arbeit im Hauptthread).
-- Vor dem Push: keine Konsolenfehler, kein horizontales Scrollen, alle Ansichten aufrufbar, auch mit leeren Daten.
-  Seiten, die sich nicht ändern sollen, per Bildvergleich gegen den Stand vorher prüfen.
+  Seit 2.10: `kontrast.py` (Kontrast von Text und Symbolen nach Regel 2, gemessen auf dem echten Hintergrund).
+- Jedes Design testen: Beispieldaten mit `--design hell`, `--design neon` oder `--design neon-alt` (Neon wie in 2.9,
+  für den Bildvergleich mit alten Bildern) erzeugen, ohne gilt Dunkel.
+- Vor dem Push: keine Konsolenfehler, kein horizontales Scrollen, alle Ansichten aufrufbar, auch mit leeren Daten,
+  in allen drei Designs. Seiten, die sich nicht ändern sollen, per Bildvergleich gegen den Stand vorher prüfen.
 
 ## Texte in der App
 Kurz und umgangssprachlich, wie ein normaler Gym-Tracker. Keine Gedankenstriche, keine Pfeile im Fließtext,
@@ -91,13 +96,28 @@ keine typografischen Anführungszeichen, keine rhetorischen Fragen, keine Werbes
 und keine Beteuerungen zum Datenschutz. Bereiche mit Bindestrich schreiben (`8-12 Wdh.`).
 
 ## Design
-Wird mit dem Plan in `docs/naechste-version.md` (Schritt 1) umgebaut: neuer ruhiger Standard wie eine Store-App,
-ohne Glas, Leuchten und japanische Zeichen, dazu ein helles Design. Der bisherige Look bleibt als Design Neon.
-Bis der Umbau fertig ist, beschreibt der Rest dieses Abschnitts den bisherigen Look, danach nur noch das Design Neon.
-
-Navy-Grund, Glas-Karten (seit 2.9 ohne Unschärfe, fast deckend), Neon-Glow in Pink, Cyan und Violett. Schriften: Adventor (Titel und Zahlen), Inter (Text).
-Japanische Schriftzeichen nur als Deko (Neon-Schild, Wasserzeichen in Seitenköpfen, Banner). Keine bekannten
-Anime-Figuren, auch nicht aus Referenzbildern des Besitzers: nur Stimmung, Farben und Motive übernehmen.
-Knöpfe sind eckig mit abgeschrägten Ecken wie in einem Game-Menü, ruhig, ohne Glanz und ohne Leuchten darunter:
-`.btn-neon` (Hauptknopf, gefüllt, dunkle Schrift), `.btn-ghost` (Rand), `.btn-danger`, `.btn-dashed`. Kein
-Glitzer-Symbol in Knöpfen. Alles Antippbare mindestens 44 px, besser 48 px (unsichtbar über `::after` vergrößern).
+Drei Designs zum Wählen in den Einstellungen (seit 2.10): Dunkel (Standard), Hell und Neon (der Look bis 2.9).
+- `js/theme.js` setzt das Design an `<html>`: `data-theme` (dunkel, hell, neon), `data-calm` bei Dunkel und Hell,
+  `data-jp` für japanische Zeichen. `index.html` setzt es schon vor dem ersten Bild (localStorage `kintore:design`).
+  Im Code fragen `isCalm()`, `isLight()` und `jpOn()` nach dem Design. Beim Wechsel zeichnet `redesign()` alles neu.
+- `app.css` ist das Design Neon und liegt in der CSS-Ebene `neon`. `ruhig.css` legt Dunkel und Hell in der Ebene
+  `ruhig` darüber: gilt nur mit `data-calm` und gewinnt immer, egal wie genau die Selektoren in `app.css` sind.
+  Neues immer in beiden Dateien gestalten und in allen drei Designs ansehen.
+- Dunkel und Hell: ruhig wie eine Store-App. Flache Karten, eine Akzentfarbe, kein Glas, kein Leuchten, keine
+  Farbverläufe, keine kursiven Titel, keine japanischen Zeichen. Farben nur über die Variablen oben in `ruhig.css`.
+  Text in der Akzentfarbe mit `--acc-text`, Flächen mit `--acc` oder `--acc-soft`. Schriften: Barlow SemiBold für
+  Titel und Zahlen (`--font-display`), Inter für Text. Symbole aus Lucide (ISC-Lizenz, `icon()` in `js/util.js`).
+  Knöpfe abgerundet: Hauptknopf gefüllt in der Akzentfarbe, die anderen grau. Rang-Abzeichen flach, Profilbild ohne
+  Foto mit Initialen. Schilder gibt es mit Wort (KRAFT, DISZIPLIN) und mit Kanji. Kanji-Belohnungen darf man
+  tragen, sonst zeigt der Standard keine Schriftzeichen.
+- Neon: Navy-Grund, Glas-Karten (seit 2.9 ohne Unschärfe, fast deckend), Neon-Glow in Pink, Cyan und Violett.
+  Schriften: Adventor (Titel und Zahlen), Inter (Text). Knöpfe eckig mit abgeschrägten Ecken wie in einem
+  Game-Menü, ohne Glanz und ohne Leuchten darunter. Japanische Schriftzeichen nur als Deko (Neon-Schild,
+  Wasserzeichen in Seitenköpfen, Banner) und nur, wenn sie in den Einstellungen an sind (`jpMark()`).
+- Für alle Designs: keine bekannten Anime-Figuren, auch nicht aus Referenzbildern des Besitzers, nur Stimmung,
+  Farben und Motive übernehmen. Kein Glitzer-Symbol in Knöpfen. Knöpfe: `.btn-neon` (Hauptknopf), `.btn-ghost`,
+  `.btn-danger`, `.btn-dashed`. Alles Antippbare mindestens 44 px, besser 48 px (unsichtbar über `::after`
+  vergrößern). Text mindestens 4,5 : 1 Kontrast, auch auf `--acc-soft` und über Effekten (`kontrast.py`).
+- App-Symbol: dunkles K aus Barlow auf Pink (`ICON_BG` in `scripts/patch-android.py`), Startbild mit Symbol und
+  Schriftzug KINTORE. Neu zeichnen mit `python3 scripts/build-icons.py`. Die Android-Leisten folgen dem Design
+  (`setBars` in `js/native.js`).

@@ -21,6 +21,9 @@ export const DEFAULT_SETTINGS = {
   bgBlur: 2,
   barWeight: 20,
   plates: [20, 15, 10, 5, 2.5, 1.25],
+  // Design (seit 2.10): dunkel (Standard), hell oder neon. Japanische Zeichen nur im Design Neon, wenn jp an ist.
+  theme: 'dunkel',
+  jp: false,
 };
 
 // Profil: was dort zu sehen ist, lässt sich einzeln ausblenden.
@@ -52,6 +55,8 @@ export function migrate(raw) {
     s.settings.bgDim = DEFAULT_SETTINGS.bgDim;
     s.settings.bgBlur = DEFAULT_SETTINGS.bgBlur;
   }
+  if (!['dunkel', 'hell', 'neon'].includes(s.settings.theme)) s.settings.theme = DEFAULT_SETTINGS.theme;
+  s.settings.jp = s.settings.jp === true;
   s.meta = s.meta && typeof s.meta === 'object' ? s.meta : {};
   // Gesehene Einführungen (seit 2.7), zum Beispiel { profil: true, rang: true }.
   if (s.meta.intro != null && (typeof s.meta.intro !== 'object' || Array.isArray(s.meta.intro))) delete s.meta.intro;
@@ -64,6 +69,12 @@ export function migrate(raw) {
   const claimed = Array.isArray(rw.claimed) ? [...new Set(rw.claimed.map(Number).filter((n) => valid.has(n)))].sort((a, b) => a - b) : [];
   const equip = { ...DEFAULT_LOOK };
   for (const type of TYPE_ORDER) if (itemOf(type, rw.equip?.[type])) equip[type] = rw.equip[type];
+  // Seit 2.10 ist das Start-Schild ein Wort (KRAFT) statt 筋トレ. Einmalig umstellen, wer noch das alte trägt.
+  // Das japanische Schild bleibt in der Sammlung und lässt sich jederzeit wieder anlegen.
+  if (!s.meta.signWord) {
+    if (equip.sign === 'kintore') equip.sign = 'kraft';
+    s.meta.signWord = 1;
+  }
   s.rewards = { claimed, equip };
   const setsByEx = new Map();
   for (const x of s.sets) {
@@ -124,9 +135,9 @@ function grantBonuses({ rest = false, week = true } = {}) {
 
 function bonusBanners(list) {
   for (const b of list) {
-    if (b.k === 'quest') banner({ jp: '達成', text: 'Tages-Quest geschafft', xp: b.xp });
-    else if (b.k === 'rest') banner({ jp: '休息日', text: 'Ruhetag-Quest geschafft', xp: b.xp });
-    else if (b.k === 'week') banner({ jp: '連続', text: b.n > 1 ? `Serie: ${b.n} Wochen` : 'Woche geschafft', xp: b.xp });
+    if (b.k === 'quest') banner({ jp: '達成', text: 'Tages-Quest geschafft', xp: b.xp, ic: 'target' });
+    else if (b.k === 'rest') banner({ jp: '休息日', text: 'Ruhetag-Quest geschafft', xp: b.xp, ic: 'scale' });
+    else if (b.k === 'week') banner({ jp: '連続', text: b.n > 1 ? `Serie: ${b.n} Wochen` : 'Woche geschafft', xp: b.xp, ic: 'flame' });
   }
   if (list.length) vibrate([40, 60, 40]);
 }

@@ -1,11 +1,13 @@
 """Erzeugt Beispieldaten (keine echten Trainingsdaten) für Tests der App.
 
-Aufruf: python3 .claude/tests/beispieldaten.py <tage> <ausgabe.json> [luecke|max|intro]
+Aufruf: python3 .claude/tests/beispieldaten.py <tage> <ausgabe.json> [luecke|max|intro] [--design <name>]
   tage    Wie viele Tage zurück trainiert wird. 0 ergibt eine leere App mit Startdaten.
   luecke  Lässt vor gut einer Woche Trainings aus, damit der Serien-Schutz greift.
   max     Gibt so viel Bonus-XP, dass der höchste Rang erreicht ist und alle Belohnungen bereitliegen.
   intro   Die Einführungen für Profil und Rang-Pfad sind noch nicht gesehen (sonst schon gesehen,
           damit Screenshots vergleichbar bleiben).
+  --design  dunkel (Standard), hell, neon oder neon-alt. neon-alt ist Neon mit japanischen Zeichen und dem
+          Schild von früher, sieht also aus wie Version 2.9 (für den Bildvergleich mit alten Bildern).
 Richtwerte (XP mit Gewichts-Bonus): 85 Tage ergeben etwa Level 25 (Rang B), 120 Tage etwa Level 27.
 """
 import datetime
@@ -20,9 +22,11 @@ ROOT = Path(__file__).resolve().parents[2]
 def main():
     days = int(sys.argv[1]) if len(sys.argv) > 1 else 85
     out = sys.argv[2] if len(sys.argv) > 2 else 'beispiel.json'
-    gap = len(sys.argv) > 3 and sys.argv[3] == 'luecke'
-    top = len(sys.argv) > 3 and sys.argv[3] == 'max'
-    intro = len(sys.argv) > 3 and sys.argv[3] == 'intro'
+    extra = sys.argv[3:]
+    gap = 'luecke' in extra
+    top = 'max' in extra
+    intro = 'intro' in extra
+    design = extra[extra.index('--design') + 1] if '--design' in extra else 'dunkel'
     random.seed(7)
     seed = json.loads((ROOT / 'www' / 'data' / 'seed.json').read_text(encoding='utf-8'))
     tpls = {t['id']: t for t in seed['templates']}
@@ -52,6 +56,12 @@ def main():
     state['meta'] = {'welcomeDone': bool(sets), 'lastBackup': today.isoformat(), 'xpRule': 2}
     if not intro:
         state['meta']['intro'] = {'profil': True, 'rang': True}
+    if design == 'neon-alt':
+        state['settings'] = {'theme': 'neon', 'jp': True}
+        state['rewards'] = {'equip': {'sign': 'kintore'}}
+        state['meta']['signWord'] = 1
+    else:
+        state['settings'] = {'theme': design, 'jp': False}
     if top:
         state['bonus'] = [{'d': (today - datetime.timedelta(days=400 + i)).isoformat(), 'k': 'quest', 'xp': 1000, 'n': 10} for i in range(300)]
     Path(out).write_text(json.dumps(state), encoding='utf-8')

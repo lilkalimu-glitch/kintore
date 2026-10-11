@@ -84,6 +84,14 @@ export function onHashChange() {
 const afterHooks = [];
 export const onAfterRender = (fn) => afterHooks.push(fn);
 
+// Design gewechselt (Einstellungen): Teile außerhalb der Seite neu zeichnen (Tabbar, Timer), dann die Seite.
+const designHooks = [];
+export const onDesignChange = (fn) => designHooks.push(fn);
+export function redesign() {
+  for (const fn of designHooks) fn();
+  render({ entering: true });
+}
+
 // Nichts soll springen, wenn eine Seite nach einer Änderung neu gezeichnet wird:
 // - Leisten und Listen mit data-keep="name" behalten ihre Scroll-Position.
 // - Der zuletzt angetippte Knopf bleibt an derselben Stelle auf dem Bildschirm, auch wenn darüber

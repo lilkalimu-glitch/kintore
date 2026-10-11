@@ -1,4 +1,10 @@
-/* KINTORE 筋トレ: Navy-Grund, Glas-Karten, Neon. */
+/* KINTORE: Design Neon (der Look bis 2.9). Navy-Grund, Glas-Karten, Neon.
+   Seit 2.10 liegt alles in der CSS-Ebene "neon". Die Designs Dunkel und Hell stehen in ruhig.css, in der Ebene
+   "ruhig", die immer gewinnt, egal wie genau ein Selektor hier ist. Hier nur ändern, was das Design Neon betrifft. */
+@layer neon, ruhig;
+
+@layer neon {
+
 
 :root {
   --bg: #0B1020;
@@ -1496,3 +1502,46 @@ body.intro-open { overflow: hidden; }
 /* Rekorde nicht nur über die Farbe zeigen (Regel 3) */
 .hs-pr { margin-right: 5px; font: italic 700 11px/1 var(--font-display); letter-spacing: 0.04em; color: var(--peach); }
 .rec span .rec-star { width: 13px; height: 13px; margin-left: 2px; vertical-align: -2px; color: var(--peach); fill: rgba(255, 165, 134, 0.35); stroke-width: 2; }
+
+
+/* ---------- Seit 2.10: neue Teile, die es auch im Design Neon gibt ---------- */
+.exb-title { flex: 1; min-width: 0; }
+.exb-cat { display: none; }
+/* Schilder mit einem Wort statt Schriftzeichen */
+.neon-sign.sign-word { font: italic 700 30px/1 var(--font-display); letter-spacing: 0; padding: 16px 0; }
+.neon-sign.sign-word.sign-8, .neon-sign.sign-word.sign-9, .neon-sign.sign-word.sign-10 { font-size: 21px; }
+.pf-sign.sign-word, .lp-sign.sign-word, .show-sign .sg-word { writing-mode: horizontal-tb; width: auto; padding: 6px 10px; font: italic 700 15px/1 var(--font-display); letter-spacing: 0.04em; }
+.lp-sign.sign-word { font-size: 12px; padding: 5px 8px; }
+.show-sign span.sg-word { padding: 10px 14px; font-size: 22px; }
+.rw-show.multi .show-sign span.sg-word { padding: 6px 8px; font-size: 13px; }
+.orb-word { font: italic 700 19px/1 var(--font-display); color: #fff; text-shadow: 0 0 8px rgba(var(--acc-rgb), 0.9); }
+.lo-word { font: italic 700 13px/1.15 var(--font-display); letter-spacing: 0.04em; }
+.n-name.lo-word { font-size: 12.5px; }
+/* Profilbild ohne Foto und ohne japanische Zeichen: Initialen oder ein Symbol */
+.av-ini.av-two { font-size: calc(var(--av) * 0.36); padding-right: 0.08em; }
+.av-ini.av-none .ic { width: calc(var(--av) * 0.44); height: calc(var(--av) * 0.44); color: var(--text-2); }
+.fb-ic { display: grid; place-items: center; color: var(--acc); }
+.fb-ic .ic { width: 20px; height: 20px; }
+/* Design wählen (Einstellungen) */
+.set-list > li.design-row { padding-bottom: 14px; }
+.design-pick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; }
+.dp { display: grid; gap: 6px; min-height: 48px; padding: 7px; border-radius: 14px; background: rgba(255, 255, 255, 0.045); border: 1.5px solid var(--line); text-align: center; }
+.dp.is-on { border-color: rgba(var(--acc-rgb), 0.85); background: rgba(var(--acc-rgb), 0.1); }
+.dp-prev { position: relative; display: block; height: 52px; overflow: hidden; border-radius: 9px; }
+.dp-prev i { position: absolute; display: block; }
+.dp-prev i:nth-child(1) { left: 8px; right: 8px; top: 8px; height: 18px; border-radius: 5px; }
+.dp-prev i:nth-child(2) { left: 8px; width: 46%; top: 32px; height: 12px; border-radius: 4px; }
+.dp-prev i:nth-child(3) { right: 8px; width: 22%; top: 32px; height: 12px; border-radius: 99px; }
+.dp-dunkel { background: #0E0F13; }
+.dp-dunkel i:nth-child(1), .dp-dunkel i:nth-child(2) { background: #22252D; }
+.dp-dunkel i:nth-child(3) { background: #F571A6; }
+.dp-hell { background: #F3F4F6; box-shadow: inset 0 0 0 1px #E3E5EA; }
+.dp-hell i:nth-child(1), .dp-hell i:nth-child(2) { background: #FFFFFF; box-shadow: 0 0 0 1px #E3E5EA; }
+.dp-hell i:nth-child(3) { background: #C42673; }
+.dp-neon { background: radial-gradient(80% 90% at 0% 0%, rgba(255, 79, 163, 0.45), transparent 60%), radial-gradient(70% 80% at 100% 100%, rgba(60, 240, 255, 0.3), transparent 60%), #0B1020; }
+.dp-neon i:nth-child(1), .dp-neon i:nth-child(2) { background: rgba(37, 50, 78, 0.9); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12); }
+.dp-neon i:nth-child(3) { background: #FF4FA3; box-shadow: 0 0 8px #FF4FA3; }
+.dp-name { display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-size: 13px; font-weight: 600; }
+.dp-name .ic { width: 15px; height: 15px; stroke-width: 2.6; color: var(--acc); }
+
+} /* Ende der Ebene neon */

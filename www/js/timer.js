@@ -103,3 +103,10 @@ function paint() {
 }
 
 export const timerRunning = () => !!t && !t.fired;
+
+// Nach einem Wechsel des Designs mit den passenden Symbolen neu aufbauen.
+export function repaintTimer() {
+  const el = document.getElementById('timer');
+  if (el) el.innerHTML = '';
+  paint();
+}

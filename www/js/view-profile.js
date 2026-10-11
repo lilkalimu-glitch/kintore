@@ -2,12 +2,13 @@
 // Jeder Teil vom Look lässt sich direkt antippen und ändern. Der Stift am Profilbild öffnet Bearbeiten.
 // Darunter Trainings-Kalender, Level, Bestwerte, Statistik und die Sammlung. Jeder Teil lässt sich ausblenden.
 import { app, D, views, actions, navigate, openSheet, closeSheet, render } from './core.js';
-import { esc, icon, int, kg, fmtMonth, fmtSetText, relDay, clamp, today, addDays, weekStart, parseIso, persistHtml } from './util.js';
+import { esc, icon, int, kg, fmtMonth, fmtSetText, relDay, clamp, today, addDays, weekStart, parseIso, persistHtml, jpMark } from './util.js';
 import { weekStreak, e1rmOf, catColor } from './stats.js';
 import { CAT } from './model.js';
 import {
-  ITEMS, TYPES, TYPE_ORDER, RARITIES, equipped, emblem, rewardOrb, ownedItems, rarityOf, rarityIndex, itemLabel, signSparks, rankChip,
+  ITEMS, TYPES, TYPE_ORDER, RARITIES, equipped, emblem, rewardOrb, ownedItems, rarityOf, rarityIndex, itemLabel, signSparks, rankChip, isJp,
 } from './look.js';
+import { isCalm } from './theme.js';
 import { bannerArt, effectParts } from './art.js';
 import { saveProfile, NAME_MAX, MOTTO_MAX } from './ops.js';
 import { myAvatar, avatarUrl, setAvatar, squareImage } from './me.js';
@@ -96,7 +97,7 @@ function collectionCard(s, lv) {
   return `<section class="card pad pf-sec">
     <div class="card-title"><h2>Sammlung</h2><span class="hint">${have.length} von ${ITEMS.length}</span></div>
     <div class="pf-rar">${per.map(({ r, n, of }) => `<span class="rar-${r.id}" style="--f:${((n / of) * 100).toFixed(1)}%"><i></i><b>${n}/${of}</b>${esc(r.name)}</span>`).join('')}</div>
-    <div class="pf-coll">${have.map((it) => `<button class="pc-item" data-act="look-open" data-type="${it.type}" aria-label="${esc(`${TYPES[it.type].name} ${itemLabel(it)}, ${rarityOf(it).name}`)}">${rewardOrb(it)}<span class="pc-name ${it.type === 'sign' ? 'jp' : ''}">${esc(it.name)}</span></button>`).join('')}</div>
+    <div class="pf-coll">${have.map((it) => `<button class="pc-item" data-act="look-open" data-type="${it.type}" aria-label="${esc(`${TYPES[it.type].name} ${itemLabel(it)}, ${rarityOf(it).name}`)}">${rewardOrb(it)}<span class="pc-name ${isJp(it.name) ? 'jp' : ''}">${esc(it.name)}</span></button>`).join('')}</div>
   </section>`;
 }
 
@@ -171,7 +172,7 @@ function badges(d, lv, ws) {
   const prs = d.prEvents.length;
   const out = [`<li class="pf-badge rank-${esc(lv.rank)}">${rankChip(lv.rank)}<span>Rang ${esc(lv.rank)}</span></li>`];
   if (ws.streak) out.push(`<li class="pf-badge b-streak">${icon('flame')}<span>${ws.streak} ${ws.streak === 1 ? 'Woche' : 'Wochen'} Serie</span></li>`);
-  if (prs) out.push(`<li class="pf-badge b-pr">${icon('star')}<span>${int(prs)} ${prs === 1 ? 'Rekord' : 'Rekorde'}</span></li>`);
+  if (prs) out.push(`<li class="pf-badge b-pr">${icon(isCalm() ? 'trophy' : 'star')}<span>${int(prs)} ${prs === 1 ? 'Rekord' : 'Rekorde'}</span></li>`);
   if (first) out.push(`<li class="pf-badge b-since">${icon('calendar')}<span>Seit ${esc(fmtMonth(first))}</span></li>`);
   return `<ul class="pf-badges" aria-label="Abzeichen">${out.join('')}</ul>`;
 }
@@ -193,7 +194,7 @@ function headCard(s, d, lv, look, ws) {
     <div class="pf-banner">
       <button class="pf-banner-btn" data-act="look-open" data-type="banner" aria-label="${esc(`Banner ${look.banner.name}. Ändern`)}">${persistHtml(bannerArt(look.banner.id), 'bn')}</button>
       <span class="pf-hint" aria-hidden="true">${icon('palette')}</span>
-      <button class="pf-sign sg-${signRar} sign-${[...look.sign.name].length}" data-act="look-open" data-type="sign" aria-label="${esc(`Neon-Schild ${itemLabel(look.sign)}. Ändern`)}"><span aria-hidden="true">${esc(look.sign.name)}</span>${signSparks(look.sign)}</button>
+      <button class="pf-sign sg-${signRar} sign-${[...look.sign.name].length}${isJp(look.sign.name) ? '' : ' sign-word'}" data-act="look-open" data-type="sign" aria-label="${esc(`${TYPES.sign.name} ${itemLabel(look.sign)}. Ändern`)}"><span aria-hidden="true">${esc(look.sign.name)}</span>${signSparks(look.sign)}</button>
     </div>
     ${fx.card ? `<div class="pf-cfx" aria-hidden="true">${persistHtml(fx.card, 'cfx')}</div>` : ''}
     <div class="pf-head">
@@ -224,7 +225,7 @@ views.profil = {
     const fresh = document.getElementById('view')?.dataset.route !== 'profil';
     return `
     <header class="head has-back pf-headbar">
-      <span class="jp-mark" aria-hidden="true">プロフィール</span>
+      ${jpMark('プロフィール')}
       <div class="head-row"><button class="icon-btn back-btn" data-act="profile-back" aria-label="Zurück">${icon('left')}</button><h1>Profil</h1></div>
     </header>
     <div class="stack">

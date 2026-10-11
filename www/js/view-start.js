@@ -1,11 +1,17 @@
-// Startseite: Neon-Schild, Status-Fenster, Tages-Quest, Wochen-Radar, Rekorde.
+// Startseite: Status mit Level und Rang, Tages-Quest, Woche, Rekorde.
+// Design Neon mit Neon-Schild und Wochen-Radar, Dunkel und Hell ruhig mit Balken (seit 2.10, wie im Entwurf).
 import { app, D, views, actions, navigate, commit } from './core.js';
 import { esc, icon, int, fmtLong, today, relDay, fmtSetText, fmtDate, daysBetween, addDays } from './util.js';
 import { nextQuest, progressionTip, weekCats, weekStreak, daySummary, questGoal, weekXp, SHIELD_MAX } from './stats.js';
 import { radarChart } from './charts.js';
 import { startSession } from './ops.js';
-import { emblem, equipped, readyStations, rarityOf, signSparks } from './look.js';
+import { emblem, equipped, readyStations, rarityOf, signSparks, isJp } from './look.js';
 import { myAvatar } from './me.js';
+import { CAT } from './model.js';
+import { isCalm, jpOn } from './theme.js';
+
+// Japanischer Zusatz neben einem Titel (Vorlage, Ruhetag): nur im Design Neon mit eingeschalteten Zeichen.
+const jpSpan = (text) => (jpOn() && text ? `<span>${esc(text)}</span>` : '');
 
 function rankBadge(lv, look, ready) {
   return `<div class="rank-badge">
@@ -63,7 +69,7 @@ function questCard(s, d) {
     const n = d.days.get(today())?.sets.length || 0;
     return `<section class="card quest">
       <div class="quest-label">Läuft gerade</div>
-      <div class="quest-title"><b>${esc(q.tpl?.name || 'Training')}</b>${q.tpl ? `<span>${esc(q.tpl.jp)}</span>` : ''}</div>
+      <div class="quest-title"><b>${esc(q.tpl?.name || 'Training')}</b>${q.tpl ? jpSpan(q.tpl.jp) : ''}</div>
       ${questGoalRow(goal)}
       <p class="rest-msg">${n ? `${n} ${n === 1 ? 'Satz' : 'Sätze'} eingetragen.` : 'Noch kein Satz eingetragen.'}</p>
       <button class="btn-neon btn-block" data-act="go" data-to="training">Weiter trainieren</button>
@@ -82,7 +88,7 @@ function questCard(s, d) {
     })();
     return `<section class="card quest">
       <div class="quest-label">Heute erledigt</div>
-      <div class="quest-title"><b>${esc(q.tpl?.name || 'Training')}</b><span>完了</span></div>
+      <div class="quest-title"><b>${esc(q.tpl?.name || 'Training')}</b>${jpSpan('完了')}</div>
       ${q.tpl ? rotationTrack(s, q.tpl.id) : ''}
       ${questGoalRow(goal)}
       <p class="rest-msg">${sum.sets} Sätze, ${int(sum.vol)} kg Volumen${sum.prs ? `, ${sum.prs} ${sum.prs === 1 ? 'Rekord' : 'Rekorde'}` : ''}.${next ? ` Als Nächstes: ${esc(next)}.` : ''}</p>
@@ -92,7 +98,7 @@ function questCard(s, d) {
   if (q.kind === 'rest') {
     return `<section class="card quest">
       <div class="quest-label">Heute dran</div>
-      <div class="quest-title"><b>Ruhetag</b><span>休息日</span></div>
+      <div class="quest-title"><b>Ruhetag</b>${jpSpan('休息日')}</div>
       ${rotationTrack(s, 'off')}
       ${questGoalRow(goal)}
       <p class="rest-msg">Heute ist Pause.${q.tpl ? ` Danach kommt ${esc(q.tpl.name)}.` : ''}</p>
@@ -110,7 +116,7 @@ function questCard(s, d) {
   }
   return `<section class="card quest">
     <div class="quest-label">Heute dran</div>
-    <div class="quest-title"><b>${esc(q.tpl.name)}</b><span>${esc(q.tpl.jp || '')}</span></div>
+    <div class="quest-title"><b>${esc(q.tpl.name)}</b>${jpSpan(q.tpl.jp)}</div>
     ${rotationTrack(s, q.tpl.id)}
     ${targetsList(s, d, q.tpl)}
     ${questGoalRow(goal)}
@@ -141,15 +147,30 @@ function streakBlock(s, ws) {
     </div>`;
 }
 
+// Sätze pro Muskel als Balken (Dunkel und Hell). Der Strich zeigt das Ziel von 10 Sätzen pro Woche.
+const BAR_ORDER = ['brust', 'ruecken', 'schultern', 'bizeps', 'trizeps', 'beine', 'bauch'];
+function muscleBars(counts, target = 10) {
+  const top = Math.max(target * 1.6, ...Object.values(counts));
+  const pct = (n) => Math.min(100, (n / top) * 100).toFixed(1);
+  const order = BAR_ORDER.filter((c) => c in counts);
+  return `<ul class="mbars" aria-label="Sätze pro Muskelgruppe in den letzten 7 Tagen" style="--t:${pct(target)}%">${order.map((c) => `<li>
+      <span class="mb-name">${esc(CAT[c].name)}</span>
+      <span class="mb-track" aria-hidden="true"><i style="--w:${pct(counts[c])}%"></i></span>
+      <span class="mb-n">${int(counts[c])}</span>
+    </li>`).join('')}</ul>
+    <div class="mb-legend"><i aria-hidden="true"></i>Ziel: ${target} Sätze pro Woche</div>`;
+}
+
 function weekCard(s, d) {
   const ws = weekStreak(d);
   const t = today();
   const names = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-  return `<section class="card pad">
+  const calm = isCalm();
+  return `<section class="card pad week-card">
     <div class="card-title"><h2>Diese Woche</h2><span class="hint">Sätze pro Muskel</span></div>
-    ${radarChart(weekCats(d))}
-    <div class="legend"><span><i></i>10 Sätze pro Woche</span></div>
-    <div class="week">${ws.days.map((x, i) => `<div class="wk-day ${x.trained ? 'on' : ''} ${x.d === t ? 'today' : ''} ${x.future ? 'future' : ''}"><i></i>${names[i]}</div>`).join('')}</div>
+    ${calm ? muscleBars(weekCats(d)) : `${radarChart(weekCats(d))}
+    <div class="legend"><span><i></i>10 Sätze pro Woche</span></div>`}
+    <div class="week">${ws.days.map((x, i) => `<div class="wk-day ${x.trained ? 'on' : ''} ${x.d === t ? 'today' : ''} ${x.future ? 'future' : ''}"${calm ? ` aria-label="${names[i]}${x.trained ? ', trainiert' : ''}"` : ''}><i>${calm && x.trained ? icon('check') : ''}</i>${names[i]}</div>`).join('')}</div>
     ${streakBlock(s, ws)}
   </section>`;
 }
@@ -162,7 +183,7 @@ function prCard(d) {
     <ul class="pr-list">${recent
       .map((p) => {
         const ex = d.exById.get(p.ex);
-        return `<li data-act="go" data-to="uebung" data-id="${p.ex}" role="button" tabindex="0"><span class="pr-star">${icon('star')}</span><span class="pr-name">${esc(ex?.name || '')}<small>${esc(relDay(p.d))}</small></span><span class="pr-val">${fmtSetText(ex, p)}</span></li>`;
+        return `<li data-act="go" data-to="uebung" data-id="${p.ex}" role="button" tabindex="0"><span class="pr-star">${icon(isCalm() ? 'trophy' : 'star')}</span><span class="pr-name">${esc(ex?.name || '')}<small>${esc(relDay(p.d))}</small></span><span class="pr-val">${fmtSetText(ex, p)}</span></li>`;
       })
       .join('')}</ul>
   </section>`;
@@ -172,7 +193,7 @@ function noticeCard(s) {
   const m = s.meta || {};
   if (!m.welcomeDone && !s.sets.length) {
     return `<section class="card pad notice">
-      <div class="card-title"><h2>Willkommen</h2><span class="jp" aria-hidden="true">ようこそ</span></div>
+      <div class="card-title"><h2>Willkommen</h2>${jpOn() ? '<span class="jp" aria-hidden="true">ようこそ</span>' : ''}</div>
       <p class="soft">Wähl unten eine Vorlage und leg los. Ein FitNotes-Backup kannst du in den Einstellungen importieren.</p>
       <button class="btn-ghost small" data-act="notice-ok" data-k="welcomeDone">Ok</button>
     </section>`;
@@ -180,7 +201,7 @@ function noticeCard(s) {
   if (!m.welcomeDone && m.summary) {
     const last = m.summary.last || (D().dates.slice(-1)[0] ?? null);
     return `<section class="card pad notice">
-      <div class="card-title"><h2>Willkommen</h2><span class="jp" aria-hidden="true">ようこそ</span></div>
+      <div class="card-title"><h2>Willkommen</h2>${jpOn() ? '<span class="jp" aria-hidden="true">ようこそ</span>' : ''}</div>
       <p class="soft">Deine FitNotes-Daten${last ? ` bis ${esc(fmtDate(last))}` : ''} sind drin. Wenn du danach noch in FitNotes trainiert hast, importier das neue Backup in den Einstellungen.</p>
       <button class="btn-ghost small" data-act="notice-ok" data-k="welcomeDone">Ok</button>
     </section>`;
@@ -188,7 +209,7 @@ function noticeCard(s) {
   // Einmal nach dem Update: neue XP-Rechnung erklären.
   if (m.xpNote && typeof m.xpNote === 'object') {
     return `<section class="card pad notice">
-      <div class="card-title"><h2>Neue XP-Rechnung</h2><span class="jp" aria-hidden="true">経験値</span></div>
+      <div class="card-title"><h2>Neue XP-Rechnung</h2>${jpOn() ? '<span class="jp" aria-hidden="true">経験値</span>' : ''}</div>
       <p class="soft">Schwere Sätze bringen jetzt mehr XP. Jede Übung hat dafür einen eigenen Maßstab. Dein Level ist von <b>${m.xpNote.from}</b> auf <b>${m.xpNote.to}</b> gestiegen.</p>
       <div class="row-actions"><button class="btn-ghost small" data-act="go" data-to="rang">Zum Rang-Pfad</button><button class="btn-ghost small" data-act="notice-ok" data-k="xpNote">Ok</button></div>
     </section>`;
@@ -208,6 +229,40 @@ function noticeCard(s) {
 
 actions['notice-ok'] = (ds) => commit((s) => { s.meta[ds.k] = ds.k === 'backupSnooze' ? today() : true; }, { derive: 'keep' });
 
+// Dunkel und Hell: Kopf mit Name der App, darunter Level und Rang. Der Knopf zum Starten steht vor der Statistik,
+// damit er ohne Scrollen zu sehen ist (Entwurf vom 11. Oktober 2026).
+function calmStart(s, d, lv, look, ready) {
+  return `
+    <header class="home-head">
+      <div class="home-brand"><b>KINTORE</b><span>${esc(fmtLong(today()))}</span></div>
+      <button class="av-btn" data-act="go" data-to="profil" aria-label="Profil">${myAvatar({ size: 40, deco: false, effect: 'none' })}</button>
+      <button class="icon-btn" data-act="go" data-to="einstellungen" aria-label="Einstellungen">${icon('sliders')}</button>
+    </header>
+    <div class="stack">
+      <section class="card status is-link" data-act="go" data-to="rang" role="button" tabindex="0" aria-label="Rang-Pfad öffnen. Level ${lv.level}, Rang ${esc(lv.rank)}${ready ? `, ${ready} ${ready === 1 ? 'Belohnung' : 'Belohnungen'} bereit` : ''}">
+        <div class="status-top">
+          <div class="lv-col">
+            <small class="lv-label">Level</small>
+            <div class="lv"><b>${lv.level}</b><span class="title-tag">${esc(look.title.name)}</span></div>
+          </div>
+          <div class="rank-badge">${emblem(lv.rank, look.frame.id, 46)}<small>Rang ${esc(lv.rank)}</small></div>
+        </div>
+        <div class="xpbar" style="--p:${(lv.progress * 100).toFixed(1)}%" role="progressbar" aria-valuenow="${Math.round(lv.progress * 100)}" aria-valuemin="0" aria-valuemax="100" aria-label="Fortschritt zum nächsten Level"><i></i></div>
+        <div class="xp-text"><span>Noch ${int(lv.toNext)} XP bis Level ${lv.level + 1}</span>
+          <span class="xp-path"><span>${lv.nextRank ? `Rang ${esc(lv.nextRank.id)} ab Level ${lv.nextRank.level}` : 'Höchster Rang erreicht'}</span><span class="go">${ready ? `<span class="go-count">${ready}</span>` : ''}Rang-Pfad${icon('right')}</span></span></div>
+      </section>
+      ${noticeCard(s)}
+      ${questCard(s, d)}
+      <section class="card stats3">
+        <div><b>${int(d.totals.days)}</b><span>Trainingstage</span></div>
+        <div><b>${int(d.totals.sets)}</b><span>Sätze</span></div>
+        <div><b>${int(d.totals.tonnage / 1000)} t</b><span>bewegt</span></div>
+      </section>
+      ${weekCard(s, d)}
+      ${prCard(d)}
+    </div>`;
+}
+
 views.start = {
   render() {
     const s = app.state;
@@ -215,10 +270,11 @@ views.start = {
     const lv = d.level;
     const look = equipped(s, lv.level);
     const ready = readyStations(s, lv.level).length;
+    if (isCalm()) return calmStart(s, d, lv, look, ready);
     const sign = look.sign;
     return `
     <section class="hero">
-      <div class="neon-sign sign-${[...sign.name].length} sg-${rarityOf(sign).id}" role="img" aria-label="${esc(sign.name)}, japanisch für ${esc(sign.de)}" data-persist="sign-${esc(sign.id)}">${esc(sign.name)}${signSparks(sign)}</div>
+      <div class="neon-sign sign-${[...sign.name].length} sg-${rarityOf(sign).id}${isJp(sign.name) ? '' : ' sign-word'}" role="img" aria-label="${esc(sign.de ? `${sign.name}, japanisch für ${sign.de}` : sign.name)}" data-persist="sign-${esc(sign.id)}">${esc(sign.name)}${signSparks(sign)}</div>
       <div>
         <div class="brand">
           <div class="brand-name"><b>KINTORE</b><span>${esc(fmtLong(today()))}</span></div>

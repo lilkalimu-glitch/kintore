@@ -1,12 +1,13 @@
 // Rang-Pfad: alle Ränge von E bis SS, Belohnungen zum Abholen und der eigene Look.
 import { app, D, views, actions, navigate, openSheet, once, watchOff, unwatchOff, setAnimations, sheetBox } from './core.js';
-import { esc, icon, int, clamp, hashStr, persistHtml } from './util.js';
+import { esc, icon, int, clamp, hashStr, persistHtml, jpMark } from './util.js';
 import { maybeIntro } from './intro.js';
 import { RANKS, xpAt, PR_XP, QUEST_XP, REST_XP, LIFT_XP, LIFT_CAP, weekXp, SHIELD_EVERY, SHIELD_MAX } from './stats.js';
 import {
   STATIONS, TYPES, TYPE_ORDER, ITEMS, RARITIES, emblem, rewardOrb, rankChip, itemLabel, itemRank, rarityOf, topRarity,
-  equipped, readyStations, owned, stationAt, avatar,
+  equipped, readyStations, owned, stationAt, avatar, isJp,
 } from './look.js';
+import { isCalm } from './theme.js';
 import { bannerArt, effectParts } from './art.js';
 import { claimStations, equipItems } from './ops.js';
 import { rewardReveal, rewardSummary, toast } from './fx.js';
@@ -64,7 +65,7 @@ function nodeText(st) {
     return `<b class="n-rank">Rang ${esc(st.rank.id)}</b><span class="n-name">${esc(names)}</span>`;
   }
   const it = st.items[0];
-  return `<small>${esc(TYPES[it.type].name)}</small><span class="n-name ${it.type === 'sign' ? 'jp' : ''}">${esc(it.name)}</span>`;
+  return `<small>${esc(TYPES[it.type].name)}</small><span class="n-name ${isJp(it.name) ? 'jp' : ''}">${esc(it.name)}</span>`;
 }
 
 // full: Station mit Kugel oder Abzeichen. Sonst nur Text und Knopf, die Kugel kommt beim Scrollen dazu.
@@ -223,7 +224,7 @@ function lookCard(look) {
     <div class="look-grid">
       ${TYPE_ORDER.map((t) => `<button class="look-tile" data-act="look-open" data-type="${t}">
         ${rewardOrb(look[t], { chip: false })}
-        <span class="lt-text"><small>${esc(TYPES[t].name)}</small><b class="${t === 'sign' ? 'jp' : ''}">${esc(look[t].name)}</b></span>
+        <span class="lt-text"><small>${esc(TYPES[t].name)}</small><b class="${isJp(look[t].name) ? 'jp' : ''}">${esc(look[t].name)}</b></span>
       </button>`).join('')}
     </div>
     <button class="btn-ghost btn-block look-profile" data-act="go" data-to="profil">${icon('user')} Profil ansehen</button>
@@ -262,7 +263,7 @@ views.rang = {
     }
     return `
     <header class="head has-back">
-      <span class="jp-mark" aria-hidden="true">ランク</span>
+      ${jpMark('ランク')}
       <div class="head-row"><button class="icon-btn back-btn" data-act="rank-back" aria-label="Zurück">${icon('left')}</button></div>
       <h1 style="margin-top:14px">Rang-Pfad</h1>
       <p class="sub">Level ${lv.level}, Rang ${esc(lv.rank)}</p>
@@ -481,7 +482,7 @@ actions['rank-back'] = () => { if (history.length > 1) history.back(); else navi
 // ---------- Look ändern ----------
 // Ein Fenster mit Vorschau oben (Mini-Profil), Reitern für die sechs Teile und den Optionen darunter.
 // Antippen legt an, die Vorschau zeigt es sofort. Nichts baut sich neu auf: Nur geänderte Teile werden ersetzt.
-const LEAD = {
+const LEAD_NEON = {
   color: 'Die Neon-Farbe färbt die ganze App.',
   title: 'Der Titel steht unter deinem Namen.',
   frame: 'Der Rahmen liegt um dein Profilbild und dein Rang-Abzeichen.',
@@ -489,6 +490,13 @@ const LEAD = {
   banner: 'Der Banner ist das große Bild oben in deinem Profil.',
   effect: 'Der Effekt liegt um dein Profilbild und über deiner Profilkarte.',
 };
+const LEAD_CALM = {
+  ...LEAD_NEON,
+  color: 'Die Farbe färbt die ganze App.',
+  frame: 'Der Rahmen gibt deinem Rang-Abzeichen die Form und verziert dein Profilbild.',
+  sign: 'Das Schild steht oben auf deinem Profil.',
+};
+const lead = (type) => (isCalm() ? LEAD_CALM : LEAD_NEON)[type];
 
 // Banner kommen erst dazu, wenn sie im Fenster zu sehen sind (watchBanners). So öffnet das Fenster sofort.
 function optionPreview(it, rankId) {
@@ -547,12 +555,12 @@ function optionState(it, ctx) {
 
 function lookOption(it, ctx) {
   const st = optionState(it, ctx);
-  const nameCls = it.type === 'sign' ? 'jp' : it.type === 'title' ? `tt tt-${st.rar.id}` : '';
+  const nameCls = it.type === 'sign' ? (isJp(it.name) ? 'jp' : 'lo-word') : it.type === 'title' ? `tt tt-${st.rar.id}` : '';
   return `<button class="look-opt lo-${it.type} rar-${st.rar.id} ${st.on ? 'is-on' : ''} ${st.has ? '' : st.ready ? 'is-ready' : 'is-locked'}" data-type="${it.type}" data-id="${it.id}" aria-pressed="${st.on}" aria-label="${esc(st.aria)}">
     ${rankChip(itemRank(it))}
     ${optionPreview(it, ctx.rank)}
     <span class="lo-name ${nameCls}">${esc(it.name)}</span>
-    ${it.type === 'sign' ? `<span class="lo-de">${esc(it.de)}</span>` : ''}
+    ${it.type === 'sign' && it.de ? `<span class="lo-de">${esc(it.de)}</span>` : ''}
     <small>${st.small}</small>
   </button>`;
 }
@@ -564,7 +572,7 @@ function lookPreview() {
   const p = app.state.profile;
   const fx = effectParts(look.effect.id);
   return `<div class="lp rank-${esc(lv.rank)}" aria-hidden="true">
-    <div class="lp-bn">${bannerArt(look.banner.id)}<span class="lp-sign sg-${rarityOf(look.sign).id} sign-${[...look.sign.name].length}">${esc(look.sign.name)}</span></div>
+    <div class="lp-bn">${bannerArt(look.banner.id)}<span class="lp-sign sg-${rarityOf(look.sign).id} sign-${[...look.sign.name].length}${isJp(look.sign.name) ? '' : ' sign-word'}">${esc(look.sign.name)}</span></div>
     ${fx.card ? `<div class="lp-cfx">${fx.card}</div>` : ''}
     <div class="lp-row">
       <span class="lp-av">${avatar({ frameId: look.frame.id, rankId: lv.rank, img: avatarUrl(), initial: p.name, size: 60, effect: look.effect.id })}</span>
@@ -591,7 +599,7 @@ export function lookSheet(focusType = null) {
     <div class="lk-tabs" role="tablist" aria-label="Teil vom Look">
       ${TYPE_ORDER.map((t) => `<button class="lk-tab ${t === type ? 'is-on' : ''}" role="tab" data-tab="${t}" aria-selected="${t === type}">${esc(TYPES[t].name)}<small data-count="${t}">${counts(t, ctx0)}</small></button>`).join('')}
     </div>
-    <p class="lead lk-lead" data-lead>${esc(LEAD[type])}</p>
+    <p class="lead lk-lead" data-lead>${esc(lead(type))}</p>
     <div class="look-opts look-${type}" data-opts role="tabpanel">${optsHtml(ctx0)}</div>
     <p class="lk-foot">Neues holst du im Rang-Pfad ab.</p>`);
   const opts = el.querySelector('[data-opts]');
@@ -631,7 +639,7 @@ export function lookSheet(focusType = null) {
         b.classList.toggle('is-on', on);
         b.setAttribute('aria-selected', String(on));
       });
-      el.querySelector('[data-lead]').textContent = LEAD[type];
+      el.querySelector('[data-lead]').textContent = lead(type);
       // Das Fenster wird nicht kürzer, sonst springt es nach oben, wenn ein Reiter weniger Optionen hat.
       const minH = Math.max(opts.offsetHeight, parseFloat(opts.style.minHeight) || 0);
       opts.style.minHeight = `${minH}px`;

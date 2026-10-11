@@ -1,4 +1,5 @@
 // SVG-Diagramme im Neon-Stil.
+import { isCalm } from './theme.js';
 import { esc, parseIso, fmtShort, fmtMon, hashStr } from './util.js';
 import { CAT } from './model.js';
 
@@ -72,9 +73,9 @@ export function lineChart({ points, width = 340, height = 190, color = '#3CF0FF'
 
   return `<div class="chart" data-chart="${id}" style="--c:${color}">
   <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(label)}">
-    <defs><linearGradient id="g${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${color}" stop-opacity=".34"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>
+    ${isCalm() ? '' : `<defs><linearGradient id="g${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${color}" stop-opacity=".34"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>`}
     ${grid}${goalLine}
-    ${area ? `<path d="${areaPath}" fill="url(#g${id})"/>` : ''}
+    ${area ? (isCalm() ? `<path d="${areaPath}" fill="${color}" fill-opacity=".1"/>` : `<path d="${areaPath}" fill="url(#g${id})"/>`) : ''}
     ${avgPath ? `<path d="${avgPath}" class="avg"/>` : ''}
     <path d="${line}" class="line"/>
     ${dots}

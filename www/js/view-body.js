@@ -1,6 +1,7 @@
 // Körpergewicht: Kurve mit 7-Tage-Schnitt, Eintragen, Liste.
+import { isCalm, isLight } from './theme.js';
 import { app, views, actions, render, openSheet, closeSheet } from './core.js';
-import { esc, icon, kg, parseNum, today, addDays, fmtDay, fmtShort, relDay } from './util.js';
+import { esc, icon, kg, parseNum, today, addDays, fmtDay, fmtShort, relDay, jpMark } from './util.js';
 import { lineChart } from './charts.js';
 import { setBody, deleteBody } from './ops.js';
 import { toast } from './fx.js';
@@ -38,7 +39,7 @@ views.koerper = {
     const todayEntry = list.find((b) => b.d === t);
     return `
     <header class="head">
-      <span class="jp-mark" aria-hidden="true">体重</span>
+      ${jpMark('体重')}
       <div class="head-row"><h1>Körper</h1></div>
       <p class="sub">${list.length} Einträge${list.length ? ` seit ${esc(fmtDay(list[0].d))}` : ''}</p>
     </header>
@@ -52,8 +53,8 @@ views.koerper = {
           <div><span>vs. Vorwoche</span><b>${diff != null ? (diff > 0 ? '+' : diff < 0 ? '-' : '±') + kg(Math.round(Math.abs(diff) * 10) / 10) + ' kg' : '-'}</b></div>
         </div>` : '<p class="soft" style="margin:0">Noch keine Einträge.</p>'}
         ${list.length ? `<div class="seg" role="tablist" style="margin-top:16px">${[['1m', '1 M'], ['3m', '3 M'], ['1j', '1 J'], ['alle', 'Alle']].map(([v, l]) => `<button class="${v === app.ui.bodyRange ? 'is-on' : ''}" data-act="body-range" data-v="${v}" role="tab" aria-selected="${v === app.ui.bodyRange}">${l}</button>`).join('')}</div>
-        ${lineChart({ points: shown.map((b) => ({ x: b.d, y: b.kg, label: fmtShort(b.d) })), avg, goal, width: chartWidth(), height: 200, color: '#9B6BFF', yFmt: (v) => kg(Math.round(v * 10) / 10), unit: 'kg', label: 'Körpergewicht', area: true })}
-        <div class="legend" style="margin:8px 0 0"><span><i style="border-top-color:#FF4FA3"></i>Schnitt 7 Tage</span></div>` : ''}
+        ${lineChart({ points: shown.map((b) => ({ x: b.d, y: b.kg, label: fmtShort(b.d) })), avg, goal, width: chartWidth(), height: 200, color: isCalm() ? (isLight() ? '#6C4AB3' : '#B298F9') : '#9B6BFF', yFmt: (v) => kg(Math.round(v * 10) / 10), unit: 'kg', label: 'Körpergewicht', area: true })}
+        <div class="legend" style="margin:8px 0 0"><span><i${isCalm() ? '' : ' style="border-top-color:#FF4FA3"'}></i>Schnitt 7 Tage</span></div>` : ''}
       </section>
       <section class="card pad body-entry ${todayEntry ? 'is-done' : ''}">
         <div class="card-title"><h2>Eintragen</h2>${todayEntry ? '' : '<span class="hint">Heute noch offen</span>'}</div>

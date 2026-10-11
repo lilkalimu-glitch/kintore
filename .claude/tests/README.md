@@ -12,9 +12,14 @@ python3 .claude/tests/beispieldaten.py 120 /tmp/kt/luecke.json luecke # Serie mi
 python3 .claude/tests/beispieldaten.py 85 /tmp/kt/max.json max        # höchster Rang, alle Belohnungen bereit
 python3 .claude/tests/beispieldaten.py 85 /tmp/kt/intro.json intro    # Einführungen noch nicht gesehen
 python3 .claude/tests/beispieldaten.py 1100 /tmp/kt/gross.json        # etwa 3 Jahre Verlauf, für den Tempo-Test
+python3 .claude/tests/beispieldaten.py 85 /tmp/kt/hell.json --design hell  # dasselbe im Design Hell
 ```
 
 Ohne `intro` gelten die Einführungen für Profil und Rang-Pfad als gesehen, damit die Screenshots vergleichbar bleiben.
+
+Seit 2.10 gibt es drei Designs: Dunkel (Standard, ohne `--design`), `hell` und `neon`. Dazu `neon-alt`: Neon mit
+japanischen Zeichen und dem Schild von früher, also der Look von 2.9, um alte Bilder zu vergleichen. Alle Tests in
+jedem Design laufen lassen, im hellen Design besonders `kontrast.py`.
 
 ## Ablauf bei einer Änderung
 
@@ -45,7 +50,13 @@ Ohne `intro` gelten die Einführungen für Profil und Rang-Pfad als gesehen, dam
 12. Speichern prüfen: `python3 .claude/tests/speichern.py /tmp/kt/beispiel.json` startet mit dem alten Format
     (bis 2.8), ändert Daten auf viele Arten, lädt neu und vergleicht. Prüft auch die Datei-Kopie.
 13. Abläufe prüfen: `python3 .claude/tests/ablauf.py /tmp/kt/beispiel.json` klickt Training, Verlauf, Körper,
-    Einstellungen, Rang-Pfad, Look und Profil durch und prüft jedes Ergebnis auf der Seite.
+    Einstellungen (auch Design wechseln), Rang-Pfad, Look und Profil durch und prüft jedes Ergebnis auf der Seite.
+14. Kontrast prüfen: `python3 .claude/tests/kontrast.py /tmp/kt/hell.json` misst auf allen Seiten, mitten im
+    Training, in den Fenstern, bei den Effekten und in der Einführung die echte Farbe hinter jedem Text
+    (Bildschirmfoto ohne Schrift) und prüft Regel 2 aus `docs/bedienung.md`: Text 4,5 : 1, große Schrift und
+    Symbole in Knöpfen ohne Text 3 : 1. Ohne Daten: `kontrast.py leer --design hell`. Die Farben aus dem Rang-Pfad
+    lassen sich prüfen, indem man in den Daten `rewards.equip.color` setzt (pink, eis, toxic, uv, sunset, crimson
+    oder gold).
 
 Animationen, die jedes Bild Arbeit im Hauptthread machen, sieht man so: Seite öffnen, ein paar Sekunden warten und
 mit Chrome-Tracing zählen, wie oft `UpdateLayoutTree` läuft. Auf Start, Rang-Pfad und Profil sollte es in Ruhe 0 sein.

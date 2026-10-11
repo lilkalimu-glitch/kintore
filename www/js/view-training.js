@@ -1,10 +1,12 @@
 // Training: Vorlage wählen, Sätze eintragen, Pausen-Timer, Steigerungs-Tipps.
 import { app, D, views, actions, navigate, once } from './core.js';
-import { esc, icon, kg, parseNum, round2, today, fmtDay, relDay, fmtDuration, fmtLoad, fmtSetText } from './util.js';
+import { esc, icon, kg, parseNum, round2, today, fmtDay, relDay, fmtDuration, fmtLoad, fmtSetText, jpMark } from './util.js';
+import { jpOn } from './theme.js';
 import { progressionTip, plateLoad, dayTemplate, nextQuest, catColor, questGoal } from './stats.js';
 import { addSet, startSession, finishSession } from './ops.js';
 import { exerciseMenu, editSetSheet, addExerciseToSession, templatesSheet, confirmSheet } from './sheets.js';
 import { haptic } from './native.js';
+import { CAT } from './model.js';
 import { toast } from './fx.js';
 
 const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
@@ -63,7 +65,7 @@ function exBlock(id) {
     .join('');
   return `<article class="card exb" style="--c:${catColor(ex.cat)}" data-ex="${id}" data-key="exb-${id}">
     <div class="exb-head">
-      <h2 class="exb-name"><button data-act="go" data-to="uebung" data-id="${id}">${esc(ex.name)}</button></h2>
+      <div class="exb-title"><h2 class="exb-name"><button data-act="go" data-to="uebung" data-id="${id}">${esc(ex.name)}</button></h2><span class="exb-cat">${esc(CAT[ex.cat]?.name || '')}</span></div>
       <button class="icon-btn" data-act="ex-menu" data-id="${id}" aria-label="Optionen für ${esc(ex.name)}">${icon('more')}</button>
     </div>
     <p class="exb-last">${prev ? `${esc(cap(relDay(prev.d)))}: ${prev.sets.filter((s) => s.r > 0).map((s) => fmtSetText(ex, s)).join(', ')}` : 'Erstes Mal'}</p>
@@ -98,7 +100,7 @@ function renderActive() {
   const goal = isToday ? questGoal(s, D(), nextQuest(s, D())) : null;
   return `
   <header class="head">
-    <span class="jp-mark" aria-hidden="true">${esc(tpl?.jp || 'トレーニング')}</span>
+    ${jpMark(tpl?.jp || 'トレーニング')}
     <div class="head-row"><h1>${esc(tpl?.name || 'Training')}</h1></div>
     <div class="session-meta">
       ${isToday
@@ -131,7 +133,7 @@ function renderPicker() {
   const todaySets = d.days.get(today())?.sets.length || 0;
   return `
   <header class="head">
-    <span class="jp-mark" aria-hidden="true">トレーニング</span>
+    ${jpMark('トレーニング')}
     <div class="head-row"><h1>Training</h1></div>
     <p class="sub">${q.kind === 'rest' ? 'Laut Split ist heute Ruhetag.' : 'Was trainierst du heute?'}</p>
   </header>
@@ -142,7 +144,7 @@ function renderPicker() {
         const last = lastDoneOf(s, d, t.id);
         return `<section class="card tpl-card ${t.id === suggested ? 'is-next' : ''}">
           <div>
-            <h3>${esc(t.name)} <span>${esc(t.jp || '')}</span></h3>
+            <h3>${esc(t.name)}${jpOn() ? ` <span>${esc(t.jp || '')}</span>` : ''}</h3>
             <p>${t.ex.length} Übungen${last ? `, zuletzt ${esc(relDay(last))}` : ''}</p>
             ${t.id === suggested ? '<span class="badge">Heute dran</span>' : ''}
           </div>

@@ -1,6 +1,7 @@
 // Einstellungen: Pausen-Timer, Training, Hintergrund, Backup und Import.
-import { app, D, views, actions, render, commit, openSheet, closeSheet, replaceState, once } from './core.js';
-import { esc, icon, kg, int, parseNum, today, fmtDate, fmtClock } from './util.js';
+import { app, D, views, actions, render, commit, openSheet, closeSheet, replaceState, once, redesign } from './core.js';
+import { esc, icon, kg, int, parseNum, today, fmtDate, fmtClock, jpMark } from './util.js';
+import { jpOn, THEMES, themeOf, applyTheme } from './theme.js';
 import { exportJson, importBackupText, importFitNotes, migrate } from './ops.js';
 import { readFitNotes } from './fitnotes.js';
 import { saveTextFile, notificationsAllowed, isNative } from './native.js';
@@ -29,7 +30,7 @@ views.einstellungen = {
     const look = equipped(s, d.level.level);
     return `
     <header class="head has-back">
-      <span class="jp-mark" aria-hidden="true">設定</span>
+      ${jpMark('設定')}
       <div class="head-row"><button class="icon-btn back-btn" data-act="back" aria-label="Zurück">${icon('left')}</button></div>
       <h1 style="margin-top:14px">Einstellungen</h1>
     </header>
@@ -53,6 +54,12 @@ views.einstellungen = {
 
     <h2 class="group-title">Aussehen</h2>
     <section class="card"><ul class="set-list">
+      <li class="design-row"><span class="grow">Design</span>
+        <div class="design-pick" role="radiogroup" aria-label="Design">${THEMES.map((t) => {
+          const on = themeOf(st) === t.id;
+          return `<button class="dp ${on ? 'is-on' : ''}" role="radio" aria-checked="${on}" data-act="set-theme" data-v="${t.id}"><span class="dp-prev dp-${t.id}" aria-hidden="true"><i></i><i></i><i></i></span><span class="dp-name">${on ? icon('check') : ''}${esc(t.name)}</span></button>`;
+        }).join('')}</div></li>
+      ${themeOf(st) === 'neon' ? `<li><label class="sw-row"><span class="grow">Japanische Zeichen<small>Als Deko in Überschriften und Effekten</small></span>${sw('jp', st.jp)}</label></li>` : ''}
       <li><button class="row-btn" data-act="go" data-to="profil">${icon('image')}<span class="grow">Profil<small>${esc(s.profile.name || 'Name und Bild')}</small></span>${icon('right')}</button></li>
       <li><button class="row-btn" data-act="look-open">${icon('palette')}<span class="grow">Dein Look<small>${esc(APP_TYPES.map((t) => look[t].name).join(', '))}</small></span>${icon('right')}</button></li>
       <li><span class="bg-preview" data-bg-preview></span><span class="grow">Hintergrundbild</span>
@@ -71,7 +78,7 @@ views.einstellungen = {
     </ul></section>
 
     <div class="about">
-      <b>KINTORE <span class="jp">筋トレ</span></b>
+      <b>KINTORE${jpOn() ? ' <span class="jp">筋トレ</span>' : ''}</b>
       Version ${esc(VERSION)}
     </div>`;
   },
@@ -82,6 +89,7 @@ views.einstellungen = {
       inp.addEventListener('change', async () => {
         const key = inp.dataset.setting;
         commit((s) => { s.settings[key] = inp.checked; }, { render: false, derive: 'keep' });
+        if (key === 'jp' && applyTheme(app.state.settings)) redesign();
         if (key === 'restNotify' && inp.checked && isNative()) {
           const ok = await notificationsAllowed(true);
           if (!ok) toast('Erlaube Mitteilungen für KINTORE in den Android-Einstellungen.');
@@ -104,6 +112,13 @@ views.einstellungen = {
     if (bgCache === null) bgCache = (await loadBg()) || '';
     paintBgPreview(main);
   },
+};
+
+// Design wechseln: gilt sofort für die ganze App (theme.js, ruhig.css).
+actions['set-theme'] = (ds) => {
+  if (themeOf(app.state.settings) === ds.v) return;
+  commit((s) => { s.settings.theme = ds.v; }, { render: false, derive: 'keep' });
+  if (applyTheme(app.state.settings)) redesign();
 };
 
 function paintBgPreview(main) {

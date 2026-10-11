@@ -4,6 +4,7 @@ import {
   TYPES, RARITIES, emblem, itemShowcase, rewardOrb, rankChip, itemLabel, itemRank, rankColor, rarityOf, rarityIndex, topRarity,
 } from './look.js';
 import { fireRow } from './art.js';
+import { isCalm, jpOn } from './theme.js';
 
 const root = () => document.getElementById('fx-root');
 const reduced = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -68,6 +69,13 @@ async function run() {
 }
 const enqueue = (job) => { queue.push(job); run(); };
 
+// Japanische Zeile über dem Titel: nur im Design Neon mit eingeschalteten Zeichen.
+const jpLine = (text) => (jpOn() ? `<div class="fx-jp" aria-hidden="true">${esc(text)}</div>` : '');
+// Speed-Linien, Raster und Funken gehören zum Design Neon. Dunkel und Hell bleiben ruhig.
+const deco = (color) => (isCalm() ? '' : `${speedLines(color)}<div class="fx-tone" aria-hidden="true"></div>${sparkles()}`);
+// Rundes Symbol über dem Titel im ruhigen Design.
+const fxIcon = (name) => (isCalm() ? `<div class="fx-ic" aria-hidden="true">${icon(name)}</div>` : '');
+
 const rewardLine = (rewards) => {
   if (!rewards?.length) return '';
   const what = rewards.length > 2 ? `${rewards.length} Belohnungen` : rewards.map((r) => `${TYPES[r.type].name} ${itemLabel(r)}`).join(', ');
@@ -76,12 +84,11 @@ const rewardLine = (rewards) => {
 
 export function prBurst({ name, w, r, bw, e1, gain }) {
   enqueue(() => show(`
-    ${speedLines('#FFA586')}
-    <div class="fx-tone" aria-hidden="true"></div>
-    ${sparkles()}
+    ${deco('#FFA586')}
     <div class="fx-card fx-card-pr">
-      <div class="fx-jp" aria-hidden="true">新記録</div>
-      <div class="fx-big">NEW PR!</div>
+      ${fxIcon('trophy')}
+      ${jpLine('新記録')}
+      <div class="fx-big">${isCalm() ? 'Neuer Rekord' : 'NEW PR!'}</div>
       <div class="fx-ex">${esc(name)}</div>
       <div class="fx-val">${bw ? (w > 0 ? '+' + kg(w) + ' kg' : 'Körpergewicht') : kg(w) + ' kg'} × ${r}</div>
       <div class="fx-sub">1RM ${kg(Math.round(e1 * 10) / 10)} kg${gain > 0.05 ? ` <em>+${kg(Math.round(gain * 10) / 10)}</em>` : ''}</div>
@@ -91,12 +98,11 @@ export function prBurst({ name, w, r, bw, e1, gain }) {
 
 export function levelUp({ level, rank, rewards = [] }) {
   enqueue(() => show(`
-    ${speedLines('#3CF0FF')}
-    <div class="fx-tone" aria-hidden="true"></div>
-    ${sparkles()}
+    ${deco('#3CF0FF')}
     <div class="fx-card fx-card-lv">
-      <div class="fx-jp" aria-hidden="true">レベルアップ</div>
-      <div class="fx-big">LEVEL UP!</div>
+      ${fxIcon('arrowUp')}
+      ${jpLine('レベルアップ')}
+      <div class="fx-big">${isCalm() ? 'Neues Level' : 'LEVEL UP!'}</div>
       <div class="fx-val">Level ${level}</div>
       <div class="fx-sub">Rang ${esc(rank)}</div>
       ${rewardLine(rewards)}
@@ -105,6 +111,16 @@ export function levelUp({ level, rank, rewards = [] }) {
 
 // Rang-Aufstieg: altes Abzeichen lädt auf und zerfällt, das neue erscheint mit Lichtstrahlen.
 export function rankUp({ from, to, level, frame = 'hex', rewards = [] }) {
+  if (isCalm()) {
+    enqueue(() => show(`
+    <div class="fx-card fx-card-rank">
+      <div class="fx-rank-emb" aria-hidden="true">${emblem(to, frame, 96)}</div>
+      <div class="fx-big">Neuer Rang</div>
+      <div class="rk-name">Rang <b class="rank-inline rank-${esc(to)}">${esc(to)}</b><span>Level ${level}</span></div>
+      ${rewardLine(rewards)}
+    </div>`, { cls: 'fx-rank', autoClose: rewards.length ? 3600 : 3000 }));
+    return;
+  }
   enqueue(() => show(`
     <div class="rk-rays" aria-hidden="true"></div>
     <div class="fx-tone" aria-hidden="true"></div>
@@ -116,7 +132,7 @@ export function rankUp({ from, to, level, frame = 'hex', rewards = [] }) {
         <div class="rk-new">${emblem(to, frame, 136)}</div>
       </div>
       <div class="rk-copy">
-        <div class="fx-jp" aria-hidden="true">ランクアップ</div>
+        ${jpLine('ランクアップ')}
         <div class="fx-big">RANK UP!</div>
         <div class="rk-name">Rang <b class="rank-inline rank-${esc(to)}">${esc(to)}</b><span>Level ${level}</span></div>
         ${rewardLine(rewards)}
@@ -127,11 +143,13 @@ export function rankUp({ from, to, level, frame = 'hex', rewards = [] }) {
 
 // Auftakt je nach Seltenheit: Episch lädt kurz auf, Legendär mit Flammen und Funken.
 function rarityIntro(r) {
-  if (r !== 'e' && r !== 'l') return '';
+  if (isCalm() || (r !== 'e' && r !== 'l')) return '';
   return `<div class="rw-charge" aria-hidden="true"><i></i><b></b></div><div class="rw-flash" aria-hidden="true"></div>
     ${r === 'l' ? `<div class="rw-fire" aria-hidden="true">${fireRow(11, 5)}</div><div class="rw-embers" aria-hidden="true">${emberRain()}</div>` : ''}`;
 }
 const LOCK = { n: 0, s: 0, e: 950, l: 1500 };
+const lockOf = (r) => (isCalm() ? 0 : LOCK[r]);
+const rays = () => (isCalm() ? '' : '<div class="rw-rays" aria-hidden="true"></div><div class="fx-tone" aria-hidden="true"></div>' + sparkles());
 
 function emberRain() {
   let out = '';
@@ -148,12 +166,10 @@ export function rewardReveal({ items, rankId, me = {}, onEquip }) {
   const rk = itemRank(items[0]);
   enqueue(() => show(`
     ${rarityIntro(top.id)}
-    <div class="rw-rays" aria-hidden="true"></div>
-    <div class="fx-tone" aria-hidden="true"></div>
-    ${sparkles()}
+    ${rays()}
     <div class="fx-card fx-card-rw" data-fx-keep>
       ${rarityHead(top, rk)}
-      <div class="fx-jp" aria-hidden="true">${esc(top.jp)}</div>
+      ${jpLine(top.jp)}
       <div class="rw-show ${items.length > 1 ? 'multi' : ''}">
         ${items.map((it) => `<figure>${itemShowcase(it, rankId, me)}<figcaption><small>${esc(TYPES[it.type].name)}</small><b>${esc(itemLabel(it))}</b></figcaption></figure>`).join('')}
       </div>
@@ -161,7 +177,7 @@ export function rewardReveal({ items, rankId, me = {}, onEquip }) {
         <button class="btn-ghost" data-fx-close>Später</button>
         <button class="btn-neon" data-fx-act="equip">Anlegen</button>
       </div>
-    </div>`, { cls: `fx-rw rw-${top.id}`, autoClose: 0, lockMs: LOCK[top.id], onAct: (act) => { if (act === 'equip') onEquip?.(); } }));
+    </div>`, { cls: `fx-rw rw-${top.id}`, autoClose: 0, lockMs: lockOf(top.id), onAct: (act) => { if (act === 'equip') onEquip?.(); } }));
 }
 
 // Mehrere Stationen auf einmal abholen. Die seltensten stehen oben.
@@ -171,11 +187,10 @@ export function rewardSummary({ items, onLook }) {
   const counts = RARITIES.map((r) => [r, items.filter((it) => rarityOf(it).id === r.id).length]).filter(([, n]) => n).reverse();
   enqueue(() => show(`
     ${rarityIntro(top.id)}
-    <div class="rw-rays" aria-hidden="true"></div>
-    <div class="fx-tone" aria-hidden="true"></div>
-    ${sparkles()}
+    ${rays()}
     <div class="fx-card fx-card-rw" data-fx-keep>
-      <div class="fx-jp" aria-hidden="true">報酬</div>
+      ${fxIcon('gift')}
+      ${jpLine('報酬')}
       <div class="fx-big fx-big-sm">${items.length} Belohnungen</div>
       <div class="rw-counts">${counts.map(([r, n]) => `<span class="rar-${r.id}"><i></i>${n} ${esc(r.name)}</span>`).join('')}</div>
       <ul class="rw-list">
@@ -185,16 +200,17 @@ export function rewardSummary({ items, onLook }) {
         <button class="btn-ghost" data-fx-close>Ok</button>
         <button class="btn-neon" data-fx-act="look">Look ändern</button>
       </div>
-    </div>`, { cls: `fx-rw rw-${top.id} rw-sum`, autoClose: 0, lockMs: LOCK[top.id], onAct: (act) => { if (act === 'look') onLook?.(); } }));
+    </div>`, { cls: `fx-rw rw-${top.id} rw-sum`, autoClose: 0, lockMs: lockOf(top.id), onAct: (act) => { if (act === 'look') onLook?.(); } }));
 }
 
 // Kleines Banner oben (blockiert nichts), z. B. Tages-Quest geschafft.
-export function banner({ jp, text, xp }) {
+export function banner({ jp, text, xp, ic = 'check' }) {
   enqueue(() => new Promise((resolve) => {
     const el = document.createElement('div');
     el.className = 'fx-banner' + (reduced() ? ' fx-still' : '');
     el.setAttribute('role', 'status');
-    el.innerHTML = `<span class="fb-jp" aria-hidden="true">${esc(jp)}</span><b>${esc(text)}</b><em>+${int(xp)} XP</em>`;
+    const lead = jpOn() ? `<span class="fb-jp" aria-hidden="true">${esc(jp)}</span>` : `<span class="fb-ic" aria-hidden="true">${icon(ic)}</span>`;
+    el.innerHTML = `${lead}<b>${esc(text)}</b><em>+${int(xp)} XP</em>`;
     root().appendChild(el);
     let done = false;
     const close = () => {
@@ -210,9 +226,10 @@ export function banner({ jp, text, xp }) {
 
 export function missionComplete({ title, dur, sets, vol, prs, xp }) {
   enqueue(() => show(`
-    <div class="fx-tone" aria-hidden="true"></div>
+    ${isCalm() ? '' : '<div class="fx-tone" aria-hidden="true"></div>'}
     <div class="fx-card fx-card-mc" data-fx-keep>
-      <div class="fx-jp" aria-hidden="true">任務完了</div>
+      ${fxIcon('check')}
+      ${jpLine('任務完了')}
       <div class="fx-big fx-big-sm">Training geschafft</div>
       <div class="fx-ex">${esc(title)}</div>
       <dl class="mc-grid">
@@ -231,6 +248,7 @@ export function missionComplete({ title, dur, sets, vol, prs, xp }) {
 // kostet beim ersten Abholen spürbar Zeit. Deshalb einmal in Ruhe vorbereiten, unsichtbar und ohne Wirkung.
 const WARM_JP = '新記録レベルアップランクアップノーマルレアエピックレジェンド報酬任務完了達成休息日連続';
 export function warmUp() {
+  if (isCalm()) return;
   const el = document.createElement('div');
   el.setAttribute('aria-hidden', 'true');
   el.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;contain:strict';

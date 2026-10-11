@@ -164,6 +164,39 @@ def main():
         after = text('[data-act=set-rest] + output')
         check('Einstellungen: Pause geändert', before != after, (before, after))
 
+        # Einstellungen: Design wechseln (seit 2.10). Gilt sofort überall, auch für die Leiste unten,
+        # und bleibt nach dem Neuladen. Japanische Zeichen lassen sich nur im Design Neon einschalten.
+        own = page.evaluate("document.documentElement.dataset.theme")
+        tab_icons = {}
+        for t in ('hell', 'neon', 'dunkel'):
+            go('einstellungen')
+            page.click(f'.dp[data-v={t}]')
+            page.wait_for_timeout(500)
+            got = page.evaluate("""(t) => { const h = document.documentElement;
+              return [h.dataset.theme, h.hasAttribute('data-calm'), document.querySelector(`.dp[data-v=${t}]`)?.getAttribute('aria-checked'),
+                localStorage.getItem('kintore:design') === `${t}|${h.dataset.jp}`, !!document.querySelector('#view [data-setting=jp]'),
+                !!document.querySelector('#tabs .tab.is-active')]; }""", t)
+            check(f'Design {t}: sofort aktiv', got == [t, t != 'neon', 'true', True, t == 'neon', True], got)
+            tab_icons[t] = page.evaluate("document.querySelector('#tabs [data-tab=training] svg')?.innerHTML")
+            if t == 'neon':
+                # Zweimal umschalten: Zeichen an und wieder aus (oder umgekehrt, je nach Beispieldaten).
+                for _ in range(2):
+                    before = page.evaluate("document.documentElement.dataset.jp")
+                    page.click('#view label.sw-row:has([data-setting=jp])')
+                    page.wait_for_timeout(500)
+                    jp = page.evaluate("[document.documentElement.dataset.jp, !!document.querySelector('#view .jp-mark')]")
+                    want = 'aus' if before == 'an' else 'an'
+                    check(f'Design Neon: japanische Zeichen {want}', jp == [want, want == 'an'], jp)
+            else:
+                check(f'Design {t}: keine japanischen Zeichen', page.evaluate("document.documentElement.dataset.jp === 'aus' && !document.querySelector('.jp-mark')"))
+        check('Leiste unten passt sich dem Design an', tab_icons['hell'] == tab_icons['dunkel'] != tab_icons['neon'], tab_icons)
+        go('einstellungen')
+        page.click(f'.dp[data-v={own}]')
+        page.wait_for_timeout(400)
+        page.reload()
+        page.wait_for_timeout(900)
+        check('Design bleibt nach dem Neuladen', page.evaluate("document.documentElement.dataset.theme") == own)
+
         # Rang-Pfad: abholen, alle abholen, Look anlegen.
         go('rang')
         page.wait_for_timeout(1500)

@@ -1,6 +1,6 @@
 // Übungen: Liste mit Suche und Muskelgruppen, Detail mit Diagramm, Rekorden und Einstellungen.
 import { app, D, views, actions, navigate, render, openSheet, closeSheet, once, morph } from './core.js';
-import { esc, icon, kg, int, num1, relDay, fmtDay, fmtShort, today, addDays, fmtLoad, fmtSetText } from './util.js';
+import { esc, icon, kg, int, num1, relDay, fmtDay, fmtShort, today, addDays, fmtLoad, fmtSetText, jpMark } from './util.js';
 import { CATEGORIES, CAT } from './model.js';
 import { sparkline, lineChart } from './charts.js';
 import { exerciseRecords, trend30, weightFor, catColor, e1rmOf, liftXp, LIFT_XP } from './stats.js';
@@ -61,7 +61,7 @@ views.uebungen = {
     const ui = app.ui;
     return `
     <header class="head">
-      <span class="jp-mark" aria-hidden="true">種目</span>
+      ${jpMark('種目')}
       <div class="head-row"><h1>Übungen</h1></div>
       <p class="sub">${d.setsByEx.size ? `${d.setsByEx.size} trainiert, ${int(d.prEvents.length)} Rekorde` : `${app.state.exercises.filter((e) => !e.hidden).length} Übungen`}</p>
     </header>
@@ -169,7 +169,7 @@ views.uebung = {
 
     return `
     <header class="head has-back">
-      <span class="jp-mark" aria-hidden="true">${esc(CAT[ex.cat]?.jp || '')}</span>
+      ${jpMark(CAT[ex.cat]?.jp || '')}
       <div class="head-row">
         <button class="icon-btn back-btn" data-act="back" aria-label="Zurück">${icon('left')}</button>
         <span style="flex:1"></span>

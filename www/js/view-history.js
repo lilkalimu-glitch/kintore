@@ -1,6 +1,6 @@
 // Verlauf: Monatskalender mit Muskelgruppen-Punkten, Tagesdetails, Nachtragen.
 import { app, D, views, actions, render, navigate } from './core.js';
-import { esc, icon, int, today, fmtMonth, fmtLong, parseIso, isoOf, fmtLoad, fmtDuration } from './util.js';
+import { esc, icon, int, today, fmtMonth, fmtLong, parseIso, isoOf, fmtLoad, fmtDuration, jpMark } from './util.js';
 import { CAT } from './model.js';
 import { daySummary, dayTemplate, catColor } from './stats.js';
 import { startSession } from './ops.js';
@@ -91,7 +91,7 @@ views.verlauf = {
       .join('');
     return `
     <header class="head">
-      <span class="jp-mark" aria-hidden="true">記録</span>
+      ${jpMark('記録')}
       <div class="head-row"><h1>Verlauf</h1></div>
       <p class="sub">${d.dates.length ? `${int(d.totals.days)} Trainingstage seit ${esc(fmtMonth(d.dates[0]))}` : 'Noch nichts eingetragen.'}</p>
     </header>

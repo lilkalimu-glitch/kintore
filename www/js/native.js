@@ -130,14 +130,29 @@ export async function saveTextFile(filename, text, mime = 'application/json') {
 }
 
 // ---------- System-Leisten, Zurück-Taste, App-Status ----------
-export function initNative({ onBack, onResume, onPause }) {
+// Farbe der Statusleiste oben und der Navigationsleiste unten passend zum Design (theme.js ruft das auf).
+// light: heller Grund mit dunklen Symbolen. Die Navigationsleiste färbt das eigene Plugin KintoreBars (seit 2.10,
+// scripts/patch-android.py), die Statusleiste zusätzlich das Capacitor-Plugin.
+export function setBars({ color, light }) {
   if (!isNative()) return;
   const SB = plugin('StatusBar');
   if (SB) {
-    safe(() => SB.setOverlaysWebView({ overlay: false }));
-    safe(() => SB.setBackgroundColor({ color: '#0B1020' }));
-    safe(() => SB.setStyle({ style: 'DARK' }));
+    safe(() => SB.setBackgroundColor({ color }));
+    safe(() => SB.setStyle({ style: light ? 'LIGHT' : 'DARK' }));
   }
+  const KB = barsPlugin();
+  if (KB) safe(() => KB.set({ color, light: !!light }));
+}
+let kbars;
+const barsPlugin = () => {
+  if (kbars === undefined) { try { kbars = g.Capacitor?.registerPlugin?.('KintoreBars') || null; } catch { kbars = null; } }
+  return kbars;
+};
+
+export function initNative({ onBack, onResume, onPause }) {
+  if (!isNative()) return;
+  const SB = plugin('StatusBar');
+  if (SB) safe(() => SB.setOverlaysWebView({ overlay: false }));
   const App = plugin('App');
   if (App) {
     safe(() => App.addListener('backButton', () => onBack?.()));

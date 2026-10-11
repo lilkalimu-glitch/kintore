@@ -16,8 +16,9 @@ MANIFEST = os.path.join(APP, "src", "main", "AndroidManifest.xml")
 GRADLE = os.path.join(APP, "build.gradle")
 OWN_RES = os.path.join(ROOT, "android-res")
 
-BG = "#0B1020"
-ICON_BG = "#0D1324"
+# Grund beim Start und Farbe der Leisten, bis die App ihr Design setzt (Dunkel, seit 2.10).
+BG = "#0E0F13"
+ICON_BG = "#F571A6"
 
 
 def read(path):
@@ -152,6 +153,48 @@ def version():
     print(f"Version {major}.{run} (versionCode {code}); Treffer {n1}/{n2}")
 
 
+BARS_PLUGIN = """
+
+import android.graphics.Color;
+import android.view.Window;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
+import com.getcapacitor.Plugin;
+import com.getcapacitor.PluginCall;
+import com.getcapacitor.PluginMethod;
+import com.getcapacitor.annotation.CapacitorPlugin;
+
+// Färbt Status- und Navigationsleiste passend zum Design der App (Dunkel, Hell, Neon).
+// light: heller Grund, dann dunkle Symbole in den Leisten.
+@CapacitorPlugin(name = "KintoreBars")
+public class KintoreBarsPlugin extends Plugin {
+    @PluginMethod
+    public void set(final PluginCall call) {
+        final String color = call.getString("color", "#0E0F13");
+        final Boolean lightValue = call.getBoolean("light", false);
+        final boolean light = lightValue != null && lightValue;
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Window window = getActivity().getWindow();
+                    int c = Color.parseColor(color);
+                    window.setStatusBarColor(c);
+                    window.setNavigationBarColor(c);
+                    WindowInsetsControllerCompat bars = WindowCompat.getInsetsController(window, window.getDecorView());
+                    bars.setAppearanceLightStatusBars(light);
+                    bars.setAppearanceLightNavigationBars(light);
+                    call.resolve();
+                } catch (Exception e) {
+                    call.reject("Leisten konnten nicht gefärbt werden", e);
+                }
+            }
+        });
+    }
+}
+"""
+
+
 def main_activity():
     java_root = os.path.join(APP, "src", "main", "java")
     for dirpath, _, files in os.walk(java_root):
@@ -162,6 +205,7 @@ def main_activity():
             if not pkg:
                 print("WARNUNG: Paketname in MainActivity nicht gefunden")
                 return
+            write(os.path.join(dirpath, "KintoreBarsPlugin.java"), pkg.group(0) + BARS_PLUGIN)
             write(path, pkg.group(0) + """
 
 import android.os.Bundle;
@@ -170,6 +214,8 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        // Eigenes Plugin: Leisten oben und unten passend zum Design der App färben (www/js/native.js).
+        registerPlugin(KintoreBarsPlugin.class);
         super.onCreate(savedInstanceState);
         try {
             // Größere Schrift aus den Android-Einstellungen gilt auch in der App (Barrierefreiheit),

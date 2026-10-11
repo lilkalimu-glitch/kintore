@@ -1,10 +1,11 @@
 // Einstieg: Daten laden, Tabbar, Klicks verteilen, Android-Zurück-Taste.
-import { app, D, actions, render, navigate, parseHash, onHashChange, onPopState, closeSheet, sheetOpen, TOP, onAfterRender, noteTap } from './core.js';
+import { app, D, actions, render, navigate, parseHash, onHashChange, onPopState, closeSheet, sheetOpen, TOP, onAfterRender, noteTap, onDesignChange } from './core.js';
 import { applyBackground } from './bg.js';
 import { loadState, persist, flushPersist, loadBg, markStored } from './store.js';
 import { migrate, noteXpRule } from './ops.js';
-import { initTimer } from './timer.js';
-import { initNative, exitApp, isNative } from './native.js';
+import { initTimer, repaintTimer } from './timer.js';
+import { initNative, exitApp, isNative, setBars } from './native.js';
+import { applyTheme, isCalm, setBarsHandler } from './theme.js';
 import { icon } from './util.js';
 import { applyLook, equipped } from './look.js';
 import './view-start.js';
@@ -19,21 +20,27 @@ import { initAvatar } from './me.js';
 import { introOpen, finish as closeIntro } from './intro.js';
 import { warmUp } from './fx.js';
 
+// calm: Symbol in Dunkel und Hell, sonst das aus dem Design Neon.
 const TABS = [
   { id: 'start', label: 'Start', icon: 'home' },
-  { id: 'training', label: 'Training', icon: 'bolt' },
+  { id: 'training', label: 'Training', icon: 'bolt', calm: 'dumbbell' },
   { id: 'uebungen', label: 'Übungen', icon: 'list' },
   { id: 'verlauf', label: 'Verlauf', icon: 'calendar' },
-  { id: 'koerper', label: 'Körper', icon: 'scale' },
+  { id: 'koerper', label: 'Körper', icon: 'scale', calm: 'body' },
 ];
 const TAB_OF = { uebung: 'uebungen', einstellungen: 'start', rang: 'start', profil: 'start' };
 
 // Neon-Farbe aus dem Rang-Pfad auf die ganze App legen.
 const updateLook = () => { if (app.state) applyLook(equipped(app.state, D().level.level)); };
 
+function paintTabs() {
+  const nav = document.getElementById('tabs');
+  nav.innerHTML = TABS.map((t) => `<button class="tab" data-tab="${t.id}" aria-label="${t.label}">${icon(isCalm() && t.calm ? t.calm : t.icon)}<span>${t.label}</span></button>`).join('');
+}
+
 function renderTabs() {
   const nav = document.getElementById('tabs');
-  nav.innerHTML = TABS.map((t) => `<button class="tab" data-tab="${t.id}" aria-label="${t.label}">${icon(t.icon)}<span>${t.label}</span></button>`).join('');
+  paintTabs();
   nav.addEventListener('click', (e) => {
     const b = e.target.closest('[data-tab]');
     if (!b) return;
@@ -108,7 +115,7 @@ function ensureSafeArea() {
 async function boot() {
   ensureSafeArea();
   const view = document.getElementById('view');
-  view.innerHTML = '<div class="loading" aria-label="Lädt">筋トレ</div>';
+  view.innerHTML = '<div class="loading" aria-label="Lädt"></div>';
   let loaded;
   try {
     loaded = await loadState();
@@ -117,6 +124,7 @@ async function boot() {
     return;
   }
   app.state = migrate(loaded.state);
+  applyTheme(app.state.settings);
   if (loaded.parts) markStored(app.state);
   if (loaded.origin !== 'db') persist(app.state);
   noteXpRule();
@@ -130,6 +138,7 @@ async function boot() {
   document.addEventListener('visibilitychange', () => { if (document.hidden) flushPersist(); });
   window.addEventListener('pagehide', flushPersist);
   initNative({ onBack, onPause: flushPersist, onResume: () => render() });
+  setBarsHandler(setBars);
 
   // Bei offener Tastatur Tabbar und Timer ausblenden, damit sie nichts verdecken.
   let fullHeight = window.innerHeight;
@@ -152,4 +161,5 @@ async function boot() {
 
 onAfterRender(updateTabs);
 onAfterRender(updateLook);
+onDesignChange(() => { paintTabs(); repaintTimer(); });
 boot();

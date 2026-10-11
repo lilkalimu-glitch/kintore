@@ -146,9 +146,9 @@ t('Stationen', () => {
 });
 t('Abholen und Anlegen', () => {
   const s = baseState();
-  // 9 Stationen aus Version 2.5, 5 neue mit Bannern und Effekten (Level 3, 5, 9, 13, 17)
-  // und 2 neue Banner aus Version 2.7 (Level 15 und 19)
-  assert.equal(readyStations(s, 19).length, 16);
+  // 9 Stationen aus Version 2.5, 5 neue mit Bannern und Effekten (Level 3, 5, 9, 13, 17),
+  // 2 neue Banner aus Version 2.7 (Level 15 und 19) und das Wort-Schild BISS aus 2.10 (Level 11)
+  assert.equal(readyStations(s, 19).length, 17);
   assert.equal(readyStations(s, 1).length, 0);
   s.rewards.claimed = [4];
   s.rewards.equip.color = 'eis';
@@ -336,7 +336,8 @@ t('Einführung: gesehen bleibt gesehen, kaputte Werte fliegen raus', () => {
   const b = migrate({ exercises: [], sets: [], meta: { intro: 'ja' } });
   assert.equal(b.meta.intro, undefined);
   const c = migrate({ exercises: [], sets: [], meta: null });
-  assert.deepEqual(c.meta, {});
+  // signWord: das Start-Schild wurde einmalig auf das Wort umgestellt (seit 2.10)
+  assert.deepEqual(c.meta, { signWord: 1 });
 });
 
 if (calendarData) {
@@ -491,6 +492,51 @@ t('Nachtragen eines älteren Tages geht nicht, dann wird alles neu gerechnet', (
   const old = { id: 99999, ex: s.sets[0].ex, d: addDays(today(), -60), w: 50, r: 8 };
   assert.equal(deriveAppend(d, old), false);
   assert.equal(deriveAppend(d, { id: 99998, ex: 123456, d: today(), w: 50, r: 8 }), false, 'unbekannte Übung');
+});
+
+// ---------- Designs (seit 2.10) ----------
+const { initialsOf, themeOf, isCalm, jpOn } = await import(W + 'theme.js');
+const { isJp, itemOf } = await import(W + 'look.js');
+
+t('Design: Standard ist Dunkel, unbekannte Werte fallen auf Dunkel zurück', () => {
+  assert.equal(migrate({ exercises: [], sets: [] }).settings.theme, 'dunkel');
+  assert.equal(migrate({ exercises: [], sets: [], settings: { theme: 'neon', jp: true } }).settings.theme, 'neon');
+  assert.equal(migrate({ exercises: [], sets: [], settings: { theme: 'neon', jp: true } }).settings.jp, true);
+  assert.equal(migrate({ exercises: [], sets: [], settings: { theme: 'bunt', jp: 'ja' } }).settings.theme, 'dunkel');
+  assert.equal(migrate({ exercises: [], sets: [], settings: { jp: 'ja' } }).settings.jp, false);
+  assert.equal(themeOf({ theme: 'hell' }), 'hell');
+  assert.equal(themeOf({}), 'dunkel');
+  // Ohne Seite (Node) gilt der ruhige Standard ohne japanische Zeichen
+  assert.equal(isCalm(), true);
+  assert.equal(jpOn(), false);
+});
+
+t('Schilder mit Wort: Standard KRAFT, 筋トレ wird einmalig umgestellt und bleibt in der Sammlung', () => {
+  assert.equal(DEFAULT_LOOK.sign, 'kraft');
+  for (const id of ['kraft', 'biss', 'disziplin', 'unbeugsam', 'erwachen', 'grenzenlos']) {
+    const it = itemOf('sign', id);
+    assert.ok(it, 'Schild fehlt ' + id);
+    assert.equal(isJp(it.name), false);
+  }
+  const s = migrate({ exercises: [], sets: [], rewards: { claimed: [], equip: { sign: 'kintore' } } });
+  assert.equal(s.rewards.equip.sign, 'kraft');
+  assert.equal(owned(s, 1, itemOf('sign', 'kintore')), true);
+  // Wer 筋トレ danach wieder anlegt, behält es
+  s.rewards.equip.sign = 'kintore';
+  assert.equal(migrate(s).rewards.equip.sign, 'kintore');
+  // Andere Schilder bleiben, wie sie sind
+  const t2 = migrate({ exercises: [], sets: [], rewards: { claimed: [10], equip: { sign: 'konjo' } } });
+  assert.equal(t2.rewards.equip.sign, 'konjo');
+});
+
+t('Initialen fürs Profilbild', () => {
+  assert.equal(initialsOf('Max Mustermann'), 'MM');
+  assert.equal(initialsOf('alex'), 'A');
+  assert.equal(initialsOf('  Lina   von  Berg '), 'LB');
+  assert.equal(initialsOf(''), '');
+  assert.equal(initialsOf('Özlem'), 'Ö');
+  assert.equal(isJp('筋トレ'), true);
+  assert.equal(isJp('KRAFT'), false);
 });
 
 console.log(n, 'Tests bestanden');

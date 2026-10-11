@@ -27,6 +27,9 @@ LATIN_FONTS = {
     "inter-500": "/usr/share/fonts/opentype/inter/Inter-Medium.otf",
     "inter-600": "/usr/share/fonts/opentype/inter/Inter-SemiBold.otf",
     "inter-700": "/usr/share/fonts/opentype/inter/Inter-Bold.otf",
+    # Titel und Zahlen in den Designs Dunkel und Hell (seit 2.10). Barlow gibt es unter github.com/google/fonts
+    # (ofl/barlow, SIL Open Font License, siehe www/fonts/OFL-Barlow.txt). Pfad bei Bedarf über BARLOW_600 setzen.
+    "barlow-600": os.environ.get("BARLOW_600", "/usr/share/fonts/truetype/barlow/Barlow-SemiBold.ttf"),
 }
 
 JP_FONTS = {
@@ -67,6 +70,9 @@ def save_subset(font, unicodes, out_path):
 def main():
     latin = subset.parse_unicodes(LATIN)
     for name, path in LATIN_FONTS.items():
+        if not os.path.exists(path):
+            print(f"{name}: {path} fehlt, Datei bleibt wie sie ist")
+            continue
         size = save_subset(TTFont(path), latin, os.path.join(OUT, name + ".woff"))
         print(f"{name}.woff  {size // 1024} KB")
 
