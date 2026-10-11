@@ -19,6 +19,9 @@ Vergleich zu Store-Apps fehlt. Das Ergebnis steht für später in `fahrplan.md` 
 
 - [ ] Entwürfe: Nach der Tempo-APK 2 bis 3 Seiten im neuen Standard-Design als Entwurf zeigen, zum Beispiel Start,
       Training und Profil. Der Besitzer bestätigt Akzentfarbe, Schrift und Knöpfe. Erst danach die ganze App umbauen.
+      Stand 11. Oktober 2026: Entwürfe gezeigt (Canvas "KINTORE Design-Entwurf" in Claude: Start, Training und Profil
+      in Dunkel und Hell, dazu Varianten für Akzentfarbe, Schrift und Knöpfe). Vorschlag von Claude, noch nicht
+      bestätigt: Pink, Barlow für Titel und Zahlen mit Inter für Text, Knöpfe abgerundet. Antwort steht aus.
 
 ## Schritt 1: Schnell und erwachsen
 
@@ -149,6 +152,15 @@ Nach dem Tempo-Umbau in 2.9, gemessen am 11. Oktober 2026 wie oben (Median aus 3
   Hintergrund, unveränderte Monate werden nicht neu in Text umgewandelt. Auf dem Gerät noch nicht gemessen.
 - Für den Design-Umbau: Epische und legendäre Teile vom Look (Glanz auf Rahmen, schimmernde Titel, Funken am
   Neon-Schild) lassen den Hauptthread jedes Bild mitrechnen. Das betrifft das Design Neon, beim Umbau ruhiger bauen.
+- Werte aus dem Entwurf (gelten erst, wenn der Besitzer sie bestätigt): Dunkel mit Grund `#0E0F13`, Karten
+  `#181A20`, Flächen in Karten `#22252D`, Linien `#262932`, Text `#F2F3F5`, `#B6BAC4` und `#8C91A0`. Hell mit Grund
+  `#F3F4F6`, Karten `#FFFFFF`, Flächen `#F0F1F4`, Linien `#E3E5EA`, Text `#15171C`, `#474C59` und `#666B7A`. Akzent im
+  Dunkeln heller mit dunkler Schrift darauf (Pink `#F571A6`, Blau `#59AAF8`, Grün `#37C080`, Orange `#F3813F`), im
+  Hellen kräftiger mit weißer Schrift (Pink `#C42673`, Blau `#006AC5`, Grün `#008145`, Orange `#B23E00`). Rang-Farben
+  ruhiger, zum Beispiel B `#B298F9` (hell `#6C4AB3`). Radien abgerundet: Knöpfe 12 px, Chips 8 px, Karten 16 px.
+  Symbole aus Lucide (ISC-Lizenz), Strich 1,75-2 px. Alle Kontraste mindestens 4,5 : 1.
+- Schriften Barlow und Manrope (OFL) lassen sich in der Sitzung nur über GitHub holen
+  (`github.com/google/fonts`, Ordner `ofl/barlow` und `ofl/manrope`), npm und Google Fonts sind gesperrt.
 - Designs über CSS-Variablen und `:root[data-theme]`, die Akzentfarbe bleibt in `--acc*`. Neue Einstellungen
   (Design, japanische Zeichen) in `state.settings` und in `migrate()` abfangen.
 - Nach dem Umbau den Abschnitt Design in `.claude/CLAUDE.md` neu schreiben: Der neue Look ist der Standard, Neon ist
