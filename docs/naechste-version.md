@@ -1,8 +1,9 @@
 # Nächste Version von KINTORE
 
-Stand: 11. Oktober 2026. Aktuelle Version: 2.9 (Release v2.9). Darin steckt der Tempo-Teil aus Schritt 1, noch im
-alten Look. Davor kam 2.8 mit dem ganzen Plan 2.7: einfache Bedienung, eigene Knöpfe, volleres Profil und 9 neue Banner
-nach Vorlagen des Besitzers. Die Nummer der APK zählt jeden Build mit.
+Stand: 11. Oktober 2026. Aktuelle Version: 2.10 (Release v2.10). Damit ist Schritt 1 fertig: das Tempo aus 2.9 und
+das neue Design mit Dunkel als Standard, dazu Hell und Neon (der alte Look) zum Wählen. Als Nächstes kommt Schritt 2.
+Davor kam 2.8 mit dem ganzen Plan 2.7: einfache Bedienung, eigene Knöpfe, volleres Profil und 9 neue Banner nach
+Vorlagen des Besitzers. Die Nummer der APK zählt jeden Build mit.
 
 Der Plan unten ist am 10. Oktober 2026 mit dem Besitzer abgestimmt. Er kommt in drei Schritten, jeder Schritt endet
 mit einer eigenen APK zum Testen: erst Schritt 1, dann 2, dann 3. Erledigtes abhaken, nicht löschen.
@@ -37,31 +38,31 @@ Vergleich zu Store-Apps fehlt. Das Ergebnis steht für später in `fahrplan.md` 
 
 ### Neues Standard-Design wie eine Store-App
 
-- [ ] Ruhiger dunkler Grund, flache Karten, eine Akzentfarbe, gerade klare Schrift ohne kursive Titel. Kein Glas,
+- [x] Ruhiger dunkler Grund, flache Karten, eine Akzentfarbe, gerade klare Schrift ohne kursive Titel. Kein Glas,
       kein Leuchten, keine Farbverläufe.
-- [ ] Neue Knöpfe: normal abgerundet, der Hauptknopf in der Akzentfarbe, die anderen grau. Keine abgeschrägten
+- [x] Neue Knöpfe: normal abgerundet, der Hauptknopf in der Akzentfarbe, die anderen grau. Keine abgeschrägten
       Ecken mehr im Standard.
-- [ ] Alle Symbole aus einem einheitlichen Satz, gleiche Strichstärke und Größe.
-- [ ] Alle Seiten und Fenster umbauen, nicht nur einzelne: Start, Training, Übungen, Verlauf, Körper, Einstellungen,
+- [x] Alle Symbole aus einem einheitlichen Satz, gleiche Strichstärke und Größe.
+- [x] Alle Seiten und Fenster umbauen, nicht nur einzelne: Start, Training, Übungen, Verlauf, Körper, Einstellungen,
       Rang-Pfad, Profil, alle Fenster, Hinweise, Einführung und die Effekte beim Abholen.
-- [ ] Level, Rang, Rang-Pfad und Belohnungen bleiben, nur ruhiger dargestellt, zum Beispiel mit flachem
+- [x] Level, Rang, Rang-Pfad und Belohnungen bleiben, nur ruhiger dargestellt, zum Beispiel mit flachem
       Rang-Abzeichen statt Leucht-Sechseck.
-- [ ] Neues App-Symbol und Startbild ohne Kanji und ohne Glitzer-Stern.
+- [x] Neues App-Symbol und Startbild ohne Kanji und ohne Glitzer-Stern.
 
 ### Japanische Zeichen
 
-- [ ] Im Standard keine japanischen Zeichen mehr: kein Neon-Schild auf der Startseite, keine Zeichen hinter den
+- [x] Im Standard keine japanischen Zeichen mehr: kein Neon-Schild auf der Startseite, keine Zeichen hinter den
       Überschriften, kein 休息日 neben Ruhetag, kein 筋 als Platzhalter.
-- [ ] Ohne Foto zeigt das Profilbild die Initialen.
-- [ ] Der Name KINTORE bleibt, in lateinischer Schrift.
-- [ ] Neon-Schilder gibt es zusätzlich mit einem Wort statt Schriftzeichen, zum Beispiel DISZIPLIN.
-- [ ] Belohnungen mit Kanji (Neon-Schilder, einige Banner) bleiben im Rang-Pfad. Man muss sie nicht tragen.
+- [x] Ohne Foto zeigt das Profilbild die Initialen.
+- [x] Der Name KINTORE bleibt, in lateinischer Schrift.
+- [x] Neon-Schilder gibt es zusätzlich mit einem Wort statt Schriftzeichen, zum Beispiel DISZIPLIN.
+- [x] Belohnungen mit Kanji (Neon-Schilder, einige Banner) bleiben im Rang-Pfad. Man muss sie nicht tragen.
 
 ### Designs zum Wählen
 
-- [ ] In den Einstellungen: Dunkel (neu, Standard), Hell und Neon (der bisherige Look).
-- [ ] Im Design Neon lassen sich die japanischen Zeichen wieder einschalten.
-- [ ] Die Farben aus dem Rang-Pfad gelten in jedem Design als Akzentfarbe.
+- [x] In den Einstellungen: Dunkel (neu, Standard), Hell und Neon (der bisherige Look).
+- [x] Im Design Neon lassen sich die japanischen Zeichen wieder einschalten.
+- [x] Die Farben aus dem Rang-Pfad gelten in jedem Design als Akzentfarbe.
 
 ## Schritt 2: Profil und realistische Werte
 
@@ -155,20 +156,24 @@ Nach dem Tempo-Umbau in 2.9, gemessen am 11. Oktober 2026 wie oben (Median aus 3
   Hintergrund, unveränderte Monate werden nicht neu in Text umgewandelt. Auf dem Gerät noch nicht gemessen.
 - Für den Design-Umbau: Epische und legendäre Teile vom Look (Glanz auf Rahmen, schimmernde Titel, Funken am
   Neon-Schild) lassen den Hauptthread jedes Bild mitrechnen. Das betrifft das Design Neon, beim Umbau ruhiger bauen.
-- Werte aus dem Entwurf (gelten erst, wenn der Besitzer sie bestätigt): Dunkel mit Grund `#0E0F13`, Karten
+- Werte aus dem Entwurf (am 11. Oktober 2026 bestätigt und in 2.10 gebaut, `www/css/ruhig.css`): Dunkel mit Grund `#0E0F13`, Karten
   `#181A20`, Flächen in Karten `#22252D`, Linien `#262932`, Text `#F2F3F5`, `#B6BAC4` und `#8C91A0`. Hell mit Grund
   `#F3F4F6`, Karten `#FFFFFF`, Flächen `#F0F1F4`, Linien `#E3E5EA`, Text `#15171C`, `#474C59` und `#666B7A`. Akzent im
   Dunkeln heller mit dunkler Schrift darauf (Pink `#F571A6`, Blau `#59AAF8`, Grün `#37C080`, Orange `#F3813F`), im
   Hellen kräftiger mit weißer Schrift (Pink `#C42673`, Blau `#006AC5`, Grün `#008145`, Orange `#B23E00`). Rang-Farben
   ruhiger, zum Beispiel B `#B298F9` (hell `#6C4AB3`). Radien abgerundet: Knöpfe 12 px, Chips 8 px, Karten 16 px.
-  Symbole aus Lucide (ISC-Lizenz), Strich 1,75-2 px. Alle Kontraste mindestens 4,5 : 1.
+  Symbole aus Lucide (ISC-Lizenz), Strich 1,75-2 px. Alle Kontraste mindestens 4,5 : 1. In 2.10 ist Text in der
+  Akzentfarbe (`--acc-text`) etwas heller (Dunkel) bzw. dunkler (Hell) als die Fläche, damit er auch auf hellem
+  Akzent-Grund 4,5 : 1 hat. Geprüft mit `.claude/tests/kontrast.py` in beiden Designs und allen sieben Farben.
 - Schriften Barlow und Manrope (OFL) lassen sich in der Sitzung nur über GitHub holen
   (`github.com/google/fonts`, Ordner `ofl/barlow` und `ofl/manrope`), npm und Google Fonts sind gesperrt.
 - Designs über CSS-Variablen und `:root[data-theme]`, die Akzentfarbe bleibt in `--acc*`. Neue Einstellungen
   (Design, japanische Zeichen) in `state.settings` und in `migrate()` abfangen.
 - Nach dem Umbau den Abschnitt Design in `.claude/CLAUDE.md` neu schreiben: Der neue Look ist der Standard, Neon ist
   eines von drei Designs. Die Regeln aus `docs/bedienung.md` gelten weiter. `bedienung.py` für jedes Design laufen
-  lassen, im hellen Design besonders auf Kontrast achten.
+  lassen, im hellen Design besonders auf Kontrast achten. Erledigt in 2.10.
+- Tempo im Design Dunkel (2.10, 816 Sätze, gemessen wie oben): Rang-Pfad öffnen 0,12 s, längstes Bild beim Wischen
+  0,02 s, Satz speichern 0,06 s ohne Stocken, Profil öffnen etwa 0,1 s wie in 2.9.
 - Teilen: `@capacitor/share` ist schon eingebunden. Das Bild fürs Profil selbst als SVG zeichnen und über ein Canvas
   in ein PNG umwandeln.
 - Stärke-Richtwerte als eigene Tabelle (Verhältnis zum Körpergewicht, nach Geschlecht), keine Tabellen von anderen
