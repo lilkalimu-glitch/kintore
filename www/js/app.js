@@ -19,7 +19,7 @@ import './view-profile.js';
 import { initAvatar } from './me.js';
 import { introOpen, finish as closeIntro } from './intro.js';
 import { warmUp } from './fx.js';
-import './tempo.js';
+import './admin.js';
 
 // calm: Symbol in Dunkel und Hell, sonst das aus dem Design Neon.
 const TABS = [

@@ -40,6 +40,12 @@ function cleanProfile(raw, exIds) {
   return { name: text(p.name, NAME_MAX), motto: text(p.motto, MOTTO_MAX), lifts, show };
 }
 
+const HEX = /^[0-9a-f]{32,128}$/;
+function cleanAdmin(a) {
+  if (!a || typeof a !== 'object' || !HEX.test(a.salt || '') || !HEX.test(a.hash || '')) return null;
+  return { on: a.on === true, salt: a.salt, hash: a.hash };
+}
+
 export function migrate(raw) {
   const s = raw && typeof raw === 'object' ? raw : {};
   s.v = 1;
@@ -60,6 +66,9 @@ export function migrate(raw) {
   s.meta = s.meta && typeof s.meta === 'object' ? s.meta : {};
   // Gesehene Einführungen (seit 2.7), zum Beispiel { profil: true, rang: true }.
   if (s.meta.intro != null && (typeof s.meta.intro !== 'object' || Array.isArray(s.meta.intro))) delete s.meta.intro;
+  // Admin-Modus (seit 2.12): { on, salt, hash }. Ohne gültigen Prüfwert gibt es keinen Admin.
+  s.meta.admin = cleanAdmin(s.meta.admin);
+  if (!s.meta.admin) delete s.meta.admin;
   // Bonus-XP (Tages-Quest, Ruhetag-Quest, Wochen-Serie) und Belohnungen aus dem Rang-Pfad.
   s.bonus = Array.isArray(s.bonus)
     ? s.bonus.filter((b) => b && typeof b.d === 'string' && typeof b.k === 'string' && Number.isFinite(b.xp) && b.xp > 0 && b.xp <= 1000)
@@ -111,6 +120,16 @@ export function saveProfile(patch) {
     const next = { ...s.profile, ...patch, show: { ...s.profile.show, ...(patch.show || {}) } };
     s.profile = cleanProfile(next, new Set(s.exercises.map((e) => e.id)));
   }, { derive: 'keep' });
+}
+
+// ---------- Admin-Modus ----------
+// Ändert nur, welche Looks nutzbar sind. Level, XP und abgeholte Belohnungen bleiben, wie sie sind.
+export function setAdminPassword(salt, hash) {
+  commit((s) => { s.meta.admin = { on: true, salt, hash }; }, { derive: 'keep' });
+}
+
+export function setAdmin(on) {
+  commit((s) => { if (s.meta.admin) s.meta.admin.on = on === true; }, { derive: 'keep' });
 }
 
 const nextId = (list) => list.reduce((m, x) => Math.max(m, x.id || 0), 0) + 1;

@@ -583,4 +583,37 @@ t('Rang-Pfad bis Level 100 (seit 2.11)', () => {
   assert.equal(owned(s, 1, ITEMS.find((x) => x.id === 'schimmer')), true);
 });
 
+t('Admin-Modus', () => {
+  const s = baseState();
+  s.rewards.claimed = [4];
+  const top = ITEMS.reduce((a, b) => (b.lv > a.lv ? b : a));
+  s.rewards.equip = { ...s.rewards.equip, color: 'gold', banner: 'kosmos', effect: 'sterne' };
+  // Ohne Admin: nur Abgeholtes
+  assert.equal(owned(s, 5, top), false);
+  assert.equal(equipped(s, 5).color.id, 'pink');
+  // Admin an: alles nutzbar, auch mit Level 1, ohne dass etwas abgeholt wird
+  s.meta = { admin: { on: true, salt: 'a'.repeat(32), hash: 'b'.repeat(64) } };
+  assert.equal(ITEMS.every((it) => owned(s, 1, it)), true);
+  assert.deepEqual(['color', 'banner', 'effect'].map((k) => equipped(s, 1)[k].id), ['gold', 'kosmos', 'sterne']);
+  assert.deepEqual(s.rewards.claimed, [4]);
+  assert.equal(readyStations(s, 19).length, 17);
+  // Bleibt nach dem Speichern und Laden erhalten
+  const back = migrate(JSON.parse(JSON.stringify(s)));
+  assert.deepEqual(back.meta.admin, s.meta.admin);
+  assert.deepEqual(back.rewards.equip.color, 'gold');
+  // Admin aus: wieder nur Abgeholtes, der gewählte Look bleibt gemerkt
+  s.meta.admin.on = false;
+  assert.equal(owned(s, 99, top), false);
+  assert.equal(equipped(s, 5).color.id, 'pink');
+  assert.equal(s.rewards.equip.color, 'gold');
+  // Kaputte oder fremde Werte: kein Admin
+  for (const bad of [true, 'ja', { on: true }, { on: true, salt: 'xyz', hash: 'b'.repeat(64) }]) {
+    const m = migrate({ meta: { admin: bad } });
+    assert.equal(m.meta.admin, undefined);
+    assert.equal(owned(m, 1, top), false);
+  }
+  // Alte Daten ohne Admin bleiben ohne Admin
+  assert.equal(migrate({}).meta.admin, undefined);
+});
+
 console.log(n, 'Tests bestanden');

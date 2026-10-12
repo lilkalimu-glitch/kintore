@@ -1,6 +1,6 @@
 # Nächste Version von KINTORE
 
-Stand: 12. Oktober 2026. Aktuelle Version: 2.11. Damit sind Schritt 1 und Schritt 1b fertig: das Tempo aus 2.9, das
+Stand: 12. Oktober 2026. Aktuelle Version: 2.12 mit dem Admin-Modus. Davor 2.11. Damit sind Schritt 1 und Schritt 1b fertig: das Tempo aus 2.9, das
 neue Design mit Dunkel als Standard (dazu Hell, Automatisch und Neon), der Rang-Pfad bis Level 100 mit mehr Effekten
 und der Feinschliff aus der Prüfung von 2.10. Als Nächstes: Rückmeldung des Besitzers vom Handy, dann Schritt 2.
 Davor kam 2.8 mit dem ganzen Plan 2.7: einfache Bedienung, eigene Knöpfe, volleres Profil und 9 neue Banner nach
@@ -183,6 +183,25 @@ Hinweise aus 2.11:
   auch mit Türkis, Platin und den neuen Effekten.
 - Startbild: Ab Android 13 merkt sich Android das gewählte Startbild über `setSplashScreenTheme`. Auf älteren Handys
   bleibt das Startbild dunkel, danach färbt `MainActivity` Grund und Leisten sofort richtig. Auf dem Gerät prüfen.
+
+## Admin-Modus
+
+Wunsch des Besitzers vom 12. Oktober 2026, so bestätigt. Kommt vor Schritt 2, als eigene APK. Gebaut am 12. Oktober 2026 in Version 2.12.
+
+- [x] In den Einstellungen 15-mal auf die Version tippen, dann öffnet sich der Admin-Modus. Siebenmal tippen startet
+      weiter die Tempo-Messung, aber nur, wenn man nach 7 aufhört.
+- [x] Beim ersten Mal legt der Besitzer das Passwort selbst auf dem Handy fest. Es steht nirgends im Code, gespeichert
+      wird nur ein Prüfwert. Danach öffnet nur das richtige Passwort den Admin-Modus.
+- [x] Mit Admin an sind alle Looks aus dem Rang-Pfad sofort nutzbar: Banner, Rahmen, Effekte, Titel, Schilder und
+      Farben. Level, XP und schon abgeholte Belohnungen bleiben unverändert.
+- [x] Admin lässt sich wieder ausschalten. Dann gilt wieder nur, was wirklich abgeholt ist.
+
+Hinweise aus 2.12:
+- `js/admin.js` zählt die Tipps auf die Version: 15 öffnet sofort den Admin-Modus, bei 7-14 und dann einer Pause
+  von 1,2 s kommt die Tempo-Messung. Der Prüfwert liegt in `state.meta.admin` und ist im Backup dabei.
+- Admin aus behält den gewählten Look in `state.rewards.equip`. Gezeigt wird dann wieder nur Abgeholtes, mit Admin an
+  ist der gewählte Look sofort wieder da.
+- Ein vergessenes Passwort lässt sich nicht zurücksetzen. Admin bleibt dann aus, an den Daten ändert sich nichts.
 
 ## Schritt 2: Profil und realistische Werte
 

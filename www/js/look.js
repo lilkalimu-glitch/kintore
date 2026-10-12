@@ -168,9 +168,12 @@ export function readyStations(state, level) {
   return STATIONS.filter((s) => s.lv > 1 && s.lv <= level && !claimed.has(s.lv));
 }
 
+// Admin-Modus an (seit 2.12, `state.meta.admin.on`): Alle Looks sind nutzbar, abgeholt wird dadurch nichts.
+export const adminOn = (state) => state?.meta?.admin?.on === true;
+
 export function owned(state, level, item) {
   if (!item) return false;
-  if (item.lv <= 1) return true;
+  if (item.lv <= 1 || adminOn(state)) return true;
   return item.lv <= level && claimedSet(state).has(item.lv);
 }
 

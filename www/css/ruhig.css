@@ -424,6 +424,8 @@
 [data-calm] .input-big { font: 600 26px var(--font-display); }
 [data-calm] .bg-preview { border-radius: 12px; background-color: var(--c-card2); border-color: var(--line); }
 [data-calm] .about b { font: 600 20px var(--font-display); letter-spacing: 0.08em; color: var(--text-2); }
+[data-calm] .about-admin { color: var(--acc-text); }
+[data-calm] .admin-err { color: var(--c-danger-text); }
 [data-calm] .dp { border: 2px solid transparent; border-radius: 12px; background: var(--c-card2); }
 [data-calm] .dp.is-on { border-color: var(--acc); background: var(--acc-soft); }
 [data-calm] .dp-name .ic { color: var(--acc-text); }

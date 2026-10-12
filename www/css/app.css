@@ -454,6 +454,8 @@ input[type='range'] { width: 100%; accent-color: var(--acc); }
 .about { text-align: center; color: var(--muted); font-size: 12.5px; margin: 24px 0 8px; }
 .about b { display: block; font: italic 700 20px var(--font-display); color: var(--text-2); }
 .about .jp { font-weight: 300; color: var(--acc); }
+.about-admin { display: block; margin-top: 6px; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--acc); }
+.admin-err { margin: -4px 0 14px; font-size: 13.5px; font-weight: 500; color: var(--red); }
 /* Tempo-Messung (seit 2.11, versteckt in den Einstellungen) */
 .tempo-list { margin: 4px 0 16px; padding: 0; list-style: none; }
 .tempo-list li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }

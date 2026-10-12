@@ -10,7 +10,7 @@ import { applyBackground } from './bg.js';
 import { confirmSheet, templatesSheet } from './sheets.js';
 import { toast } from './fx.js';
 import { VERSION } from './version.js';
-import { equipped, APP_TYPES } from './look.js';
+import { equipped, APP_TYPES, adminOn } from './look.js';
 
 let bgCache = null;
 
@@ -80,6 +80,7 @@ views.einstellungen = {
     <div class="about" data-act="about-tap">
       <b>KINTORE${jpOn() ? ' <span class="jp">筋トレ</span>' : ''}</b>
       Version ${esc(VERSION)}
+      ${adminOn(s) ? '<span class="about-admin">Admin an</span>' : ''}
     </div>`;
   },
   // Felder bleiben beim Neuzeichnen stehen (core.js), deshalb hängen die Listener nur einmal daran.

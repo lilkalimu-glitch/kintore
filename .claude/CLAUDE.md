@@ -91,8 +91,12 @@ Projektsprache ist Deutsch: Texte in der App, Code-Kommentare, Commit-Nachrichte
   Seit 2.9 dazu: `neuzeichnen.py` (morph), `speichern.py` (nichts geht verloren, auch beim Umstieg von 2.8),
   `ablauf.py` (die wichtigsten Abläufe durchklicken) und `leerlauf.py` (in Ruhe keine Arbeit im Hauptthread).
   Seit 2.10: `kontrast.py` (Kontrast von Text und Symbolen nach Regel 2, gemessen auf dem echten Hintergrund).
-- Tempo auf dem Handy (seit 2.11): siebenmal auf die Version unten in den Einstellungen tippen (`js/tempo.js`).
-  Der Besitzer kann die Werte kopieren und schicken. Ändert keine Daten.
+- Tempo auf dem Handy (seit 2.11): siebenmal auf die Version unten in den Einstellungen tippen und aufhören
+  (`js/tempo.js`, gezählt wird in `js/admin.js`). Der Besitzer kann die Werte kopieren und schicken. Ändert keine Daten.
+- Admin-Modus (seit 2.12, `js/admin.js`): 15-mal auf die Version tippen. Beim ersten Mal legt der Besitzer das
+  Passwort auf dem Handy fest, gespeichert wird nur ein Prüfwert (PBKDF2) in `state.meta.admin` ({ on, salt, hash }).
+  Kein Passwort in den Code schreiben. Mit Admin an gibt `owned()` in `js/look.js` für jeden Look true zurück;
+  Level, XP und `state.rewards.claimed` bleiben unverändert. Prüfen mit `admin.py`.
 - Jedes Design testen: Beispieldaten mit `--design hell`, `--design neon` oder `--design neon-alt` (Neon wie in 2.9,
   für den Bildvergleich mit alten Bildern) erzeugen, ohne gilt Dunkel.
 - Vor dem Push: keine Konsolenfehler, kein horizontales Scrollen, alle Ansichten aufrufbar, auch mit leeren Daten,

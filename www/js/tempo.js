@@ -1,4 +1,5 @@
-// Versteckte Tempo-Messung (seit 2.11): siebenmal auf die Version in den Einstellungen tippen.
+// Versteckte Tempo-Messung (seit 2.11): siebenmal auf die Version in den Einstellungen tippen und aufhören
+// (das Zählen steht in `js/admin.js`).
 // Misst auf dem Handy, wie lange Seiten und Fenster bis zum nächsten Bild brauchen, und zeigt die Werte zum Kopieren.
 // Ändert keine Daten: Es wird nur geblättert und das Look-Fenster geöffnet und wieder geschlossen.
 import { app, actions, openSheet, closeSheet } from './core.js';
@@ -108,21 +109,11 @@ function showResult(rows) {
   el.querySelector('[data-again]').addEventListener('click', () => measure());
 }
 
-function introSheet() {
+// Wird über das Tippen auf die Version geöffnet (`js/admin.js`).
+export function tempoSheet() {
   const el = openSheet(`
     <h2>Tempo testen</h2>
     <p class="lead">Misst, wie schnell die App auf deinem Handy reagiert. Die App blättert dafür etwa 20 Sekunden lang selbst durch die Seiten. An deinen Daten ändert sich nichts.</p>
     <button class="btn-neon btn-block" data-start>Messen</button>`);
   el.querySelector('[data-start]').addEventListener('click', () => measure());
 }
-
-// Siebenmal kurz hintereinander auf die Version tippen.
-let taps = [];
-actions['about-tap'] = () => {
-  const now = Date.now();
-  taps = [...taps.filter((t) => now - t < 3000), now];
-  if (taps.length >= 7) {
-    taps = [];
-    introSheet();
-  }
-};

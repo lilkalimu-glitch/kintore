@@ -69,3 +69,6 @@ Seltenheiten im Pfad prüfen: mit `max.json` die Seite `rang` öffnen und Statio
 `screenshots.py` meldet Konsolenfehler und horizontales Scrollen und endet dann mit Exit-Code 1.
 Über `await import('./js/ops.js')` in `page.evaluate` lassen sich Sätze eintragen, um Level-Up, Rang-Aufstieg
 und Quest-Banner auszulösen.
+15. Admin-Modus prüfen: `python3 .claude/tests/admin.py /tmp/kt/beispiel.json [bilder-ordner]` tippt 7-mal (Tempo
+    erst nach der Pause) und 15-mal auf die Version, legt ein Passwort fest, prüft, dass kein Look gesperrt ist und
+    Level, XP und Abgeholtes gleich bleiben, schaltet Admin aus und meldet sich mit falschem und richtigem Passwort an.
