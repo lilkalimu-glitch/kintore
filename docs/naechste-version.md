@@ -1,8 +1,9 @@
 # Nächste Version von KINTORE
 
-Stand: 11. Oktober 2026. Aktuelle Version: 2.10 (Release v2.10). Damit ist Schritt 1 fertig: das Tempo aus 2.9 und
-das neue Design mit Dunkel als Standard, dazu Hell und Neon (der alte Look) zum Wählen. Als Nächstes: erst 2.10
-prüfen und Ideen abwägen (siehe "Noch offen"), dann Schritt 2.
+Stand: 12. Oktober 2026. Aktuelle Version: 2.10 (Release v2.10). Damit ist Schritt 1 fertig: das Tempo aus 2.9 und
+das neue Design mit Dunkel als Standard, dazu Hell und Neon (der alte Look) zum Wählen. 2.10 ist geprüft, die Ideen
+sind abgewogen (siehe "Noch offen"). Als Nächstes: Der Besitzer entscheidet, welche Empfehlungen gebaut werden und ob
+vor oder nach Schritt 2.
 Davor kam 2.8 mit dem ganzen Plan 2.7: einfache Bedienung, eigene Knöpfe, volleres Profil und 9 neue Banner nach
 Vorlagen des Besitzers. Die Nummer der APK zählt jeden Build mit.
 
@@ -19,7 +20,10 @@ Vergleich zu Store-Apps fehlt. Das Ergebnis steht für später in `fahrplan.md` 
 
 ## Noch offen
 
-- [ ] Zuerst: 2.10 prüfen und Ideen abwägen. Wunsch des Besitzers vom 11. Oktober 2026, so bestätigt. Nur prüfen,
+- [ ] Entscheidung des Besitzers zu den Empfehlungen aus der Prüfung (siehe "Ergebnis der Prüfung am 12. Oktober
+      2026" unter dem nächsten Punkt): Welche werden gebaut, und kommen sie vor oder nach Schritt 2. Nichts davon ist
+      bestätigt. Dazu bitten: auf dem Handy Leisten, App-Symbol, Startbild und Datei-Kopie ansehen.
+- [x] Zuerst: 2.10 prüfen und Ideen abwägen. Wunsch des Besitzers vom 11. Oktober 2026, so bestätigt. Nur prüfen,
       nachdenken und recherchieren, nichts bauen. Danach dem Besitzer kurz mit Bildern zeigen, was nicht passt und
       welche Ideen sich lohnen. Gebaut wird nur, was er bestätigt. Er entscheidet auch, ob das vor Schritt 2 kommt.
       Prüfen, in allen drei Designs (Dunkel, Hell, Neon):
@@ -47,6 +51,48 @@ Vergleich zu Store-Apps fehlt. Das Ergebnis steht für später in `fahrplan.md` 
       9. Leichteres Profil: Trainingskalender als ein Bild statt vieler einzelner Kästchen (Profil öffnen liegt bei
          etwa 0,1 s, genau an der Grenze).
       10. Banner im hellen Design mit Rand, damit dunkle Bilder nicht zu schwer wirken.
+
+      Ergebnis der Prüfung am 12. Oktober 2026 (Bilder dem Besitzer im Chat gezeigt, nichts gebaut):
+      - Alle Seiten in allen drei Designs da, keine Konsolenfehler, auch leer. `ablauf.py`, `bedienung.py` und
+        `springen.py` in allen Designs grün, `kontrast.py` in Dunkel und Hell grün. Design wechseln mitten im Training
+        klappt, das Training und der Timer laufen weiter.
+      - Hell: Diagramme und dunkle Banner sehen gut aus. Die legendären Effekte nicht: Neon-Flammen werden braun,
+        Blitze sehen aus wie Kratzer, Funken wie Staub (halb durchsichtig auf Weiß).
+      - Rahmen in Dunkel und Hell uneinheitlich: Krone und Flügel gut zu sehen, Wappen ist am Profilbild nur ein
+        Ring, Kristall liegt als Achteck über dem Kreis.
+      - Knöpfe sind fast überall sauber. Auffällig: In Training startet ein Knopf mit nur einem Play-Symbol (Store-Apps
+        wie Hevy haben dort einen Knopf mit Wort), und manche Knöpfe haben ein Symbol vor dem Wort, andere nicht
+        (Gewicht eintragen und Profil ansehen mit, Alle abholen und Trotzdem trainieren ohne).
+      - Neon: rund 70 Stellen mit grauem Text knapp unter 4,5 : 1 (4,3-4,49), dazu "+50 XP" im Rekord-Effekt
+        (3,4 : 1) und die Zahl am Rang-Abzeichen auf der Startseite (3 : 1). Eine etwas hellere Grau-Stufe reicht.
+      - Neon ohne japanische Zeichen: keine Lücken.
+      - Wechselt das Design bei offenem Look-Fenster (heute nicht möglich, mit "Automatisch" schon), bleiben die
+        Reiter mit den alten Namen (Neon-Farbe, Neon-Schild) stehen.
+      - Tempo (gedrosselt wie oben, Median aus 3 Runden), Dunkel mit 816 Sätzen und in Klammern 3 Jahre: Start
+        0,43 s (0,52), Rang-Pfad 0,18 s (0,18), Look-Fenster 0,07 s (0,06), Satz speichern 0,06 s (0,07) ohne
+        Stocken, Profil 0,08-0,11 s (0,09), Tab Körper 0,08-0,11 s (0,10). Gegenüber 2.8 also deutlich schneller,
+        Profil und Körper liegen weiter an der Grenze von 0,1 s. Neon: alles im Ziel, Start 0,62 s.
+      - Start genauer: Die Skripte der App brauchen beim Start nur etwa 70 ms Rechenzeit, der Rest ist Arbeit des
+        Browsers (Stile, Aufbau der Seite).
+      - Profil ohne Trainingskalender: etwa 10-30 ms schneller. Der Kalender wird schon jetzt erst im zweiten Bild
+        eingesetzt.
+      - Ziffern: In Dunkel und Hell haben Timer, Plus und Minus, Level und Statistik schon gleich breite Ziffern
+        (Barlow mit `tabular-nums`), Adventor in Neon hat sie von sich aus.
+      - Rückmeldung: Fast alle Knöpfe drücken sich schon sichtbar ein. Vibration gibt es beim Satz speichern und beim
+        Level-Aufstieg.
+
+      Empfehlung von Claude (nicht bestätigt):
+      - Ja: 4 (eigene ruhige Effekte, dazu die Rahmen angleichen), 3 nur gezielt (Starten mit Wort statt Play-Symbol,
+        Symbole in Knöpfen einheitlich), 1 und 2 zusammen (Automatisch als vierte Wahl, Standard bleibt Dunkel; der
+        Android-Teil muss dafür Hell oder Dunkel vom Handy melden, das Startbild über `values-night` und ab Android
+        13 über `setSplashScreenTheme` passend machen; offene Fenster beim Wechsel neu aufbauen), 7 (klein und
+        versteckt, liefert echte Werte vom Handy), Neon-Kontrast nachziehen.
+      - Erst nach den Werten aus 7: 8 (die Skripte sind beim Start nicht das Problem, ein Umbau bringt wenig).
+      - Nein: 5 (schon erledigt), 6 (Vibration bei jedem Antippen nervt, Android rät zu sparsamer Vibration), 9
+        (bringt nur 10-30 ms, wenn dann eher Tab Körper ansehen), 10 (dunkle Banner wirken auf Hell gut).
+      - Am meisten fehlt im Vergleich zu Store-Apps (Liste in `fahrplan.md`): Aufwärmsätze, damit sie nicht als
+        volle Sätze in XP und Statistik zählen. Neu, nicht in der Liste: eine durchgehende Liste der Trainings im
+        Verlauf (heute nur der Kalender, ein Tag erscheint erst nach dem Antippen).
 - [x] Entwürfe: Nach der Tempo-APK 2 bis 3 Seiten im neuen Standard-Design als Entwurf zeigen, zum Beispiel Start,
       Training und Profil. Der Besitzer bestätigt Akzentfarbe, Schrift und Knöpfe. Erst danach die ganze App umbauen.
       Am 11. Oktober 2026 gezeigt (Canvas "KINTORE Design-Entwurf" in Claude: Start, Training und Profil in Dunkel und
