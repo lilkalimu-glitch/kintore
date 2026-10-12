@@ -213,7 +213,7 @@ views.uebung = {
         </ul>
       </section>
       ${app.state.active && !inSession ? `<button class="btn-neon btn-block cyan" data-act="ex-to-session">${icon('plus')} Zum laufenden Training</button>` : ''}
-      ${!app.state.active ? `<button class="btn-ghost btn-block" data-act="ex-train-now">${icon('play', 'ic-fill')} Jetzt trainieren</button>` : ''}
+      ${!app.state.active ? `<button class="btn-ghost btn-block" data-act="ex-train-now">Jetzt trainieren</button>` : ''}
       ${hist.length ? `<section class="card pad">
         <div class="card-title"><h2>Verlauf</h2><span class="hint">${hist.length} Einheiten</span></div>
         ${shown.map((s) => `<div class="hist-day"><h3><span>${esc(fmtDay(s.d))}</span><span class="muted">1RM ${ex.bw ? '+' : ''}${kg(Math.round((ex.bw ? s.best - d.bw : s.best) * 10) / 10)} kg</span></h3>

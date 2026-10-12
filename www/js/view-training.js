@@ -148,11 +148,11 @@ function renderPicker() {
             <p>${t.ex.length} Übungen${last ? `, zuletzt ${esc(relDay(last))}` : ''}</p>
             ${t.id === suggested ? '<span class="badge">Heute dran</span>' : ''}
           </div>
-          <button class="round-go" data-act="start-session" data-tpl="${esc(t.id)}" aria-label="${esc(t.name)} starten">${icon('play')}</button>
+          <button class="${t.id === suggested ? 'btn-claim' : 'btn-ghost'} small tpl-go" data-act="start-session" data-tpl="${esc(t.id)}" aria-label="${esc(t.name)} starten">Starten</button>
         </section>`;
       })
       .join('')}
-    <button class="btn-dashed" data-act="start-free">${icon('plus')} Ohne Vorlage starten</button>
+    <button class="btn-ghost btn-block" data-act="start-free">Ohne Vorlage starten</button>
     <button class="link-btn" data-act="edit-templates">Vorlagen bearbeiten</button>
   </div>`;
 }

@@ -131,7 +131,30 @@ function embers(n, seed, cls = 'em') {
   return out;
 }
 
+// Gipfel (seit 2.11): Sonnenaufgang hinter verschneiten Bergen, Nebel zieht durchs Tal.
+function gipfel() {
+  return `<i class="gp-sun"></i>${rays(18, 26, 100, 'gp-rays')}<svg class="bn-svg gp-mt" viewBox="0 0 400 150" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <polygon class="gp-far" points="0,150 0,96 34,80 62,90 98,58 128,78 156,66 190,84 226,52 262,74 300,60 336,80 372,64 400,74 400,150"/>
+    <polygon class="gp-near" points="0,150 0,118 30,108 66,74 92,96 118,88 150,112 186,92 214,62 238,80 264,72 300,104 334,90 368,108 400,98 400,150"/>
+    <polygon class="gp-snow" points="66,74 58,84 66,82 72,88 78,82 84,90 92,96"/>
+    <polygon class="gp-snow" points="214,62 204,76 212,74 218,82 224,74 232,82 238,80"/>
+    <polygon class="gp-snow" points="98,58 90,68 98,66 104,72 112,68"/>
+  </svg><i class="gp-mist"></i><i class="gp-mist gp-mist2"></i>`;
+}
+
+// Tiefsee (seit 2.11): Lichtstrahlen von oben, Blasen steigen auf, unten Felsen.
+function tiefsee() {
+  const r = rng(86);
+  let beams = '';
+  for (let i = 0; i < 5; i++) beams += `<i class="ts-beam" style="left:${f1(8 + i * 20 + r() * 8)}%;--w:${f1(26 + r() * 30)}px;--d:-${f1(r() * 5)}s"></i>`;
+  return `${beams}${embers(16, 87, 'ts-bub')}<svg class="bn-svg ts-rock" viewBox="0 0 400 150" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <path d="M0 150V128C30 120 46 132 70 124S112 112 140 126 196 132 222 120 270 110 300 124 352 132 400 118V150Z"/>
+  </svg><i class="ts-glow" style="left:22%;top:64%"></i><i class="ts-glow" style="left:71%;top:56%;--d:-1.6s"></i>`;
+}
+
 const BANNERS = {
+  gipfel: () => gipfel(),
+  tiefsee: () => tiefsee(),
   nacht: () => '<i class="bn-dots"></i>',
   raster: () => '<i class="rs-floor"></i><i class="rs-horizon"></i><i class="bn-dots top"></i>',
   skyline: () => `${skyline(9, { moon: true })}<i class="bn-haze"></i>`,
@@ -226,8 +249,78 @@ function cardFlames() {
   return `<i class="cf-glow"></i>${out}`;
 }
 
+// ---------- Neue Effekte (seit 2.11) ----------
+// Bewegt wird immer nur ein Element ohne bewegte Kinder (siehe watchOff in core.js).
+
+// Schimmer: Punkte, die ruhig um das Bild aufleuchten.
+function shimmer(n, seed, ring) {
+  const r = rng(seed);
+  let out = '';
+  for (let i = 0; i < n; i++) {
+    let x;
+    let y;
+    if (ring) {
+      const a = (i / n) * Math.PI * 2 + r() * 0.4;
+      const d = 30 + r() * 12;
+      x = 50 + Math.cos(a) * d;
+      y = 50 + Math.sin(a) * d;
+    } else {
+      x = 4 + r() * 92;
+      y = 6 + r() * 86;
+    }
+    out += `<i class="sh" style="left:${f1(x)}%;top:${f1(y)}%;--s:${f1(3 + r() * 4)}px;--d:-${f1(r() * 3.2)}s"></i>`;
+  }
+  return out;
+}
+
+// Puls: Herzschlag-Linie quer über die Karte.
+function ecg() {
+  let x = 0;
+  const pts = ['0,50'];
+  while (x < 1000) {
+    x += 70;
+    pts.push(`${x},50`, `${x + 8},44`, `${x + 14},50`, `${x + 22},50`, `${x + 28},14`, `${x + 36},84`, `${x + 42},50`, `${x + 56},50`, `${x + 66},40`, `${x + 78},50`);
+    x += 78;
+  }
+  return `<svg class="pz-ecg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts.join(' ')}"/></svg>`;
+}
+
+// Orbit: Punkte auf Bahnen ums Bild. Der Arm dreht sich, der Punkt darin steht still.
+// --r: Stellung im Standbild ohne Bewegung.
+const orbitArms = (list) => list.map(([inset, t, d, s]) => `<i class="ob-arm" style="inset:${inset}%;--t:${t}s;--d:-${d}s;--r:${Math.round((d / t) * 360)}deg"><b class="ob-dot" style="--s:${s}px"></b></i>`).join('');
+
+// Strahlen ums Bild (Aura) oder über die Karte.
+function rays(n, r0, r1, cls) {
+  let out = '';
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2;
+    const w = (Math.PI / n) * 0.42;
+    const p = (ang, rad) => `${f1(100 + Math.cos(ang) * rad)},${f1(100 + Math.sin(ang) * rad)}`;
+    out += `<polygon points="${p(a - w, r0)} ${p(a, r1)} ${p(a + w, r0)}"/>`;
+  }
+  return `<svg class="${cls}" viewBox="0 0 200 200" aria-hidden="true">${out}</svg>`;
+}
+
+// Supernova: Teilchen fliegen vom Bild nach außen. Der Halter ist gedreht und steht still, nur der Punkt fliegt.
+function novaBits(n, seed, cls) {
+  const r = rng(seed);
+  let out = '';
+  for (let i = 0; i < n; i++) {
+    out += `<i class="${cls}" style="--a:${f1((i / n) * 360 + r() * 14)}deg"><b class="nv-d" style="--t:${f1(2.2 + r() * 1.4)}s;--d:-${f1(r() * 3)}s;--s:${f1(2.5 + r() * 3)}px"></b></i>`;
+  }
+  return out;
+}
+const NOVA_STAR = 'M100 12C104 76 124 96 188 100C124 104 104 124 100 188C96 124 76 104 12 100C76 96 96 76 100 12Z';
+
 const EFFECTS = {
   none: () => ({}),
+  schimmer: () => ({ back: shimmer(8, 11, true), card: shimmer(12, 12, false) }),
+  puls: () => ({ back: '<i class="pz" style="--d:0s"></i><i class="pz" style="--d:-1.2s"></i>', card: ecg() }),
+  kreide: () => ({ back: embers(12, 25, 'kd'), card: `<i class="kp" style="left:6%;--w:140px;--d:0s"></i><i class="kp" style="left:58%;--w:180px;--d:-3s"></i><i class="kp" style="left:32%;--w:120px;--d:-5.5s"></i>${embers(10, 26, 'kd kd-card')}` }),
+  orbit: () => ({ back: `<i class="ob" style="inset:10%"></i><i class="ob" style="inset:-2%"></i>${orbitArms([[10, 6, 1, 7], [10, 6, 4, 4], [-2, 11, 2, 6]])}`, card: `<i class="obc"></i><i class="obc obc2"></i>` }),
+  welle: () => ({ back: '<i class="wv" style="--d:0s"></i><i class="wv" style="--d:-0.6s"></i><i class="wv" style="--d:-1.2s"></i>', card: '<i class="wvc" style="--d:0s"></i><i class="wvc" style="--d:-1.4s"></i><i class="wvc" style="--d:-2.8s"></i>' }),
+  aura: () => ({ back: `<i class="aux-glow"></i>${rays(16, 46, 98, 'aux')}`, front: twinkles(4, 53), card: rays(24, 30, 100, 'auc') }),
+  nova: () => ({ back: `<svg class="nv-flare" viewBox="0 0 200 200" aria-hidden="true"><path d="${NOVA_STAR}"/></svg><i class="nv-ring"></i>${novaBits(12, 88, 'nv-p')}`, card: `<i class="nvc"></i>${novaBits(16, 89, 'nv-p nv-pc')}` }),
   glitzer: () => ({ back: glints(), card: cardGlints() }),
   ring: () => ({ back: '<i class="rg rg1"></i><i class="rg rg2"></i>', card: '<i class="cr" style="--d:0s"></i><i class="cr" style="--d:-1.6s"></i><i class="cr" style="--d:-3.2s"></i>' }),
   manga: () => ({ back: speedLines(), card: cardLines() }),

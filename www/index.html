@@ -10,6 +10,12 @@
     // Zuletzt gewähltes Design sofort setzen, damit beim Start nichts kurz im falschen Design aufblitzt (theme.js).
     try {
       var d = (localStorage.getItem('kintore:design') || '').split('|');
+      // Automatisch: zuletzt gemeldeter Stand vom Handy, sonst das, was der Browser sagt.
+      if (d[0] === 'auto') {
+        var sys = localStorage.getItem('kintore:sys');
+        var dark = sys ? sys === 'dark' : !(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches);
+        d[0] = dark ? 'dunkel' : 'hell';
+      }
       if (d[0] === 'hell' || d[0] === 'neon') {
         document.documentElement.dataset.theme = d[0];
         if (d[0] === 'neon') document.documentElement.removeAttribute('data-calm');

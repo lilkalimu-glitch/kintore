@@ -1,9 +1,8 @@
 # Nächste Version von KINTORE
 
-Stand: 12. Oktober 2026. Aktuelle Version: 2.10 (Release v2.10). Damit ist Schritt 1 fertig: das Tempo aus 2.9 und
-das neue Design mit Dunkel als Standard, dazu Hell und Neon (der alte Look) zum Wählen. 2.10 ist geprüft, die Ideen
-sind abgewogen (siehe "Noch offen"). Als Nächstes: Der Besitzer entscheidet, welche Empfehlungen gebaut werden und ob
-vor oder nach Schritt 2.
+Stand: 12. Oktober 2026. Aktuelle Version: 2.11. Damit sind Schritt 1 und Schritt 1b fertig: das Tempo aus 2.9, das
+neue Design mit Dunkel als Standard (dazu Hell, Automatisch und Neon), der Rang-Pfad bis Level 100 mit mehr Effekten
+und der Feinschliff aus der Prüfung von 2.10. Als Nächstes: Rückmeldung des Besitzers vom Handy, dann Schritt 2.
 Davor kam 2.8 mit dem ganzen Plan 2.7: einfache Bedienung, eigene Knöpfe, volleres Profil und 9 neue Banner nach
 Vorlagen des Besitzers. Die Nummer der APK zählt jeden Build mit.
 
@@ -20,9 +19,12 @@ Vergleich zu Store-Apps fehlt. Das Ergebnis steht für später in `fahrplan.md` 
 
 ## Noch offen
 
-- [ ] Entscheidung des Besitzers zu den Empfehlungen aus der Prüfung (siehe "Ergebnis der Prüfung am 12. Oktober
-      2026" unter dem nächsten Punkt): Welche werden gebaut, und kommen sie vor oder nach Schritt 2. Nichts davon ist
-      bestätigt. Dazu bitten: auf dem Handy Leisten, App-Symbol, Startbild und Datei-Kopie ansehen.
+- [x] Entscheidung des Besitzers zu den Empfehlungen aus der Prüfung (siehe "Ergebnis der Prüfung am 12. Oktober
+      2026" unter dem nächsten Punkt): Welche werden gebaut, und kommen sie vor oder nach Schritt 2. Am 12. Oktober
+      2026 hat der Besitzer die Entscheidung an Claude übergeben ("Mach mal alles selber"). Ergebnis: alle
+      Empfehlungen werden gebaut, zusammen mit seinen neuen Wünschen, als Schritt 1b vor Schritt 2.
+- [ ] Den Besitzer bitten, auf dem Handy Leisten, App-Symbol, Startbild (auch mit Hell und Automatisch) und die
+      Datei-Kopie anzusehen.
 - [x] Zuerst: 2.10 prüfen und Ideen abwägen. Wunsch des Besitzers vom 11. Oktober 2026, so bestätigt. Nur prüfen,
       nachdenken und recherchieren, nichts bauen. Danach dem Besitzer kurz mit Bildern zeigen, was nicht passt und
       welche Ideen sich lohnen. Gebaut wird nur, was er bestätigt. Er entscheidet auch, ob das vor Schritt 2 kommt.
@@ -138,6 +140,49 @@ Vergleich zu Store-Apps fehlt. Das Ergebnis steht für später in `fahrplan.md` 
 - [x] In den Einstellungen: Dunkel (neu, Standard), Hell und Neon (der bisherige Look).
 - [x] Im Design Neon lassen sich die japanischen Zeichen wieder einschalten.
 - [x] Die Farben aus dem Rang-Pfad gelten in jedem Design als Akzentfarbe.
+
+## Schritt 1b: Längerer Rang-Pfad und Feinschliff
+
+Wünsche des Besitzers vom 12. Oktober 2026: mehr Effekte schon bei kleinen Rängen, mehr Belohnungen und ein längerer
+Rang-Pfad. Die Einzelheiten hat er an Claude übergeben. Dazu die Empfehlungen aus der Prüfung von 2.10. Kommt vor
+Schritt 2, als eigene APK. Gebaut am 12. Oktober 2026 in Version 2.11.
+
+### Rang-Pfad
+
+- [x] Der Pfad geht bis Level 100. Neuer höchster Rang SSS ab Level 90, mit dem Rahmen Heiligenschein.
+- [x] Neue Effekte, damit es schon früh welche gibt: Schimmer (Lv 1, von Anfang an da), Puls (Lv 7), Kreidestaub
+      (Lv 25), Orbit (Lv 31), Schockwelle (Lv 38), Aura (Lv 53) und Supernova (Lv 88). Bis Rang B gibt es damit
+      sieben statt drei Effekte.
+- [x] Mehr Belohnungen auf freien Leveln unter 70: Titel (Lv 30, 36, 46, 51, 57, 67), Schilder mit Wort (Lv 34, 42,
+      55, 63) und die Farbe Türkis (Lv 61). Neue Belohnungen kommen nur auf Level ohne bisherige Station, damit man
+      sie auch nach dem Update noch abholt.
+- [x] Level 71-100: Titel, Schilder mit Kanji und mit Wort, die Banner Gipfel (Lv 74) und Tiefsee (Lv 86), die Farbe
+      Platin (Lv 100).
+- [x] Niemand verliert Level, Rang oder schon abgeholte Belohnungen. Die XP-Rechnung bleibt gleich.
+
+### Feinschliff aus der Prüfung
+
+- [x] Eigene ruhige Effekte für Dunkel und Hell: ohne Leuchten, auf Weiß gut zu sehen. Neon bleibt, wie es ist.
+- [x] Rahmen in Dunkel und Hell einheitlich: jede Verzierung passt zum runden Profilbild (Wappen, Kristall).
+- [x] Knöpfe: Vorlagen starten mit einem Knopf mit Wort statt nur Play-Symbol. Symbole in Knöpfen mit Text nur noch
+      für Hinzufügen und Löschen.
+- [x] Neon: grauer Text und kleine Zahlen mit mindestens 4,5 : 1 Kontrast.
+- [x] Design Automatisch als vierte Wahl: übernimmt Hell oder Dunkel vom Handy und wechselt mit. Standard bleibt
+      Dunkel. Ein offenes Fenster wird beim Wechsel richtig neu aufgebaut.
+- [x] Startbild passend zum Design: Hell blitzt beim Öffnen nicht mehr dunkel auf.
+- [x] Versteckte Tempo-Messung in den Einstellungen (siebenmal auf die Version tippen). Misst Seiten und Fenster auf
+      dem Handy und zeigt die Werte zum Kopieren. Ändert keine Daten.
+
+Hinweise aus 2.11:
+- Der Pfad hat jetzt 85 Stationen statt 54. Rang-Pfad öffnen (gedrosselt, Median): 0,20 s mit 816 Sätzen, 0,23 s mit 3 Jahren
+  (vorher 0,18 s), noch im Ziel von 0,3 s. Die Kamerafahrt beim ersten Öffnen startet höchstens fünf Bildschirme vor
+  der eigenen Position, damit nicht der ganze Pfad vorab gezeichnet wird.
+- Schon in 2.10 so: Legendäre und epische Titel schimmern in Neon über `background-position`, dann rechnet der
+  Hauptthread auf Rang-Pfad und Profil jedes Bild mit (`leerlauf.py`). Nur Neon, nur mit so einem Titel.
+- Neon: `--muted` jetzt #9CA7C4, Schrift auf der Akzentfarbe dunkel. `kontrast.py` ist in allen drei Designs grün,
+  auch mit Türkis, Platin und den neuen Effekten.
+- Startbild: Ab Android 13 merkt sich Android das gewählte Startbild über `setSplashScreenTheme`. Auf älteren Handys
+  bleibt das Startbild dunkel, danach färbt `MainActivity` Grund und Leisten sofort richtig. Auf dem Gerät prüfen.
 
 ## Schritt 2: Profil und realistische Werte
 

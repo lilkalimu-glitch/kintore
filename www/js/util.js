@@ -174,13 +174,17 @@ const PL = {
   sign: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 12h10"/>',
   none: '<circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/>',
   ring: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/>',
+  activity: '<path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/>',
+  orbit: '<path d="M20.341 6.484A10 10 0 0 1 10.266 21.85"/><path d="M3.659 17.516A10 10 0 0 1 13.74 2.152"/><circle cx="12" cy="12" r="3"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/>',
+  waves: '<path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
 };
 
 export const icon = (name, cls = '') => (isCalm() && PL[name]
   ? `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${PL[name]}</svg>`
   : `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true"><path d="${P[name] || P[NEON_ALIAS[name]] || ''}"/></svg>`);
 // Namen, die es nur im neuen Symbol-Satz gibt, zeigen im Design Neon das alte Gegenstück.
-const NEON_ALIAS = { dumbbell: 'bolt', body: 'scale', trophy: 'star', sign: 'tag', none: 'x', ring: 'target' };
+const NEON_ALIAS = { dumbbell: 'bolt', body: 'scale', trophy: 'star', sign: 'tag', none: 'x', ring: 'target', activity: 'target', orbit: 'target', waves: 'target', sun: 'star' };
 
 // Japanisches Wasserzeichen hinter einer Überschrift: nur im Design Neon mit eingeschalteten Zeichen.
 export const jpMark = (text) => (jpOn() && text ? `<span class="jp-mark" aria-hidden="true">${esc(text)}</span>` : '');

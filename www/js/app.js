@@ -1,11 +1,11 @@
 // Einstieg: Daten laden, Tabbar, Klicks verteilen, Android-Zurück-Taste.
-import { app, D, actions, render, navigate, parseHash, onHashChange, onPopState, closeSheet, sheetOpen, TOP, onAfterRender, noteTap, onDesignChange } from './core.js';
+import { app, D, actions, render, navigate, parseHash, onHashChange, onPopState, closeSheet, sheetOpen, TOP, onAfterRender, noteTap, onDesignChange, redesign } from './core.js';
 import { applyBackground } from './bg.js';
 import { loadState, persist, flushPersist, loadBg, markStored } from './store.js';
 import { migrate, noteXpRule } from './ops.js';
 import { initTimer, repaintTimer } from './timer.js';
-import { initNative, exitApp, isNative, setBars } from './native.js';
-import { applyTheme, isCalm, setBarsHandler } from './theme.js';
+import { initNative, exitApp, isNative, setBars, setStart, watchSystemTheme } from './native.js';
+import { applyTheme, isCalm, setBarsHandler, setStartHandler, setSystemDark, themeOf } from './theme.js';
 import { icon } from './util.js';
 import { applyLook, equipped } from './look.js';
 import './view-start.js';
@@ -19,6 +19,7 @@ import './view-profile.js';
 import { initAvatar } from './me.js';
 import { introOpen, finish as closeIntro } from './intro.js';
 import { warmUp } from './fx.js';
+import './tempo.js';
 
 // calm: Symbol in Dunkel und Hell, sonst das aus dem Design Neon.
 const TABS = [
@@ -137,8 +138,13 @@ async function boot() {
   window.addEventListener('popstate', onPopState);
   document.addEventListener('visibilitychange', () => { if (document.hidden) flushPersist(); });
   window.addEventListener('pagehide', flushPersist);
-  initNative({ onBack, onPause: flushPersist, onResume: () => render() });
+  // Design Automatisch: wechselt mit, wenn das Handy zwischen Hell und Dunkel umstellt.
+  const askSystem = watchSystemTheme((dark) => {
+    if (setSystemDark(dark) && themeOf(app.state.settings) === 'auto' && applyTheme(app.state.settings) && app.route) redesign();
+  });
+  initNative({ onBack, onPause: flushPersist, onResume: () => { askSystem(); render(); } });
   setBarsHandler(setBars);
+  setStartHandler(setStart, app.state.settings);
 
   // Bei offener Tastatur Tabbar und Timer ausblenden, damit sie nichts verdecken.
   let fullHeight = window.innerHeight;

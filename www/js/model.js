@@ -8,7 +8,7 @@ const CALM_LIGHT = { brust: '#C42673', ruecken: '#0A73A1', schultern: '#6C4AB3',
 export const CATEGORIES = [
   { id: 'brust', name: 'Brust', jp: '胸', neon: '#FF4FA3' },
   { id: 'ruecken', name: 'Rücken', jp: '背中', neon: '#3CF0FF' },
-  { id: 'schultern', name: 'Schultern', jp: '肩', neon: '#9B6BFF' },
+  { id: 'schultern', name: 'Schultern', jp: '肩', neon: '#AB86FF' },
   { id: 'bizeps', name: 'Bizeps', jp: '二頭', neon: '#FFA586' },
   { id: 'trizeps', name: 'Trizeps', jp: '三頭', neon: '#FF5E62' },
   { id: 'beine', name: 'Beine', jp: '脚', neon: '#5BFFB0' },

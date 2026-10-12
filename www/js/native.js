@@ -149,6 +149,38 @@ const barsPlugin = () => {
   return kbars;
 };
 
+// Grund fürs Startbild beim nächsten Öffnen der App (seit 2.11), nur wenn er sich ändert.
+// auto: Android nimmt Hell oder Dunkel vom Handy (Design Automatisch).
+let lastStart = '';
+export function setStart({ color, light, auto }) {
+  if (!isNative()) return;
+  const key = `${color}|${!!light}|${!!auto}`;
+  if (key === lastStart) return;
+  lastStart = key;
+  const KB = barsPlugin();
+  if (KB) safe(() => KB.start({ color, light: !!light, auto: !!auto }));
+}
+
+// Hell oder Dunkel vom Handy (Design Automatisch): onChange(dark) gleich und bei jedem Wechsel.
+// Gibt eine Funktion zurück, die nachfragt (zum Beispiel beim Zurückkommen in die App).
+export function watchSystemTheme(onChange) {
+  const KB = isNative() ? barsPlugin() : null;
+  if (KB) {
+    const ask = async () => {
+      const r = await safe(() => KB.system());
+      if (r && typeof r.dark === 'boolean') onChange(r.dark);
+    };
+    ask();
+    safe(() => KB.addListener('system', (e) => onChange(!!e?.dark)));
+    return ask;
+  }
+  const mq = typeof window !== 'undefined' ? window.matchMedia?.('(prefers-color-scheme: dark)') : null;
+  if (!mq) return () => {};
+  onChange(mq.matches);
+  mq.addEventListener?.('change', (e) => onChange(e.matches));
+  return () => onChange(mq.matches);
+}
+
 export function initNative({ onBack, onResume, onPause }) {
   if (!isNative()) return;
   const SB = plugin('StatusBar');

@@ -63,7 +63,7 @@ def main():
     else:
         state['settings'] = {'theme': design, 'jp': False}
     if top:
-        state['bonus'] = [{'d': (today - datetime.timedelta(days=400 + i)).isoformat(), 'k': 'quest', 'xp': 1000, 'n': 10} for i in range(300)]
+        state['bonus'] = [{'d': (today - datetime.timedelta(days=400 + i)).isoformat(), 'k': 'quest', 'xp': 1000, 'n': 10} for i in range(560)]
     Path(out).write_text(json.dumps(state), encoding='utf-8')
     print(f'{out}: {len(sets)} Sätze an {len({s["d"] for s in sets})} Tagen')
 

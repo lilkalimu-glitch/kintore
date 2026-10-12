@@ -36,9 +36,15 @@ Projektsprache ist Deutsch: Texte in der App, Code-Kommentare, Commit-Nachrichte
   Wochen-Serie) als Einträge in `state.bonus`. Die Farbe aus dem Rang-Pfad ist die Akzentfarbe und läuft
   über die CSS-Variablen `--acc*` und `:root[data-accent]` (in `ruhig.css` je ein Wert für Dunkel und Hell); Pink
   bleibt der Standard. Die Seltenheit folgt aus dem Rang der Station (`rarityOf`).
+  Seit 2.11 geht der Pfad bis Level 100 (Rang SSS ab 90). Abgeholt wird pro Level (`state.rewards.claimed`): Neue
+  Belohnungen deshalb nur auf Level ohne bisherige Station legen, sonst gälten sie bei schon abgeholten Stationen
+  sofort als abgeholt. Der Logik-Test "Rang-Pfad bis Level 100" prüft das.
 - Banner und Effekte fürs Profil zeichnet `js/art.js` nur mit SVG und CSS (keine Bilddateien). Die dunklen Banner
   nach den Vorlagen des Besitzers stehen in `js/banners.js`. Effekte haben die Teile `back`, `front` (ums Profilbild)
-  und `card` (über die ganze Profilkarte).
+  und `card` (über die ganze Profilkarte). In Dunkel und Hell sind Effekte flach in der Effekt-Farbe `--fx`
+  (`ruhig.css`, in Hell ein eigener Ton je Akzentfarbe), ohne Leuchten. Jeder neue Effekt braucht dort Regeln und
+  ein Standbild für "weniger Bewegung" (`app.css`, Block "Neue Effekte"). Rahmen können für Dunkel und Hell eine
+  eigene Verzierung und Lage des runden Bildes haben (`calm` in `FRAMES`, `js/look.js`).
 - XP pro Satz: Grundwert plus Gewichts-Bonus nach dem Maßstab der Übung in `js/scale.js` (typisches 1RM).
   Neue Übungen in der Startliste brauchen dort einen Eintrag, sonst greift die Schätzung über Name und Muskelgruppe.
 - Profil: `js/view-profile.js`, Daten in `state.profile` (Name, Motto, Bestwerte, was gezeigt wird). Das Profilbild
@@ -85,6 +91,8 @@ Projektsprache ist Deutsch: Texte in der App, Code-Kommentare, Commit-Nachrichte
   Seit 2.9 dazu: `neuzeichnen.py` (morph), `speichern.py` (nichts geht verloren, auch beim Umstieg von 2.8),
   `ablauf.py` (die wichtigsten Abläufe durchklicken) und `leerlauf.py` (in Ruhe keine Arbeit im Hauptthread).
   Seit 2.10: `kontrast.py` (Kontrast von Text und Symbolen nach Regel 2, gemessen auf dem echten Hintergrund).
+- Tempo auf dem Handy (seit 2.11): siebenmal auf die Version unten in den Einstellungen tippen (`js/tempo.js`).
+  Der Besitzer kann die Werte kopieren und schicken. Ändert keine Daten.
 - Jedes Design testen: Beispieldaten mit `--design hell`, `--design neon` oder `--design neon-alt` (Neon wie in 2.9,
   für den Bildvergleich mit alten Bildern) erzeugen, ohne gilt Dunkel.
 - Vor dem Push: keine Konsolenfehler, kein horizontales Scrollen, alle Ansichten aufrufbar, auch mit leeren Daten,
@@ -96,10 +104,15 @@ keine typografischen Anführungszeichen, keine rhetorischen Fragen, keine Werbes
 und keine Beteuerungen zum Datenschutz. Bereiche mit Bindestrich schreiben (`8-12 Wdh.`).
 
 ## Design
-Drei Designs zum Wählen in den Einstellungen (seit 2.10): Dunkel (Standard), Hell und Neon (der Look bis 2.9).
+Designs zum Wählen in den Einstellungen: Dunkel (Standard), Hell, Automatisch (seit 2.11) und Neon (der Look bis 2.9).
 - `js/theme.js` setzt das Design an `<html>`: `data-theme` (dunkel, hell, neon), `data-calm` bei Dunkel und Hell,
   `data-jp` für japanische Zeichen. `index.html` setzt es schon vor dem ersten Bild (localStorage `kintore:design`).
   Im Code fragen `isCalm()`, `isLight()` und `jpOn()` nach dem Design. Beim Wechsel zeichnet `redesign()` alles neu.
+  Seit 2.11 gibt es Automatisch (`theme: 'auto'`): `themeOf()` ist die Wahl, `shownTheme()` das gezeigte Design.
+  Hell oder Dunkel vom Handy kommt in der App über das Plugin `KintoreBars` (`system`, Ereignis `system`), im
+  Browser über `prefers-color-scheme` (`watchSystemTheme` in `js/native.js`). Ein offenes Fenster mit `rebuild` in
+  `openSheet` baut sich beim Wechsel neu auf. Das Startbild folgt dem Design (`setStart`, Startbilder in
+  `scripts/patch-android.py`: `KintoreLaunchLight`, `KintoreLaunchAuto`, ab Android 13 über `setSplashScreenTheme`).
 - `app.css` ist das Design Neon und liegt in der CSS-Ebene `neon`. `ruhig.css` legt Dunkel und Hell in der Ebene
   `ruhig` darüber: gilt nur mit `data-calm` und gewinnt immer, egal wie genau die Selektoren in `app.css` sind.
   Neues immer in beiden Dateien gestalten und in allen drei Designs ansehen.
@@ -112,12 +125,14 @@ Drei Designs zum Wählen in den Einstellungen (seit 2.10): Dunkel (Standard), He
   tragen, sonst zeigt der Standard keine Schriftzeichen.
 - Neon: Navy-Grund, Glas-Karten (seit 2.9 ohne Unschärfe, fast deckend), Neon-Glow in Pink, Cyan und Violett.
   Schriften: Adventor (Titel und Zahlen), Inter (Text). Knöpfe eckig mit abgeschrägten Ecken wie in einem
-  Game-Menü, ohne Glanz und ohne Leuchten darunter. Japanische Schriftzeichen nur als Deko (Neon-Schild,
+  Game-Menü, ohne Glanz und ohne Leuchten darunter. Grauer Text `--muted` ist seit 2.11 heller (#9CA7C4), Schrift auf
+  der Akzentfarbe dunkel (`--on-acc`), damit alles 4,5 : 1 hat. Japanische Schriftzeichen nur als Deko (Neon-Schild,
   Wasserzeichen in Seitenköpfen, Banner) und nur, wenn sie in den Einstellungen an sind (`jpMark()`).
 - Für alle Designs: keine bekannten Anime-Figuren, auch nicht aus Referenzbildern des Besitzers, nur Stimmung,
-  Farben und Motive übernehmen. Kein Glitzer-Symbol in Knöpfen. Knöpfe: `.btn-neon` (Hauptknopf), `.btn-ghost`,
-  `.btn-danger`, `.btn-dashed`. Alles Antippbare mindestens 44 px, besser 48 px (unsichtbar über `::after`
+  Farben und Motive übernehmen. Kein Glitzer-Symbol in Knöpfen. Knöpfe mit Text haben seit 2.11 nur bei
+  Hinzufügen (plus) und Löschen (Papierkorb) ein Symbol, alle anderen nur das Wort. Starten immer mit Wort.
+  Knöpfe: `.btn-neon` (Hauptknopf), `.btn-ghost`, `.btn-danger`, `.btn-dashed`. Alles Antippbare mindestens 44 px, besser 48 px (unsichtbar über `::after`
   vergrößern). Text mindestens 4,5 : 1 Kontrast, auch auf `--acc-soft` und über Effekten (`kontrast.py`).
 - App-Symbol: dunkles K aus Barlow auf Pink (`ICON_BG` in `scripts/patch-android.py`), Startbild mit Symbol und
-  Schriftzug KINTORE. Neu zeichnen mit `python3 scripts/build-icons.py`. Die Android-Leisten folgen dem Design
-  (`setBars` in `js/native.js`).
+  Schriftzug KINTORE (seit 2.11 auch hell mit dunkler Schrift). Neu zeichnen mit `python3 scripts/build-icons.py`.
+  Die Android-Leisten folgen dem Design (`setBars` in `js/native.js`).

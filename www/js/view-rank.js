@@ -1,4 +1,4 @@
-// Rang-Pfad: alle Ränge von E bis SS, Belohnungen zum Abholen und der eigene Look.
+// Rang-Pfad: alle Ränge von E bis SSS, Belohnungen zum Abholen und der eigene Look.
 import { app, D, views, actions, navigate, openSheet, once, watchOff, unwatchOff, setAnimations, sheetBox } from './core.js';
 import { esc, icon, int, clamp, hashStr, persistHtml, jpMark } from './util.js';
 import { maybeIntro } from './intro.js';
@@ -48,7 +48,7 @@ function hero(lv, look, ready) {
 function rankStrip(lv) {
   const idx = RANKS.findIndex((r) => r.id === lv.rank);
   const lit = idx + (lv.nextRank ? clamp(lv.rankProgress, 0, 1) : 0);
-  return `<section class="card rank-strip" style="--lit:${((lit / (RANKS.length - 1)) * 100).toFixed(2)}%" aria-label="Alle Ränge">
+  return `<section class="card rank-strip" style="--n:${RANKS.length};--lit:${((lit / (RANKS.length - 1)) * 100).toFixed(2)}%" aria-label="Alle Ränge">
     <div class="rs-line" aria-hidden="true"><i></i></div>
     ${RANKS.map((r, i) => `<button class="rs-item ${i < idx ? 'is-past' : i === idx ? 'is-now' : 'is-next'}" data-act="road-to" data-lv="${r.min}" aria-label="Rang ${r.id} ab Level ${r.min}">
       <span class="rs-emb">${emblem(r.id, 'hex', i === idx ? 42 : 32)}</span>
@@ -227,7 +227,7 @@ function lookCard(look) {
         <span class="lt-text"><small>${esc(TYPES[t].name)}</small><b class="${isJp(look[t].name) ? 'jp' : ''}">${esc(look[t].name)}</b></span>
       </button>`).join('')}
     </div>
-    <button class="btn-ghost btn-block look-profile" data-act="go" data-to="profil">${icon('user')} Profil ansehen</button>
+    <button class="btn-ghost btn-block look-profile" data-act="go" data-to="profil">Profil ansehen</button>
   </section>`;
 }
 
@@ -371,8 +371,12 @@ function setupRoad(main, entering) {
   app.ui.roadIntro = true;
   panning = true;
   road.classList.add('is-wait');
-  const dur = Math.min(1500, 700 + target * 0.35);
-  const queue = [...new Set([...inRange(target + w * NEAR[0], target + w * NEAR[1]), ...inRange(0, target)])];
+  // Seit 2.11 ist der Pfad bis Level 100 lang: Die Fahrt startet höchstens fünf Bildschirme vor dem Ziel,
+  // damit nicht der ganze Pfad vorab gezeichnet werden muss.
+  const from = Math.max(0, target - w * 5);
+  const dur = Math.min(1500, 700 + (target - from) * 0.35);
+  const queue = [...new Set([...inRange(target + w * NEAR[0], target + w * NEAR[1]), ...inRange(from, target)])];
+  scroller.scrollLeft = from;
   const t0 = performance.now();
   let started = false;
   const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -387,7 +391,7 @@ function setupRoad(main, entering) {
     const s0 = performance.now();
     const step = (now) => {
       const t = Math.min(1, (now - s0) / dur);
-      scroller.scrollLeft = target * ease(t);
+      scroller.scrollLeft = from + (target - from) * ease(t);
       if (t < 1) panFrame = requestAnimationFrame(step);
       else done();
     };
@@ -601,7 +605,7 @@ export function lookSheet(focusType = null) {
     </div>
     <p class="lead lk-lead" data-lead>${esc(lead(type))}</p>
     <div class="look-opts look-${type}" data-opts role="tabpanel">${optsHtml(ctx0)}</div>
-    <p class="lk-foot">Neues holst du im Rang-Pfad ab.</p>`);
+    <p class="lk-foot">Neues holst du im Rang-Pfad ab.</p>`, { rebuild: () => lookSheet(type) });
   const opts = el.querySelector('[data-opts]');
   const preview = el.querySelector('[data-preview]');
   watchBanners(opts, sheetBox());

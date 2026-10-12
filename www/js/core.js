@@ -90,6 +90,8 @@ export const onDesignChange = (fn) => designHooks.push(fn);
 export function redesign() {
   for (const fn of designHooks) fn();
   render({ entering: true });
+  // Ein offenes Fenster mit Texten oder Symbolen je nach Design baut sich neu auf (seit 2.11, für Automatisch).
+  sheet?.rebuild?.();
 }
 
 // Nichts soll springen, wenn eine Seite nach einer Änderung neu gezeichnet wird:
@@ -431,7 +433,8 @@ export function render({ entering = false } = {}) {
 let sheet = null;
 let popWaiters = [];
 
-export function openSheet(html, { onClose = null, focus = null, keep = false } = {}) {
+// rebuild: baut das Fenster nach einem Designwechsel neu auf (redesign), sonst bleibt der Inhalt stehen.
+export function openSheet(html, { onClose = null, focus = null, keep = false, rebuild = null } = {}) {
   const root = document.getElementById('sheet-root');
   const fresh = !sheet;
   const body = document.createElement('div');
@@ -457,7 +460,7 @@ export function openSheet(html, { onClose = null, focus = null, keep = false } =
     }
   }
   box.setAttribute('aria-label', body.querySelector('h2')?.textContent?.trim() || 'Fenster');
-  sheet = { onClose };
+  sheet = { onClose, rebuild };
   const target = focus ? body.querySelector(focus) : null;
   if (target) setTimeout(() => { target.focus(); target.select?.(); }, 60);
   else if (!keep) box.focus({ preventScroll: true });

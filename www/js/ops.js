@@ -55,7 +55,7 @@ export function migrate(raw) {
     s.settings.bgDim = DEFAULT_SETTINGS.bgDim;
     s.settings.bgBlur = DEFAULT_SETTINGS.bgBlur;
   }
-  if (!['dunkel', 'hell', 'neon'].includes(s.settings.theme)) s.settings.theme = DEFAULT_SETTINGS.theme;
+  if (!['dunkel', 'hell', 'auto', 'neon'].includes(s.settings.theme)) s.settings.theme = DEFAULT_SETTINGS.theme;
   s.settings.jp = s.settings.jp === true;
   s.meta = s.meta && typeof s.meta === 'object' ? s.meta : {};
   // Gesehene Einführungen (seit 2.7), zum Beispiel { profil: true, rang: true }.

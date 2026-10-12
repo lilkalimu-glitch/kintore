@@ -25,7 +25,7 @@ const XP_K = 55;
 export const RANKS = [
   { min: 1, id: 'E', color: '#8591B0' }, { min: 6, id: 'D', color: '#5BFFB0' }, { min: 12, id: 'C', color: '#3CF0FF' },
   { min: 20, id: 'B', color: '#9B6BFF' }, { min: 35, id: 'A', color: '#FF4FA3' }, { min: 50, id: 'S', color: '#FFA586' },
-  { min: 70, id: 'SS', color: '#FFE45C' },
+  { min: 70, id: 'SS', color: '#FFE45C' }, { min: 90, id: 'SSS', color: '#FF4255' },
 ];
 export const rankOf = (level) => [...RANKS].reverse().find((r) => level >= r.min).id;
 export const rankById = (id) => RANKS.find((r) => r.id === id) || RANKS[0];

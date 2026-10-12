@@ -24,6 +24,8 @@ export const TYPE_ORDER = ['color', 'title', 'frame', 'sign', 'banner', 'effect'
 export const APP_TYPES = ['color', 'title', 'frame', 'sign'];
 
 // lv 1 = von Anfang an da. Ränge schalten immer einen neuen Rahmen frei.
+// Neue Belohnungen nur auf Level ohne bisherige Station, sonst gälten sie bei schon abgeholten Stationen sofort als
+// abgeholt (abgeholt wird pro Level, `state.rewards.claimed`).
 export const ITEMS = [
   { type: 'color', id: 'pink', get name() { return isCalm() ? 'Pink' : 'Neon Pink'; }, hex: '#FF4FA3', lv: 1 },
   { type: 'title', id: 'rookie', name: 'Rookie', lv: 1 },
@@ -33,11 +35,13 @@ export const ITEMS = [
   { type: 'sign', id: 'kraft', name: 'KRAFT', lv: 1 },
   { type: 'banner', id: 'nacht', name: 'Nachtlicht', lv: 1 },
   { type: 'effect', id: 'none', name: 'Kein Effekt', lv: 1 },
+  { type: 'effect', id: 'schimmer', name: 'Schimmer', lv: 1 },
   { type: 'title', id: 'stammgast', name: 'Stammgast', lv: 2 },
   { type: 'banner', id: 'raster', name: 'Neon-Raster', lv: 3 },
   { type: 'color', id: 'eis', name: 'Eisblau', hex: '#58B8FF', lv: 4 },
   { type: 'effect', id: 'glitzer', name: 'Glitzer', lv: 5 },
   { type: 'frame', id: 'double', name: 'Doppelt', lv: 6 },
+  { type: 'effect', id: 'puls', name: 'Puls', lv: 7 },
   { type: 'title', id: 'grinder', name: 'Grinder', lv: 8 },
   { type: 'banner', id: 'skyline', name: 'Skyline', lv: 9 },
   { type: 'sign', id: 'konjo', name: '根性', de: 'Biss', lv: 10 },
@@ -55,39 +59,72 @@ export const ITEMS = [
   { type: 'banner', id: 'panel', name: 'Manga-Panel', lv: 22 },
   { type: 'title', id: 'prjaeger', name: 'PR-Jäger', lv: 23 },
   { type: 'banner', id: 'synthwave', name: 'Synthwave', lv: 24 },
+  { type: 'effect', id: 'kreide', name: 'Kreidestaub', lv: 25 },
   { type: 'sign', id: 'tanren', name: '鍛錬', de: 'Disziplin', lv: 26 },
   { type: 'sign', id: 'disziplin', name: 'DISZIPLIN', lv: 27 },
   { type: 'banner', id: 'himmelslicht', name: 'Himmelslicht', lv: 28 },
   { type: 'color', id: 'sunset', name: 'Sunset', hex: '#FF7A45', lv: 29 },
+  { type: 'title', id: 'hantelheld', name: 'Hantelheld', lv: 30 },
+  { type: 'effect', id: 'orbit', name: 'Orbit', lv: 31 },
   { type: 'title', id: 'stahlwille', name: 'Stahlwille', lv: 32 },
   { type: 'banner', id: 'finsternis', name: 'Finsternis', lv: 33 },
+  { type: 'sign', id: 'fokus', name: 'FOKUS', lv: 34 },
   { type: 'frame', id: 'crest', name: 'Wappen', lv: 35 },
+  { type: 'title', id: 'kraftwerk', name: 'Kraftwerk', lv: 36 },
   { type: 'banner', id: 'regen', name: 'Neon-Regen', lv: 37 },
+  { type: 'effect', id: 'welle', name: 'Schockwelle', lv: 38 },
   { type: 'title', id: 'ronin', name: 'Gym-Ronin', lv: 39 },
   { type: 'banner', id: 'auge', name: 'Das Auge', lv: 40 },
   { type: 'effect', id: 'funken', name: 'Funken', lv: 41 },
+  { type: 'sign', id: 'wille', name: 'WILLE', lv: 42 },
   { type: 'sign', id: 'fukutsu', name: '不屈', de: 'Unbeugsam', lv: 43 },
   { type: 'sign', id: 'unbeugsam', name: 'UNBEUGSAM', lv: 44 },
   { type: 'banner', id: 'aurora', name: 'Polarlicht', lv: 45 },
+  { type: 'title', id: 'heber', name: 'Gewichtheber', lv: 46 },
   { type: 'color', id: 'crimson', name: 'Crimson', hex: '#FF3358', lv: 47 },
   { type: 'banner', id: 'unterwelt', name: 'Unterwelt', lv: 48 },
   { type: 'effect', id: 'blitze', name: 'Blitze', lv: 49 },
   { type: 'frame', id: 'wings', name: 'Flügel', lv: 50 },
+  { type: 'title', id: 'unaufhaltsam', name: 'Unaufhaltsam', lv: 51 },
   { type: 'effect', id: 'flammen', name: 'Neon-Flammen', lv: 52 },
+  { type: 'effect', id: 'aura', name: 'Aura', lv: 53 },
   { type: 'title', id: 'sensei', name: 'Sensei', lv: 54 },
+  { type: 'sign', id: 'stahl', name: 'STAHL', lv: 55 },
   { type: 'banner', id: 'inferno', name: 'Inferno', lv: 56 },
+  { type: 'title', id: 'biest', name: 'Biest', lv: 57 },
   { type: 'sign', id: 'kakusei', name: '覚醒', de: 'Erwachen', lv: 58 },
   { type: 'sign', id: 'erwachen', name: 'ERWACHEN', lv: 59 },
   { type: 'banner', id: 'horizont', name: 'Schwarzes Loch', lv: 60 },
+  { type: 'color', id: 'tuerkis', name: 'Türkis', hex: '#2EE6D6', lv: 61 },
   { type: 'title', id: 'titan', name: 'Titan', lv: 62 },
+  { type: 'sign', id: 'hunger', name: 'HUNGER', lv: 63 },
   { type: 'effect', id: 'sterne', name: 'Sternenregen', lv: 64 },
   { type: 'banner', id: 'feuersturm', name: 'Feuersturm', lv: 65 },
   { type: 'color', id: 'gold', name: 'Gold', hex: '#FFC93D', lv: 66 },
+  { type: 'title', id: 'halbgott', name: 'Halbgott', lv: 67 },
   { type: 'banner', id: 'kosmos', name: 'Kosmos', lv: 68 },
   { type: 'sign', id: 'grenzenlos', name: 'GRENZENLOS', lv: 69 },
   { type: 'frame', id: 'crown', name: 'Krone', lv: 70 },
   { type: 'title', id: 'endgegner', name: 'Endgegner', lv: 70 },
   { type: 'sign', id: 'genkai', name: '限界突破', de: 'Grenzen sprengen', lv: 70 },
+  // Level 71-100 und der Rang SSS (seit 2.11).
+  { type: 'title', id: 'unsterblich', name: 'Unsterblich', lv: 72 },
+  { type: 'banner', id: 'gipfel', name: 'Gipfel', lv: 74 },
+  { type: 'sign', id: 'tetsujin', name: '鉄人', de: 'Eisenmensch', lv: 75 },
+  { type: 'sign', id: 'eisern', name: 'EISERN', lv: 76 },
+  { type: 'title', id: 'koloss', name: 'Koloss', lv: 78 },
+  { type: 'title', id: 'legende', name: 'Legende', lv: 82 },
+  { type: 'sign', id: 'muteki', name: '無敵', de: 'Unbesiegbar', lv: 84 },
+  { type: 'sign', id: 'unbesiegbar', name: 'UNBESIEGBAR', lv: 85 },
+  { type: 'banner', id: 'tiefsee', name: 'Tiefsee', lv: 86 },
+  { type: 'effect', id: 'nova', name: 'Supernova', lv: 88 },
+  { type: 'frame', id: 'halo', name: 'Heiligenschein', lv: 90 },
+  { type: 'title', id: 'mythos', name: 'Mythos', lv: 90 },
+  { type: 'title', id: 'eisengott', name: 'Eisengott', lv: 94 },
+  { type: 'sign', id: 'tatsujin', name: '達人', de: 'Meister', lv: 97 },
+  { type: 'sign', id: 'meister', name: 'MEISTER', lv: 98 },
+  { type: 'title', id: 'grossmeister', name: 'Großmeister', lv: 100 },
+  { type: 'color', id: 'platin', name: 'Platin', hex: '#E4EAF2', lv: 100 },
 ];
 
 export const DEFAULT_LOOK = { color: 'pink', title: 'rookie', frame: 'hex', sign: 'kraft', banner: 'nacht', effect: 'none' };
@@ -100,7 +137,7 @@ export const RARITIES = [
   { id: 'e', name: 'Episch', jp: 'エピック' },
   { id: 'l', name: 'Legendär', jp: 'レジェンド' },
 ];
-const RARITY_OF_RANK = { E: 'n', D: 'n', C: 's', B: 's', A: 'e', S: 'l', SS: 'l' };
+const RARITY_OF_RANK = { E: 'n', D: 'n', C: 's', B: 's', A: 'e', S: 'l', SS: 'l', SSS: 'l' };
 export const itemRank = (item) => rankOf(Math.max(1, item?.lv || 1));
 export const rarityOf = (item) => RARITIES.find((r) => r.id === RARITY_OF_RANK[itemRank(item)]) || RARITIES[0];
 export const rarityIndex = (item) => RARITIES.indexOf(rarityOf(item));
@@ -168,6 +205,16 @@ function hexList(cx, cy, r) {
   return out;
 }
 const hexPts = (cx, cy, r) => pts(hexList(cx, cy, r));
+// Regelmäßiges Achteck mit flacher Oberkante.
+function octList(cx, cy, r) {
+  const out = [];
+  for (let i = 0; i < 8; i++) {
+    const a = ((-112.5 + i * 45) * Math.PI) / 180;
+    out.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]);
+  }
+  return out;
+}
+const octPts = (cx, cy, r) => pts(octList(cx, cy, r));
 function starPts(cx, cy, r1, r2, n) {
   const out = [];
   for (let i = 0; i < n * 2; i++) {
@@ -196,11 +243,15 @@ const FRAMES = {
       <path class="f-line" d="M50 0 50 13M99 50 82 50M50 100 50 87M1 50 18 50M86 17 75 28M86 83 75 72M14 83 25 72M14 17 25 28"/>
       `,
     main: hexMain(50, 50, 37),
+    // Dunkel und Hell: Achteck um das runde Bild, mit Steinen an den Ecken, ohne Linien ins Bild.
+    calm: { deco: () => `<polygon class="f-soft" points="${octPts(50, 50, 49)}"/>${octList(50, 50, 49).map(([x, y]) => `<circle class="f-fill" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6"/>`).join('')}` },
   },
   crest: {
     cy: 47, fs: 0.92,
     main: { path: SHIELD, box: [14, 8, 72, 88] },
     over: () => '<path class="f-line" d="M23 17H77V46C77 64 65 77 50 86C35 77 23 64 23 46Z"/>',
+    // Dunkel und Hell: das runde Bild sitzt im Wappen, die Spitze schaut unten heraus.
+    calm: { cy: 42, r: 26, deco: () => `<path class="f-soft" d="${SHIELD}"/>` },
   },
   wings: {
     cy: 52, fs: 0.78,
@@ -211,6 +262,12 @@ const FRAMES = {
     cy: 59, fs: 0.78,
     deco: () => '<path class="f-fill" d="M29 31 26 10 38 20 50 4 62 20 74 10 71 31Z"/><circle class="f-fill" cx="26" cy="10" r="3.4"/><circle class="f-fill" cx="50" cy="4" r="3.4"/><circle class="f-fill" cx="74" cy="10" r="3.4"/>',
     main: hexMain(50, 60, 31),
+  },
+  // Rang SSS (seit 2.11): ein Ring über dem Kopf, mit kurzen Strahlen.
+  halo: {
+    cy: 60, fs: 0.78,
+    deco: () => '<path class="f-line" d="M22 13 15 9M78 13 85 9M36 6 34 1M64 6 66 1"/><path class="f-fill" fill-rule="evenodd" d="M50 4C66 4 79 8.5 79 14S66 24 50 24 21 19.5 21 14 34 4 50 4ZM50 9C37 9 27.5 11.3 27.5 14S37 19 50 19 72.5 16.7 72.5 14 63 9 50 9Z"/>',
+    main: hexMain(50, 61, 31),
   },
 };
 const frameOf = (id) => FRAMES[id] || FRAMES.hex;
@@ -244,7 +301,7 @@ export function emblem(rankId, frameId = 'hex', size = 60, cls = '', { fx = fals
   const f = frameOf(frameId);
   const r = rankById(rankId);
   const keep = fx ? ` data-persist="emb-${hashStr([r.id, frameId, size, cls].join('|'))}"` : '';
-  return `<span class="emb rank-${esc(r.id)} ${r.id.length > 1 ? 'emb-wide' : ''} ${cls}" style="--es:${size}px;--cy:${f.cy};--fs:${f.fs}" aria-hidden="true"${keep}>${fx ? frameSparks(frameId) : ''}<svg viewBox="0 0 100 100">${frameSvg(f)}${fx ? frameSheen(f, frameId) : ''}</svg><b>${esc(r.id)}</b></span>`;
+  return `<span class="emb rank-${esc(r.id)} ${r.id.length > 2 ? 'emb-wide emb-wide3' : r.id.length > 1 ? 'emb-wide' : ''} ${cls}" style="--es:${size}px;--cy:${f.cy};--fs:${f.fs}" aria-hidden="true"${keep}>${fx ? frameSparks(frameId) : ''}<svg viewBox="0 0 100 100">${frameSvg(f)}${fx ? frameSheen(f, frameId) : ''}</svg><b>${esc(r.id)}</b></span>`;
 }
 
 // Nur der Rahmen, ohne Buchstaben (für kleine Vorschauen).
@@ -296,10 +353,13 @@ function calmAvatar({ frameId, rankId, img, initial, size, deco, cls, effect }) 
   const ini = initialsOf(initial);
   const fx = effectParts(effect);
   const frameIt = itemOf('frame', frameId);
-  const [bx, by, bw, bh] = f.main.box;
+  // Eigene Lage des runden Bildes und eigene Verzierung für Dunkel und Hell, wenn der Rahmen sie hat.
+  const c = f.calm || {};
+  const [bx, by, bw, bh0] = f.main.box;
   const cx = bx + bw / 2;
-  const cy = by + bh / 2;
-  const r = bh / 2;
+  const cy = c.cy ?? by + bh0 / 2;
+  const r = c.r ?? bh0 / 2;
+  const bh = r * 2;
   const s = size / bh;
   const w = 100 * s;
   const left = size / 2 - cx * s;
@@ -310,9 +370,9 @@ function calmAvatar({ frameId, rankId, img, initial, size, deco, cls, effect }) 
   return `<span class="av av-calm rank-${esc(rankId)} fr-${frameIt ? rarityOf(frameIt).id : 'n'} ${cls}" style="--av:${size}px" aria-hidden="true" data-persist="av-${keep}">${fx.back}
     <svg class="av-svg" viewBox="0 0 100 100" style="width:${w.toFixed(1)}px;height:${w.toFixed(1)}px;left:${left.toFixed(1)}px;top:${top.toFixed(1)}px">
       <defs><clipPath id="${id}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath></defs>
-      ${deco && f.deco && frameId !== 'double' ? f.deco() : ''}
+      ${deco && frameId !== 'double' ? (c.deco || f.deco)?.() || '' : ''}
       <circle class="av-base" cx="${cx}" cy="${cy}" r="${r}"/>
-      ${img ? `<g clip-path="url(#${id})"><image href="${esc(img)}" x="${bx}" y="${by}" width="${bw}" height="${bh}" preserveAspectRatio="xMidYMid slice"/></g>` : ''}
+      ${img ? `<g clip-path="url(#${id})"><image href="${esc(img)}" x="${cx - r}" y="${cy - r}" width="${bh}" height="${bh}" preserveAspectRatio="xMidYMid slice"/></g>` : ''}
       ${deco ? `<circle class="av-ring" cx="${cx}" cy="${cy}" r="${(r + gap).toFixed(2)}"/>` : ''}
       ${deco && frameId === 'double' ? `<circle class="av-ring2" cx="${cx}" cy="${cy}" r="${(r + gap * 2.6).toFixed(2)}"/>` : ''}
     </svg>${img ? '' : ini ? `<b class="av-ini ${ini.length > 1 ? 'av-two' : ''}">${esc(ini)}</b>` : `<b class="av-ini av-none">${icon('user')}</b>`}${fx.front}</span>`;
@@ -320,7 +380,10 @@ function calmAvatar({ frameId, rankId, img, initial, size, deco, cls, effect }) 
 
 const accentStyle = (item) => (item.hex ? `--sw:${isCalm() ? calmAccent(item.id) : item.hex}` : '');
 
-const EFFECT_ICONS = { none: 'x', glitzer: 'sparkle', ring: 'target', manga: 'bolt', funken: 'sparkle', blitze: 'bolt', flammen: 'flame', sterne: 'star' };
+const EFFECT_ICONS = {
+  none: 'x', glitzer: 'sparkle', ring: 'target', manga: 'bolt', funken: 'sparkle', blitze: 'bolt', flammen: 'flame', sterne: 'star',
+  schimmer: 'sparkle', puls: 'activity', kreide: 'dumbbell', orbit: 'orbit', welle: 'waves', aura: 'sun', nova: 'star',
+};
 
 // Kleine Vorschau einer Belohnung (Inhalt der Kugel).
 export function itemOrb(item) {

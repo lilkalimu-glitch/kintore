@@ -271,7 +271,7 @@ function editSheet() {
     <div class="pf-edit-top">
       <span class="pf-edit-av" data-av>${myAvatar({ size: 64, effect: 'none' })}</span>
       <div class="pf-edit-btns">
-        <label class="btn-ghost small">${icon('image')} Bild wählen<input type="file" accept="image/*" data-av-file class="visually-hidden"></label>
+        <label class="btn-ghost small">Bild wählen<input type="file" accept="image/*" data-av-file class="visually-hidden"></label>
         ${avatarUrl() ? '<button class="btn-ghost small" data-av-del>Entfernen</button>' : ''}
       </div>
     </div>

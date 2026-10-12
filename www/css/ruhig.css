@@ -117,20 +117,36 @@
 :root[data-calm][data-accent="sunset"] { --acc: #FA7A47; --acc-rgb: 250, 122, 71; --acc-text: #FC7C49; --acc-soft: rgba(250, 122, 71, 0.16); }
 :root[data-calm][data-accent="crimson"] { --acc: #FD717C; --acc-rgb: 253, 113, 124; --acc-text: #FF7680; --acc-soft: rgba(253, 113, 124, 0.16); }
 :root[data-calm][data-accent="gold"] { --acc: #ECBD4A; --acc-rgb: 236, 189, 74; --acc-text: #ECBD4A; --acc-soft: rgba(236, 189, 74, 0.16); }
+:root[data-calm][data-accent="tuerkis"] { --acc: #3CCFC2; --acc-rgb: 60, 207, 194; --acc-text: #3CCFC2; --acc-soft: rgba(60, 207, 194, 0.16); }
+:root[data-calm][data-accent="platin"] { --acc: #C5CEDA; --acc-rgb: 197, 206, 218; --acc-text: #C5CEDA; --acc-soft: rgba(197, 206, 218, 0.16); }
 :root[data-theme="hell"][data-accent="eis"] { --acc: #006FB1; --acc-rgb: 0, 111, 177; --acc-text: #0465A1; --acc-soft: rgba(0, 111, 177, 0.1); }
 :root[data-theme="hell"][data-accent="toxic"] { --acc: #007D25; --acc-rgb: 0, 125, 37; --acc-text: #027121; --acc-soft: rgba(0, 125, 37, 0.1); }
 :root[data-theme="hell"][data-accent="uv"] { --acc: #804BCC; --acc-rgb: 128, 75, 204; --acc-text: #7943C3; --acc-soft: rgba(128, 75, 204, 0.1); }
 :root[data-theme="hell"][data-accent="sunset"] { --acc: #BD3D00; --acc-rgb: 189, 61, 0; --acc-text: #AD3802; --acc-soft: rgba(189, 61, 0, 0.1); }
 :root[data-theme="hell"][data-accent="crimson"] { --acc: #C42843; --acc-rgb: 196, 40, 67; --acc-text: #BA1B3B; --acc-soft: rgba(196, 40, 67, 0.1); }
 :root[data-theme="hell"][data-accent="gold"] { --acc: #8A5800; --acc-rgb: 138, 88, 0; --acc-text: #875601; --acc-soft: rgba(138, 88, 0, 0.1); }
+:root[data-theme="hell"][data-accent="tuerkis"] { --acc: #007A72; --acc-rgb: 0, 122, 114; --acc-text: #00716A; --acc-soft: rgba(0, 122, 114, 0.1); }
+:root[data-theme="hell"][data-accent="platin"] { --acc: #4B5566; --acc-rgb: 75, 85, 102; --acc-text: #454E5E; --acc-soft: rgba(75, 85, 102, 0.1); }
+/* Farbe der Effekte im Profil (seit 2.11): in Dunkel die Akzentfarbe, in Hell ein Ton zwischen der hellen und der
+   dunklen Akzentfarbe. Effekte sind Deko, kein Text: auf Weiß sollen sie kräftig wirken, aber nicht schwer. */
+:root[data-calm] { --fx: var(--acc); --fx-core: rgba(255, 255, 255, 0.78); --fx-line: rgba(255, 255, 255, 0.5); }
+:root[data-theme="hell"] { --fx: #DC4C8C; --fx-core: rgba(255, 255, 255, 0.9); --fx-line: rgba(21, 23, 28, 0.32); }
+:root[data-theme="hell"][data-accent="eis"] { --fx: #268ED2; }
+:root[data-theme="hell"][data-accent="toxic"] { --fx: #22A650; }
+:root[data-theme="hell"][data-accent="uv"] { --fx: #996AE6; }
+:root[data-theme="hell"][data-accent="sunset"] { --fx: #DC5C24; }
+:root[data-theme="hell"][data-accent="crimson"] { --fx: #E04C60; }
+:root[data-theme="hell"][data-accent="gold"] { --fx: #C99A2A; }
+:root[data-theme="hell"][data-accent="tuerkis"] { --fx: #1EA59A; }
+:root[data-theme="hell"][data-accent="platin"] { --fx: #8891A0; }
 
 /* Ränge und Seltenheit ruhig, im hellen Design dunkler für genug Kontrast */
 [data-calm] .rank-E { --rc: #A0ACBE; } [data-calm] .rank-D { --rc: #47C58C; } [data-calm] .rank-C { --rc: #3CBFD6; }
 [data-calm] .rank-B { --rc: #B298F9; } [data-calm] .rank-A { --rc: #F083AC; } [data-calm] .rank-S { --rc: #F28C5C; }
-[data-calm] .rank-SS { --rc: #D9B23A; }
+[data-calm] .rank-SS { --rc: #D9B23A; } [data-calm] .rank-SSS { --rc: #F2707A; }
 [data-theme="hell"] .rank-E { --rc: #596475; } [data-theme="hell"] .rank-D { --rc: #007D41; } [data-theme="hell"] .rank-C { --rc: #007A8E; }
 [data-theme="hell"] .rank-B { --rc: #6C4AB3; } [data-theme="hell"] .rank-A { --rc: #A52F64; } [data-theme="hell"] .rank-S { --rc: #A83A00; }
-[data-theme="hell"] .rank-SS { --rc: #805E00; }
+[data-theme="hell"] .rank-SS { --rc: #805E00; } [data-theme="hell"] .rank-SSS { --rc: #B3262F; }
 [data-calm] .rar-n, [data-calm] .rw-n { --rar: #A0ACBE; --rar-rgb: 160, 172, 190; }
 [data-calm] .rar-s, [data-calm] .rw-s { --rar: #59AAF8; --rar-rgb: 89, 170, 248; }
 [data-calm] .rar-e, [data-calm] .rw-e { --rar: #B298F9; --rar-rgb: 178, 152, 249; }
@@ -470,6 +486,7 @@
 [data-calm] .emb .f-fill { fill: var(--rc); opacity: 0.9; }
 [data-calm] .emb b { padding-right: 0; font: 600 calc(var(--es) * 0.42 * var(--fs))/1 var(--font-display); color: var(--rc); text-shadow: none; }
 [data-calm] .emb.emb-wide b { font-size: calc(var(--es) * 0.32 * var(--fs)); }
+[data-calm] .emb.emb-wide3 b { font-size: calc(var(--es) * 0.25 * var(--fs)); }
 [data-calm] .emb-icon { --rc: var(--text-2); }
 [data-calm] .emb-icon .f-main { fill: none; }
 [data-calm] .emb-fx { display: none; }
@@ -602,6 +619,38 @@
 [data-calm] .pf-badge.b-streak .ic, [data-calm] .pf-badge.b-pr .ic { color: var(--acc-text); }
 /* Effekte über der ganzen Profilkarte nur halb so stark, damit Text darüber lesbar bleibt (Regel 2) */
 [data-calm] .pf-cfx, [data-calm] .lp-cfx { opacity: 0.5; }
+/* Effekte in Dunkel und Hell (seit 2.11): flach in der Effekt-Farbe --fx, ohne Leuchten und ohne weiße Glanzlichter.
+   So sehen sie auf Weiß genauso klar aus wie auf Dunkel. Formen und Bewegung bleiben wie in Neon. */
+[data-calm] .gl, [data-calm] .cg { background: var(--fx); }
+[data-calm] .ef-ring .rg1 { border-color: var(--fx); box-shadow: none; }
+[data-calm] .ef-ring .rg2 { border-color: color-mix(in srgb, var(--fx) 60%, transparent); }
+[data-calm] .cr { border-color: var(--fx); box-shadow: none; }
+[data-calm] .ef-manga line, [data-calm] .cl line { stroke: var(--fx-line); }
+[data-calm] .ef-manga line { opacity: 1; }
+[data-calm] .cl { opacity: 0.3; }
+[data-calm] .fs, [data-calm] .fe, [data-calm] .cs { background: var(--fx); box-shadow: none; }
+[data-calm] .bz-g { stroke: color-mix(in srgb, var(--fx) 28%, transparent); }
+[data-calm] .bz-c { stroke: var(--fx); }
+[data-calm] .bz, [data-calm] .cb { opacity: 0.8; }
+[data-calm] .bz-glow { display: none; }
+[data-calm] .cb-edge { box-shadow: inset 0 0 0 2px var(--fx); }
+[data-calm] .ft { background: var(--fx); }
+[data-calm] .ft::before { background: var(--fx-core); }
+[data-calm] .ft-glow, [data-calm] .cf-glow { display: none; }
+[data-calm] .cf { background: var(--fx); opacity: 0.4; }
+[data-calm] .tw { background: var(--fx); clip-path: polygon(50% 0, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0 50%, 42% 42%); }
+[data-calm] .ss { background: linear-gradient(90deg, var(--fx), transparent); }
+[data-calm] .sh { background: var(--fx); box-shadow: none; }
+[data-calm] .pz { border-color: var(--fx); box-shadow: none; }
+[data-calm] .pz-ecg polyline { stroke: var(--fx); }
+[data-calm] .kd, [data-calm] .kp { background: radial-gradient(closest-side, var(--fx-line), transparent); }
+[data-calm] .ob, [data-calm] .obc { border-color: color-mix(in srgb, var(--fx) 55%, transparent); }
+[data-calm] .ob-dot, [data-calm] .nv-d { background: var(--fx); box-shadow: none; }
+[data-calm] .wv, [data-calm] .wvc, [data-calm] .nvc, [data-calm] .nv-ring { border-color: var(--fx); box-shadow: none; }
+[data-calm] .aux-glow { display: none; }
+[data-calm] .aux polygon { fill: color-mix(in srgb, var(--fx) 30%, transparent); }
+[data-calm] .auc polygon { fill: var(--fx); }
+[data-calm] .nv-flare path { fill: color-mix(in srgb, var(--fx) 40%, transparent); }
 [data-calm] .pf-look { margin: 16px 0 0; padding: 14px 0 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; }
 [data-calm] .pf-look-h { padding: 0; margin-bottom: 10px; font-size: 15px; font-weight: 600; color: var(--text); }
 [data-calm] .pf-look-h small { font-size: 13px; color: var(--muted); }

@@ -1,7 +1,7 @@
 // Einstellungen: Pausen-Timer, Training, Hintergrund, Backup und Import.
 import { app, D, views, actions, render, commit, openSheet, closeSheet, replaceState, once, redesign } from './core.js';
 import { esc, icon, kg, int, parseNum, today, fmtDate, fmtClock, jpMark } from './util.js';
-import { jpOn, THEMES, themeOf, applyTheme } from './theme.js';
+import { jpOn, THEMES, themeOf, applyTheme, isLight } from './theme.js';
 import { exportJson, importBackupText, importFitNotes, migrate } from './ops.js';
 import { readFitNotes } from './fitnotes.js';
 import { saveTextFile, notificationsAllowed, isNative } from './native.js';
@@ -54,7 +54,7 @@ views.einstellungen = {
 
     <h2 class="group-title">Aussehen</h2>
     <section class="card"><ul class="set-list">
-      <li class="design-row"><span class="grow">Design</span>
+      <li class="design-row"><span class="grow">Design${themeOf(st) === 'auto' ? `<small>Folgt deinem Handy, gerade ${isLight() ? 'Hell' : 'Dunkel'}</small>` : ''}</span>
         <div class="design-pick" role="radiogroup" aria-label="Design">${THEMES.map((t) => {
           const on = themeOf(st) === t.id;
           return `<button class="dp ${on ? 'is-on' : ''}" role="radio" aria-checked="${on}" data-act="set-theme" data-v="${t.id}"><span class="dp-prev dp-${t.id}" aria-hidden="true"><i></i><i></i><i></i></span><span class="dp-name">${on ? icon('check') : ''}${esc(t.name)}</span></button>`;
@@ -77,7 +77,7 @@ views.einstellungen = {
       <li><button class="row-btn" data-act="reset">${icon('trash')}<span class="grow">Alle Daten löschen</span></button></li>
     </ul></section>
 
-    <div class="about">
+    <div class="about" data-act="about-tap">
       <b>KINTORE${jpOn() ? ' <span class="jp">筋トレ</span>' : ''}</b>
       Version ${esc(VERSION)}
     </div>`;
@@ -118,7 +118,9 @@ views.einstellungen = {
 actions['set-theme'] = (ds) => {
   if (themeOf(app.state.settings) === ds.v) return;
   commit((s) => { s.settings.theme = ds.v; }, { render: false, derive: 'keep' });
+  // Automatisch kann genauso aussehen wie vorher (Handy auf Dunkel), dann reicht es, die Seite neu zu zeichnen.
   if (applyTheme(app.state.settings)) redesign();
+  else render();
 };
 
 function paintBgPreview(main) {

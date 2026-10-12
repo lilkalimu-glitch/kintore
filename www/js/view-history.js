@@ -56,7 +56,7 @@ function dayPanel(s, d, date) {
       <div><span>Rekorde</span><b>${sum.prs}</b></div>
     </div>
     ${blocks}
-    <button class="btn-ghost btn-block" style="margin-top:12px" data-act="backfill" data-d="${date}">${icon('edit')} Sätze hinzufügen</button>
+    <button class="btn-ghost btn-block" style="margin-top:12px" data-act="backfill" data-d="${date}">${icon('plus')} Sätze hinzufügen</button>
   </section>`;
 }
 

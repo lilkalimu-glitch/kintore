@@ -102,7 +102,7 @@ function questCard(s, d) {
       ${rotationTrack(s, 'off')}
       ${questGoalRow(goal)}
       <p class="rest-msg">Heute ist Pause.${q.tpl ? ` Danach kommt ${esc(q.tpl.name)}.` : ''}</p>
-      ${goal.done ? '' : `<button class="btn-neon btn-block" data-act="go" data-to="koerper">${icon('scale')} Gewicht eintragen</button>`}
+      ${goal.done ? '' : `<button class="btn-neon btn-block" data-act="go" data-to="koerper">Gewicht eintragen</button>`}
       ${q.tpl ? `<button class="btn-ghost btn-block ${goal.done ? '' : 'mt'}" data-act="start-session" data-tpl="${esc(q.tpl.id)}">Trotzdem ${esc(q.tpl.name)} trainieren</button>` : ''}
     </section>`;
   }
@@ -120,7 +120,7 @@ function questCard(s, d) {
     ${rotationTrack(s, q.tpl.id)}
     ${targetsList(s, d, q.tpl)}
     ${questGoalRow(goal)}
-    <button class="btn-neon btn-block" data-act="start-session" data-tpl="${esc(q.tpl.id)}">${icon('play', 'ic-fill')} ${esc(q.tpl.name)} starten</button>
+    <button class="btn-neon btn-block" data-act="start-session" data-tpl="${esc(q.tpl.id)}">${esc(q.tpl.name)} starten</button>
   </section>`;
 }
 

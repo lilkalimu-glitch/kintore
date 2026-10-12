@@ -18,6 +18,8 @@ OWN_RES = os.path.join(ROOT, "android-res")
 
 # Grund beim Start und Farbe der Leisten, bis die App ihr Design setzt (Dunkel, seit 2.10).
 BG = "#0E0F13"
+# Grund im Design Hell. Startbild für Hell und Automatisch (seit 2.11), siehe KintoreLaunchLight und -Auto.
+BG_LIGHT = "#F3F4F6"
 ICON_BG = "#F571A6"
 
 
@@ -58,6 +60,15 @@ def adaptive_icon():
         '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n'
         f'    <color name="kintore_bg">{BG}</color>\n'
         f'    <color name="kintore_icon_bg">{ICON_BG}</color>\n'
+        f'    <color name="kintore_bg_light">{BG_LIGHT}</color>\n'
+        f'    <color name="kintore_bg_auto">{BG_LIGHT}</color>\n'
+        '</resources>\n',
+    )
+    # Automatisch: im Dunkelmodus des Handys dunkel.
+    write(
+        os.path.join(RES, "values-night", "kintore_colors.xml"),
+        '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n'
+        f'    <color name="kintore_bg_auto">{BG}</color>\n'
         '</resources>\n',
     )
     print("Adaptives Icon gesetzt")
@@ -78,7 +89,65 @@ def splash():
         '    <item android:gravity="center" android:drawable="@drawable/kintore_splash_logo"/>\n'
         '</layer-list>\n',
     )
+    for name, color, logo in (("splash_light.xml", "kintore_bg_light", "kintore_splash_logo_light"),):
+        write(
+            os.path.join(RES, "drawable", name),
+            '<?xml version="1.0" encoding="utf-8"?>\n'
+            '<layer-list xmlns:android="http://schemas.android.com/apk/res/android">\n'
+            f'    <item android:drawable="@color/{color}"/>\n'
+            f'    <item android:gravity="center" android:drawable="@drawable/{logo}"/>\n'
+            '</layer-list>\n',
+        )
+    # Automatisch: dunkles Startbild im Dunkelmodus des Handys.
+    write(
+        os.path.join(RES, "drawable", "splash_auto.xml"),
+        '<?xml version="1.0" encoding="utf-8"?>\n'
+        '<layer-list xmlns:android="http://schemas.android.com/apk/res/android">\n'
+        '    <item android:drawable="@color/kintore_bg_auto"/>\n'
+        '    <item android:gravity="center" android:drawable="@drawable/kintore_splash_logo_light"/>\n'
+        '</layer-list>\n',
+    )
+    write(
+        os.path.join(RES, "drawable-night", "splash_auto.xml"),
+        '<?xml version="1.0" encoding="utf-8"?>\n'
+        '<layer-list xmlns:android="http://schemas.android.com/apk/res/android">\n'
+        '    <item android:drawable="@color/kintore_bg_auto"/>\n'
+        '    <item android:gravity="center" android:drawable="@drawable/kintore_splash_logo"/>\n'
+        '</layer-list>\n',
+    )
     print(f"Startbild ersetzt ({removed} alte Dateien entfernt)")
+
+
+def launch_themes():
+    """Startbild für Hell und Automatisch (seit 2.11). Ab Android 13 wählt KintoreBarsPlugin.start eins davon
+    über setSplashScreenTheme fürs nächste Öffnen. Davor bleibt das dunkle Startbild."""
+    def theme(name, color, splash, light):
+        flag = "true" if light else "false"
+        return (
+            f'    <style name="{name}" parent="AppTheme.NoActionBarLaunch">\n'
+            f'        <item name="windowSplashScreenBackground">@color/{color}</item>\n'
+            f'        <item name="android:background">@drawable/{splash}</item>\n'
+            f'        <item name="android:statusBarColor">@color/{color}</item>\n'
+            f'        <item name="android:navigationBarColor">@color/{color}</item>\n'
+            f'        <item name="android:windowLightStatusBar" tools:targetApi="23">{flag}</item>\n'
+            f'        <item name="android:windowLightNavigationBar" tools:targetApi="27">{flag}</item>\n'
+            '    </style>\n'
+        )
+    write(
+        os.path.join(RES, "values", "kintore_themes.xml"),
+        '<?xml version="1.0" encoding="utf-8"?>\n<resources xmlns:tools="http://schemas.android.com/tools">\n'
+        + theme("KintoreLaunchLight", "kintore_bg_light", "splash_light", True)
+        + theme("KintoreLaunchAuto", "kintore_bg_auto", "splash_auto", True)
+        + '</resources>\n',
+    )
+    # Automatisch im Dunkelmodus: helle Symbole in den Leisten.
+    write(
+        os.path.join(RES, "values-night", "kintore_themes.xml"),
+        '<?xml version="1.0" encoding="utf-8"?>\n<resources xmlns:tools="http://schemas.android.com/tools">\n'
+        + theme("KintoreLaunchAuto", "kintore_bg_auto", "splash_auto", False)
+        + '</resources>\n',
+    )
+    print("Startbilder für Hell und Automatisch angelegt")
 
 
 def add_items(text, style_name, items):
@@ -155,10 +224,14 @@ def version():
 
 BARS_PLUGIN = """
 
+import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Color;
+import android.os.Build;
 import android.view.Window;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
+import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
@@ -166,8 +239,78 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 
 // Färbt Status- und Navigationsleiste passend zum Design der App (Dunkel, Hell, Neon).
 // light: heller Grund, dann dunkle Symbole in den Leisten.
+// Seit 2.11 dazu: Startbild fürs nächste Öffnen (start) und Hell oder Dunkel vom Handy (system, Ereignis "system").
 @CapacitorPlugin(name = "KintoreBars")
 public class KintoreBarsPlugin extends Plugin {
+    static final String PREFS = "kintore";
+    static final String DARK_BG = "#0E0F13";
+    static final String LIGHT_BG = "#F3F4F6";
+
+    static boolean nightMode(Context c) {
+        return (c.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+    }
+
+    // Grund und Leisten beim Start, bevor die Web-Seite steht (MainActivity).
+    static void applyStart(android.app.Activity activity) {
+        android.content.SharedPreferences p = activity.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        String color = p.getString("start_color", null);
+        if (color == null) return;
+        boolean light = p.getBoolean("start_light", false);
+        if (p.getBoolean("start_auto", false)) {
+            light = !nightMode(activity);
+            color = light ? LIGHT_BG : DARK_BG;
+        }
+        int c = Color.parseColor(color);
+        Window window = activity.getWindow();
+        window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(c));
+        window.setStatusBarColor(c);
+        window.setNavigationBarColor(c);
+        WindowInsetsControllerCompat bars = WindowCompat.getInsetsController(window, window.getDecorView());
+        bars.setAppearanceLightStatusBars(light);
+        bars.setAppearanceLightNavigationBars(light);
+    }
+
+    @PluginMethod
+    public void start(final PluginCall call) {
+        final String color = call.getString("color", DARK_BG);
+        final Boolean lightValue = call.getBoolean("light", false);
+        final Boolean autoValue = call.getBoolean("auto", false);
+        final boolean light = lightValue != null && lightValue;
+        final boolean auto = autoValue != null && autoValue;
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                        .putString("start_color", color).putBoolean("start_light", light).putBoolean("start_auto", auto).apply();
+                    if (Build.VERSION.SDK_INT >= 33) {
+                        String name = auto ? "KintoreLaunchAuto" : light ? "KintoreLaunchLight" : "AppTheme_NoActionBarLaunch";
+                        int id = getContext().getResources().getIdentifier(name, "style", getContext().getPackageName());
+                        if (id != 0) getActivity().getSplashScreen().setSplashScreenTheme(id);
+                    }
+                    call.resolve();
+                } catch (Exception e) {
+                    call.reject("Startbild konnte nicht gesetzt werden", e);
+                }
+            }
+        });
+    }
+
+    @PluginMethod
+    public void system(PluginCall call) {
+        JSObject r = new JSObject();
+        r.put("dark", nightMode(getContext()));
+        call.resolve(r);
+    }
+
+    @Override
+    protected void handleOnConfigurationChanged(Configuration newConfig) {
+        super.handleOnConfigurationChanged(newConfig);
+        JSObject r = new JSObject();
+        r.put("dark", (newConfig.uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES);
+        notifyListeners("system", r);
+    }
+
     @PluginMethod
     public void set(final PluginCall call) {
         final String color = call.getString("color", "#0E0F13");
@@ -218,6 +361,18 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(KintoreBarsPlugin.class);
         super.onCreate(savedInstanceState);
         try {
+            // Grund und Leisten im zuletzt gewählten Design, damit Hell beim Öffnen nicht dunkel aufblitzt (seit 2.11).
+            KintoreBarsPlugin.applyStart(this);
+            String bg = getSharedPreferences(KintoreBarsPlugin.PREFS, MODE_PRIVATE).getString("start_color", null);
+            if (bg != null) {
+                if (getSharedPreferences(KintoreBarsPlugin.PREFS, MODE_PRIVATE).getBoolean("start_auto", false)) {
+                    bg = KintoreBarsPlugin.nightMode(this) ? KintoreBarsPlugin.DARK_BG : KintoreBarsPlugin.LIGHT_BG;
+                }
+                getBridge().getWebView().setBackgroundColor(android.graphics.Color.parseColor(bg));
+            }
+        } catch (Exception ignored) {
+        }
+        try {
             // Größere Schrift aus den Android-Einstellungen gilt auch in der App (Barrierefreiheit),
             // höchstens 130 %, damit das Layout hält. Kleinere Schrift als vorgesehen gibt es nicht.
             float scale = getResources().getConfiguration().fontScale;
@@ -240,6 +395,7 @@ def main():
     adaptive_icon()
     splash()
     styles()
+    launch_themes()
     manifest()
     main_activity()
     version()

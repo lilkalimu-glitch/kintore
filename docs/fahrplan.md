@@ -12,6 +12,17 @@ Noch nichts davon ist im Detail geplant. Vor dem Bauen jeweils mit ihm abstimmen
 - [ ] Auf dem Profil die besten Lifts als Video hochladen
 - [ ] Chat in der App, der wie Discord funktioniert
 
+Wunsch des Besitzers vom 12. Oktober 2026: Online ohne großen Server, jedes Handy ist selbst ein Server, wie bei
+BitTorrent oder Bitcoin. Am selben Tag an Claude übergeben, Ergebnis für später:
+- Handys haben im Netz meist keine feste Adresse, und Android stoppt Apps im Hintergrund. Deshalb braucht es einen
+  kleinen Vermittler, der nur sagt, wo das andere Handy gerade ist. Die Daten laufen danach direkt von Handy zu
+  Handy (im Browser-Teil der App über WebRTC). Die Trainingsdaten bleiben auf dem Handy.
+- Wer offline ist, ist nicht zu sehen, außer Freunde haben eine Kopie seines Profils gespeichert.
+- Eine Rangliste mit Fremden lässt sich so nicht fälschungssicher machen. Bitcoin schafft das nur mit sehr viel
+  Rechenarbeit, das geht auf Handys nicht.
+- Reihenfolge: zuerst Freunde hinzufügen (zum Beispiel über einen Code) und Profile direkt austauschen. Eine
+  öffentliche Rangliste erst später, dann mit einem Server, der die Werte prüft.
+
 ## Verfügbarkeit
 
 - [ ] Version fürs iPhone

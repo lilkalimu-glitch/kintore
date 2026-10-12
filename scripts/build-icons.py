@@ -23,6 +23,7 @@ FONT = os.path.join(ROOT, 'www', 'fonts', 'barlow-600.woff')
 PINK = '#F571A6'   # Akzentfarbe im Design Dunkel
 DARK = '#0E0F13'   # Grund im Design Dunkel
 LIGHT = '#F2F3F5'  # Schrift im Design Dunkel
+INK = '#15171C'    # Schrift im Design Hell (Startbild Hell, seit 2.11)
 
 DENSITIES = {'mdpi': 1, 'hdpi': 1.5, 'xhdpi': 2, 'xxhdpi': 3, 'xxxhdpi': 4}
 
@@ -54,7 +55,10 @@ def page_html(d):
   html, body {{ margin: 0; background: transparent; }}
   .st {{ display: block; margin: 0 0 20px; }}
   #splash {{ position: relative; width: 600px; height: 780px; }}
-  #splash svg {{ position: absolute; left: 168px; top: 214px; }}
+  #splash svg, #splash-light svg {{ position: absolute; left: 168px; top: 214px; }}
+  #splash-light {{ position: relative; width: 600px; height: 780px; }}
+  #splash-light .name {{ position: absolute; left: 0; right: 0; top: 520px; text-align: center; color: {INK};
+    font: 600 60px/1 'KBarlow'; letter-spacing: 0.14em; text-indent: 0.14em; }}
   #splash .name {{ position: absolute; left: 0; right: 0; top: 520px; text-align: center; color: {LIGHT};
     font: 600 60px/1 'KBarlow'; letter-spacing: 0.14em; text-indent: 0.14em; }}
 </style></head><body>
@@ -69,6 +73,8 @@ def page_html(d):
 <svg id="stat" class="st" width="96" height="96" viewBox="0 0 96 96">{k(96, 74, '#FFFFFF')}</svg>
 <!-- Startbild (xxhdpi): Symbol und Schriftzug auf dem dunklen Grund -->
 <div id="splash" class="st"><svg width="264" height="264" viewBox="0 0 264 264"><rect width="264" height="264" rx="60" fill="{PINK}"/>{k(264, 112, DARK)}</svg><div class="name">KINTORE</div></div>
+<!-- Startbild für Hell und Automatisch (seit 2.11): dunkle Schrift auf hellem Grund -->
+<div id="splash-light" class="st"><svg width="264" height="264" viewBox="0 0 264 264"><rect width="264" height="264" rx="60" fill="{PINK}"/>{k(264, 112, DARK)}</svg><div class="name">KINTORE</div></div>
 </body></html>"""
 
 
@@ -99,7 +105,7 @@ def main():
             page.goto('file://' + src)
             page.evaluate('document.fonts.ready.then(() => document.fonts.check("600 60px KBarlow"))')
             page.wait_for_timeout(300)
-            big = {name: shot(page, '#' + name) for name in ('fg', 'mono', 'legacy', 'round', 'stat', 'splash')}
+            big = {name: shot(page, '#' + name) for name in ('fg', 'mono', 'legacy', 'round', 'stat', 'splash', 'splash-light')}
             browser.close()
     made = []
     for dens, f in DENSITIES.items():
@@ -111,6 +117,8 @@ def main():
         save(big['stat'], f'drawable-{dens}', 'ic_stat_kintore.png', s(24))
     save(big['splash'], 'drawable-xhdpi', 'kintore_splash_logo.png', (400, 520))
     save(big['splash'], 'drawable-xxhdpi', 'kintore_splash_logo.png', (600, 780))
+    save(big['splash-light'], 'drawable-xhdpi', 'kintore_splash_logo_light.png', (400, 520))
+    save(big['splash-light'], 'drawable-xxhdpi', 'kintore_splash_logo_light.png', (600, 780))
     print('Bilder in android-res/ geschrieben')
     if preview:
         make_preview(big, preview)

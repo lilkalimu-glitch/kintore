@@ -23,8 +23,11 @@ t('Level-Grenzen', () => {
   assert.equal(levelInfo(xpAt(20) - 1).level, 19);
   assert.equal(levelInfo(xpAt(20) - 1).toRank, 1);
   assert.equal(levelInfo(xpAt(70)).rank, 'SS');
-  assert.equal(levelInfo(xpAt(70)).nextRank, null);
-  assert.equal(levelInfo(xpAt(70)).rankProgress, 1);
+  assert.equal(levelInfo(xpAt(70)).nextRank.id, 'SSS');
+  assert.equal(levelInfo(xpAt(90)).rank, 'SSS');
+  assert.equal(levelInfo(xpAt(90)).nextRank, null);
+  assert.equal(levelInfo(xpAt(90)).rankProgress, 1);
+  assert.equal(levelInfo(xpAt(100)).level, 100);
   const mid = levelInfo((xpAt(12) + xpAt(20)) / 2);
   assert.ok(mid.rankProgress > 0.49 && mid.rankProgress < 0.51);
 });
@@ -147,8 +150,9 @@ t('Stationen', () => {
 t('Abholen und Anlegen', () => {
   const s = baseState();
   // 9 Stationen aus Version 2.5, 5 neue mit Bannern und Effekten (Level 3, 5, 9, 13, 17),
-  // 2 neue Banner aus Version 2.7 (Level 15 und 19) und das Wort-Schild BISS aus 2.10 (Level 11)
-  assert.equal(readyStations(s, 19).length, 17);
+  // 2 neue Banner aus Version 2.7 (Level 15 und 19), das Wort-Schild BISS aus 2.10 (Level 11)
+  // und der Effekt Puls aus 2.11 (Level 7)
+  assert.equal(readyStations(s, 19).length, 18);
   assert.equal(readyStations(s, 1).length, 0);
   s.rewards.claimed = [4];
   s.rewards.equip.color = 'eis';
@@ -495,7 +499,7 @@ t('Nachtragen eines älteren Tages geht nicht, dann wird alles neu gerechnet', (
 });
 
 // ---------- Designs (seit 2.10) ----------
-const { initialsOf, themeOf, isCalm, jpOn } = await import(W + 'theme.js');
+const { initialsOf, themeOf, isCalm, jpOn, shownTheme, setSystemDark } = await import(W + 'theme.js');
 const { isJp, itemOf } = await import(W + 'look.js');
 
 t('Design: Standard ist Dunkel, unbekannte Werte fallen auf Dunkel zurück', () => {
@@ -509,6 +513,19 @@ t('Design: Standard ist Dunkel, unbekannte Werte fallen auf Dunkel zurück', () 
   // Ohne Seite (Node) gilt der ruhige Standard ohne japanische Zeichen
   assert.equal(isCalm(), true);
   assert.equal(jpOn(), false);
+});
+
+t('Design Automatisch folgt dem Handy (seit 2.11)', () => {
+  assert.equal(migrate({ exercises: [], sets: [], settings: { theme: 'auto' } }).settings.theme, 'auto');
+  assert.equal(themeOf({ theme: 'auto' }), 'auto');
+  assert.equal(setSystemDark(false), true);
+  assert.equal(shownTheme({ theme: 'auto' }), 'hell');
+  assert.equal(setSystemDark(false), false);
+  assert.equal(setSystemDark(true), true);
+  assert.equal(shownTheme({ theme: 'auto' }), 'dunkel');
+  // Feste Designs bleiben, egal was das Handy sagt
+  assert.equal(shownTheme({ theme: 'hell' }), 'hell');
+  assert.equal(shownTheme({ theme: 'neon' }), 'neon');
 });
 
 t('Schilder mit Wort: Standard KRAFT, 筋トレ wird einmalig umgestellt und bleibt in der Sammlung', () => {
@@ -537,6 +554,33 @@ t('Initialen fürs Profilbild', () => {
   assert.equal(initialsOf('Özlem'), 'Ö');
   assert.equal(isJp('筋トレ'), true);
   assert.equal(isJp('KRAFT'), false);
+});
+
+t('Rang-Pfad bis Level 100 (seit 2.11)', () => {
+  // Stationen bis 2.10. Neue Belohnungen dürfen nur auf andere Level, sonst gälten sie nach dem Update
+  // bei schon abgeholten Stationen sofort als abgeholt.
+  const OLD = [1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 26, 27, 28, 29, 32, 33, 35,
+    37, 39, 40, 41, 43, 44, 45, 47, 48, 49, 50, 52, 54, 56, 58, 59, 60, 62, 64, 65, 66, 68, 69, 70];
+  const NEW = ['schimmer', 'puls', 'kreide', 'hantelheld', 'orbit', 'fokus', 'kraftwerk', 'welle', 'wille', 'heber', 'unaufhaltsam',
+    'aura', 'stahl', 'biest', 'tuerkis', 'hunger', 'halbgott'];
+  for (const id of NEW) {
+    const it = ITEMS.find((x) => x.id === id);
+    assert.ok(it, 'fehlt ' + id);
+    if (it.lv > 1) assert.ok(!OLD.includes(it.lv), `${id} liegt auf der alten Station ${it.lv}`);
+  }
+  assert.equal(STATIONS[STATIONS.length - 1].lv, 100);
+  assert.ok(STATIONS.find((x) => x.lv === 90)?.rank?.id === 'SSS');
+  // Bis Rang B (Level 34) gibt es jetzt 7 Effekte statt 3
+  assert.equal(ITEMS.filter((x) => x.type === 'effect' && x.id !== 'none' && x.lv < 35).length, 7);
+  // Wer in 2.10 alles bis Level 70 abgeholt hat, behält alles und bekommt die neuen Level als bereit
+  const s = baseState();
+  s.rewards.claimed = OLD.filter((x) => x > 1);
+  s.rewards.equip = { color: 'gold', title: 'endgegner', frame: 'crown', sign: 'genkai', banner: 'kosmos', effect: 'sterne' };
+  const look = equipped(s, 78);
+  assert.deepEqual(TYPE_ORDER.map((t2) => look[t2].id), ['gold', 'endgegner', 'crown', 'genkai', 'kosmos', 'sterne']);
+  assert.deepEqual(readyStations(s, 78).map((x) => x.lv), [7, 25, 30, 31, 34, 36, 38, 42, 46, 51, 53, 55, 57, 61, 63, 67, 72, 74, 75, 76, 78]);
+  // Ein neuer Effekt von Anfang an: Schimmer
+  assert.equal(owned(s, 1, ITEMS.find((x) => x.id === 'schimmer')), true);
 });
 
 console.log(n, 'Tests bestanden');
